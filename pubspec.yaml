@@ -4,6 +4,7 @@ environment:
   sdk: ">=3.5.0 <4.0.0"
 
 dev_dependencies:
+  coverde: ^0.4.0
   melos: ^7.5.1
   very_good_analysis: ^10.0.0
 
@@ -56,8 +57,29 @@ melos:
     test.ci:
       description: Run tests for all packages (CI)
       run: >
-        melos exec --depends-on test --dir-exists test --fail-fast --
-        "dart test --reporter expanded"
+        melos exec --depends-on test --dir-exists test --fail-fast
+        --order-dependents --
+        "dart test --coverage-path coverage/lcov.info
+        --coverage-package MELOS_PACKAGE_NAME --reporter expanded"
+    coverage.merge:
+      description: Merge all packages coverage trace files
+      run: >
+        dart run coverde rm --no-dry-run
+        MELOS_ROOT_PATH/coverage/filtered.lcov.info && melos exec
+        --file-exists coverage/lcov.info --
+        "dart run coverde transform --input coverage/lcov.info
+        --output MELOS_ROOT_PATH/coverage/filtered.lcov.info
+        --transformations relative=MELOS_ROOT_PATH"
+    coverage.check:
+      description: Check test coverage on features/ and entities/ (≥ 95%)
+      run: >
+        dart run coverde transform --input
+        MELOS_ROOT_PATH/coverage/filtered.lcov.info --output
+        MELOS_ROOT_PATH/coverage/features_entities.lcov.info --mode w
+        --transformations keep-by-glob='**/lib/src/features/**'
+        --transformations keep-by-glob='**/lib/src/entities/**' &&
+        dart run coverde check --input
+        MELOS_ROOT_PATH/coverage/features_entities.lcov.info 95
 
     test.e2e:
       description: Run E2E tests
