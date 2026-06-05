@@ -1,1 +1,1 @@
-// Feature modules implementing config loading, transforms, and generation.
+export 'config/config.dart';
