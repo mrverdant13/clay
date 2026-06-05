@@ -39,13 +39,14 @@ List<String> collectConfigSearchPaths({required String startDir}) {
   return candidates;
 }
 
-/// Discovers `brick-gen.json` using an explicit [configPath] or walk-up from [cwd].
+/// Discovers `brick-gen.json` using an explicit [configPath] or walk-up from
+/// [cwd].
 ///
 /// When [configPath] is provided, it is resolved relative to [cwd] unless
 /// absolute. The parent directory of the config file becomes the project root.
 ///
-/// When [configPath] is omitted, parent directories of [cwd] are searched
-/// until a `brick-gen.json` is found or the filesystem root is reached.
+/// When [configPath] is omitted, parent directories of [cwd] are searched until
+/// a `brick-gen.json` is found or the filesystem root is reached.
 DiscoveredBrickGenConfig discoverBrickGenConfig({
   String? configPath,
   String? cwd,

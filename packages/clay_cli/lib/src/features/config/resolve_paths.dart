@@ -16,7 +16,8 @@ String resolvePathFromProjectRoot({
 
 /// Resolves the reference directory path.
 ///
-/// Priority: [cliOverride] → [config.reference] → built-in default.
+/// Priority: [cliOverride] → [config] ([BrickGenConfig.reference]) → built-in
+/// default.
 String resolveReferencePath({
   required String projectRoot,
   required BrickGenConfig config,
@@ -28,7 +29,8 @@ String resolveReferencePath({
 
 /// Resolves the target directory path.
 ///
-/// Priority: [cliOverride] → [config.target] → built-in default.
+/// Priority: [cliOverride] → [config] ([BrickGenConfig.target]) → built-in
+/// default.
 String resolveTargetPath({
   required String projectRoot,
   required BrickGenConfig config,
