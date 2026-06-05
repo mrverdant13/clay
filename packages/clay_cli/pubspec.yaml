@@ -1,0 +1,25 @@
+name: clay_cli
+description: >-
+  A toolchain for authoring Mason brick templates from reference projects.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  args: ^2.7.0
+  dart_mappable: ^4.6.1
+  glob: ^2.1.3
+  mason: ^0.1.2
+  mason_logger: ^0.3.3
+  meta: ^1.18.0
+  path: ^1.9.1
+
+dev_dependencies:
+  test: ^1.31.1
+  very_good_analysis: ^10.0.0
+
+executables:
+  clay:
