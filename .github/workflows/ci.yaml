@@ -1,0 +1,73 @@
+# CI workflow
+name: Dart CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  min-conditions:
+    name: Check format and analyze codebase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        run: dart pub global activate melos 7.5.1
+      - name: Initialize melos
+        run: melos bs
+      - name: Format and analyze
+        run: melos run format.ci && melos run analyze.ci
+
+  test:
+    name: Test implementation
+    needs: min-conditions
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        run: dart pub global activate melos 7.5.1
+      - name: Initialize melos
+        run: melos bs
+      - name: Run tests and merge coverage
+        run: melos run test.ci && melos run coverage.merge
+      - name: Upload coverage trace file as artifact
+        uses: actions/upload-artifact@v7
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: filtered.lcov.info
+          path: ./coverage/filtered.lcov.info
+          retention-days: 1
+
+  codecov:
+    name: Publish coverage results
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage trace file artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: filtered.lcov.info
+      - name: Upload coverage data to Codecov
+        uses: codecov/codecov-action@v6
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          directory: ./coverage/
+          files: ./filtered.lcov.info
+          fail_ci_if_error: true
+          verbose: true
