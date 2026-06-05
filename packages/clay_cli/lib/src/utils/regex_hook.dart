@@ -14,20 +14,20 @@ class RegexHook extends MappingHook {
       final RegExp value => value,
       final String value => RegExp(value),
       final Map<String, dynamic> value => () {
-        final pattern = value['pattern'] as String;
-        final dotAll = value.getOptBool('dotAll');
-        final multiLine = value.getOptBool('multiLine');
-        final unicode = value.getOptBool('unicode');
-        final caseSensitive = value.getOptBool('caseSensitive');
-        final dummy = RegExp('.*');
-        return RegExp(
-          pattern,
-          dotAll: dotAll ?? dummy.isDotAll,
-          multiLine: multiLine ?? dummy.isMultiLine,
-          unicode: unicode ?? dummy.isUnicode,
-          caseSensitive: caseSensitive ?? dummy.isCaseSensitive,
-        );
-      }(),
+          final pattern = value['pattern'] as String;
+          final dotAll = value.getOptBool('dotAll');
+          final multiLine = value.getOptBool('multiLine');
+          final unicode = value.getOptBool('unicode');
+          final caseSensitive = value.getOptBool('caseSensitive');
+          final dummy = RegExp('.*');
+          return RegExp(
+            pattern,
+            dotAll: dotAll ?? dummy.isDotAll,
+            multiLine: multiLine ?? dummy.isMultiLine,
+            unicode: unicode ?? dummy.isUnicode,
+            caseSensitive: caseSensitive ?? dummy.isCaseSensitive,
+          );
+        }(),
       _ => RegExp(value.toString()),
     };
   }

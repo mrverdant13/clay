@@ -25,9 +25,8 @@ class AnnotationIssue {
 
   @override
   String toString() {
-    final location = column == null
-        ? '$filePath:$line'
-        : '$filePath:$line:$column';
+    final location =
+        column == null ? '$filePath:$line' : '$filePath:$line:$column';
     return '$location: $message';
   }
 }

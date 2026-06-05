@@ -102,11 +102,12 @@ mixin BrickGenConfigMappable {
   }
 
   BrickGenConfigCopyWith<BrickGenConfig, BrickGenConfig, BrickGenConfig>
-  get copyWith => _BrickGenConfigCopyWithImpl<BrickGenConfig, BrickGenConfig>(
-    this as BrickGenConfig,
-    $identity,
-    $identity,
-  );
+      get copyWith =>
+          _BrickGenConfigCopyWithImpl<BrickGenConfig, BrickGenConfig>(
+            this as BrickGenConfig,
+            $identity,
+            $identity,
+          );
   @override
   String toString() {
     return BrickGenConfigMapper.ensureInitialized().stringifyValue(
@@ -139,18 +140,10 @@ extension BrickGenConfigValueCopy<$R, $Out>
 abstract class BrickGenConfigCopyWith<$R, $In extends BrickGenConfig, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get ignore;
-  ListCopyWith<
-    $R,
-    Replacement,
-    ReplacementCopyWith<$R, Replacement, Replacement>
-  >
-  get replacements;
-  ListCopyWith<
-    $R,
-    LineDeletion,
-    LineDeletionCopyWith<$R, LineDeletion, LineDeletion>
-  >
-  get lineDeletions;
+  ListCopyWith<$R, Replacement,
+      ReplacementCopyWith<$R, Replacement, Replacement>> get replacements;
+  ListCopyWith<$R, LineDeletion,
+      LineDeletionCopyWith<$R, LineDeletion, LineDeletion>> get lineDeletions;
   $R call({
     String? reference,
     String? target,
@@ -179,27 +172,21 @@ class _BrickGenConfigCopyWithImpl<$R, $Out>
         (v) => call(ignore: v),
       );
   @override
-  ListCopyWith<
-    $R,
-    Replacement,
-    ReplacementCopyWith<$R, Replacement, Replacement>
-  >
-  get replacements => ListCopyWith(
-    $value.replacements,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(replacements: v),
-  );
+  ListCopyWith<$R, Replacement,
+          ReplacementCopyWith<$R, Replacement, Replacement>>
+      get replacements => ListCopyWith(
+            $value.replacements,
+            (v, t) => v.copyWith.$chain(t),
+            (v) => call(replacements: v),
+          );
   @override
-  ListCopyWith<
-    $R,
-    LineDeletion,
-    LineDeletionCopyWith<$R, LineDeletion, LineDeletion>
-  >
-  get lineDeletions => ListCopyWith(
-    $value.lineDeletions,
-    (v, t) => v.copyWith.$chain(t),
-    (v) => call(lineDeletions: v),
-  );
+  ListCopyWith<$R, LineDeletion,
+          LineDeletionCopyWith<$R, LineDeletion, LineDeletion>>
+      get lineDeletions => ListCopyWith(
+            $value.lineDeletions,
+            (v, t) => v.copyWith.$chain(t),
+            (v) => call(lineDeletions: v),
+          );
   @override
   $R call({
     String? reference,
@@ -207,27 +194,28 @@ class _BrickGenConfigCopyWithImpl<$R, $Out>
     List<String>? ignore,
     List<Replacement>? replacements,
     List<LineDeletion>? lineDeletions,
-  }) => $apply(
-    FieldCopyWithData({
-      if (reference != null) #reference: reference,
-      if (target != null) #target: target,
-      if (ignore != null) #ignore: ignore,
-      if (replacements != null) #replacements: replacements,
-      if (lineDeletions != null) #lineDeletions: lineDeletions,
-    }),
-  );
+  }) =>
+      $apply(
+        FieldCopyWithData({
+          if (reference != null) #reference: reference,
+          if (target != null) #target: target,
+          if (ignore != null) #ignore: ignore,
+          if (replacements != null) #replacements: replacements,
+          if (lineDeletions != null) #lineDeletions: lineDeletions,
+        }),
+      );
   @override
   BrickGenConfig $make(CopyWithData data) => BrickGenConfig(
-    reference: data.get(#reference, or: $value.reference),
-    target: data.get(#target, or: $value.target),
-    ignore: data.get(#ignore, or: $value.ignore),
-    replacements: data.get(#replacements, or: $value.replacements),
-    lineDeletions: data.get(#lineDeletions, or: $value.lineDeletions),
-  );
+        reference: data.get(#reference, or: $value.reference),
+        target: data.get(#target, or: $value.target),
+        ignore: data.get(#ignore, or: $value.ignore),
+        replacements: data.get(#replacements, or: $value.replacements),
+        lineDeletions: data.get(#lineDeletions, or: $value.lineDeletions),
+      );
 
   @override
   BrickGenConfigCopyWith<$R2, BrickGenConfig, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _BrickGenConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) =>
+      _BrickGenConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
-
