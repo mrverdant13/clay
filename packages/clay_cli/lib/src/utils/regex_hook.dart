@@ -11,6 +11,7 @@ class RegexHook extends MappingHook {
   @override
   Object? beforeDecode(Object? value) {
     return switch (value) {
+      null => null,
       final RegExp value => value,
       final String value => RegExp(value),
       final Map<String, dynamic> value => () {
