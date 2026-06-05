@@ -27,13 +27,5 @@ void main() {
       expect(exitCode, ExitCode.success.code);
       expect(logger.messages, contains(packageVersion));
     });
-
-    test('missing command exits with usage code', () async {
-      final runner = ClayCommandRunner(logger: Logger(level: Level.quiet));
-
-      final exitCode = await runner.run(const <String>[]);
-
-      expect(exitCode, ExitCode.usage.code);
-    });
   });
 }

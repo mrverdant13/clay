@@ -9,12 +9,12 @@ import 'package:mason_logger/mason_logger.dart';
 class ClayCommandRunner extends CommandRunner<int> {
   /// {@macro clay_cli.clay_command_runner}
   ClayCommandRunner({Logger? logger})
-    : logger = logger ?? Logger(),
-      super(
-        packageName,
-        'A toolchain for authoring Mason brick templates from reference '
-        'projects.',
-      ) {
+      : logger = logger ?? Logger(),
+        super(
+          packageName,
+          'A toolchain for authoring Mason brick templates from reference '
+          'projects.',
+        ) {
     argParser
       ..addFlag('version', negatable: false, help: 'Print the current version.')
       ..addFlag('verbose', help: 'Verbose logging.');
@@ -54,12 +54,6 @@ class ClayCommandRunner extends CommandRunner<int> {
     if (topLevelResults['version'] == true) {
       logger.info(packageVersion);
       return ExitCode.success.code;
-    }
-
-    if (topLevelResults.command == null) {
-      logger.err('No command specified.');
-      printUsage();
-      return ExitCode.usage.code;
     }
 
     return super.runCommand(topLevelResults);
