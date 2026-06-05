@@ -1,0 +1,15 @@
+# See https://dart.dev/guides/libraries/private-files
+
+# Files and directories created by pub
+**/.dart_tool/
+**/.packages
+**/build/
+
+# Coverage
+**/coverage/
+
+# Melos / IDE
+**/.idea/
+**/melos_overrides.yaml
+**/pubspec_overrides.yaml
+**/melos_*.iml

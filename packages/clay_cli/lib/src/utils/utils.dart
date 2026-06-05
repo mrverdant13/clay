@@ -1,1 +1,1 @@
-/// Shared utilities for the Clay CLI.
+// Shared utilities for the Clay CLI.

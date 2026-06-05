@@ -1,1 +1,1 @@
-/// Feature modules implementing config loading, transforms, and generation.
+// Feature modules implementing config loading, transforms, and generation.
