@@ -1,0 +1,59 @@
+name: clay_monorepo
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dev_dependencies:
+  melos: ^7.5.1
+  very_good_analysis: ^10.0.0
+
+melos:
+  command:
+    bootstrap:
+      environment:
+        sdk: ">=3.5.0 <4.0.0"
+
+  scripts:
+    format:
+      description: Format a package
+      run: dart format .
+      exec:
+        concurrency: 1
+        orderDependents: true
+    format.ci:
+      description: Format all packages (CI)
+      run: dart format --set-exit-if-changed .
+
+    analyze:
+      description: Analyze a package
+      run: dart analyze .
+      exec:
+        concurrency: 1
+        orderDependents: true
+    analyze.ci:
+      description: Analyze all packages (CI)
+      run: dart analyze --fatal-infos --fatal-warnings .
+
+    test:
+      description: Run tests for a package
+      run: dart test --color --reporter expanded
+      exec:
+        concurrency: 1
+        orderDependents: true
+      packageFilters:
+        dependsOn:
+          - test
+        dirExists:
+          - test
+    test.all:
+      description: Run tests for all packages
+      steps:
+        - test
+    test.ci:
+      description: Run tests for all packages (CI)
+      run: >
+        melos exec --depends-on test --dir-exists test --fail-fast --
+        "dart test --reporter expanded"
+
+workspace:
+  - packages/clay_cli/
