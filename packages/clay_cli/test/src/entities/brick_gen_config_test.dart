@@ -82,29 +82,25 @@ void main() {
       expect(reference.hashCode, isNot(other.hashCode));
     });
 
-    group('legacy altoke_bricks configs', () {
+    group('legacy config fixtures', () {
       final legacyConfigs = <String, String>{
-        'altoke_common': p.join(
-          _altokeBricksRoot,
-          'bricks',
-          'altoke_common',
-          'brick-gen.json',
+        'legacy_minimal': p.join(
+          _fixturesRoot,
+          'legacy_minimal.json',
         ),
-        'altoke_app': p.join(
-          _altokeBricksRoot,
-          'bricks',
-          'altoke_app',
-          'brick-gen.json',
+        'legacy_with_deletions': p.join(
+          _fixturesRoot,
+          'legacy_with_deletions.json',
         ),
       };
 
       for (final entry in legacyConfigs.entries) {
-        test('parses ${entry.key} brick-gen.json', () {
+        test('parses ${entry.key} fixture', () {
           final file = File(entry.value);
           expect(
             file.existsSync(),
             isTrue,
-            reason: 'Expected legacy fixture at ${entry.value}',
+            reason: 'Expected fixture at ${entry.value}',
           );
 
           final json =
@@ -116,7 +112,7 @@ void main() {
           expect(config.ignore, isEmpty);
           expect(config.replacements, isNotEmpty);
 
-          if (entry.key == 'altoke_app') {
+          if (entry.key == 'legacy_with_deletions') {
             expect(config.lineDeletions, isNotEmpty);
             expect(
               config.lineDeletions.first,
@@ -128,8 +124,8 @@ void main() {
         });
       }
 
-      test('parses altoke_app dotAll replacement object', () {
-        final file = File(legacyConfigs['altoke_app']!);
+      test('parses dotAll replacement object from legacy_with_deletions', () {
+        final file = File(legacyConfigs['legacy_with_deletions']!);
         final json =
             jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
         final config = BrickGenConfig.fromJson(json);
@@ -144,8 +140,8 @@ void main() {
         );
       });
 
-      test('parses altoke_app line deletion ranges', () {
-        final file = File(legacyConfigs['altoke_app']!);
+      test('parses line deletion ranges from legacy_with_deletions', () {
+        final file = File(legacyConfigs['legacy_with_deletions']!);
         final json =
             jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
         final config = BrickGenConfig.fromJson(json);
@@ -159,7 +155,6 @@ void main() {
   });
 }
 
-/// Sibling checkout used as a local parity fixture source.
-final String _altokeBricksRoot = p.normalize(
-  p.join(Directory.current.path, '..', '..', '..', 'altoke_bricks'),
+final String _fixturesRoot = p.normalize(
+  p.join(Directory.current.path, 'test', 'fixtures', 'brick_gen'),
 );
