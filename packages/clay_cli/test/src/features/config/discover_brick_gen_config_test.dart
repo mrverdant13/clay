@@ -20,7 +20,8 @@ void main() {
     });
 
     test('discovers config in cwd', () {
-      final projectRoot = Directory(p.join(tempDir.path, 'project'))..createSync();
+      final projectRoot = Directory(p.join(tempDir.path, 'project'))
+        ..createSync();
       final configFile = File(p.join(projectRoot.path, 'brick-gen.json'))
         ..writeAsStringSync('{}');
 
@@ -31,7 +32,8 @@ void main() {
     });
 
     test('walks up parent directories to find config', () {
-      final projectRoot = Directory(p.join(tempDir.path, 'project'))..createSync();
+      final projectRoot = Directory(p.join(tempDir.path, 'project'))
+        ..createSync();
       File(p.join(projectRoot.path, 'brick-gen.json')).writeAsStringSync('{}');
       final nestedDir = Directory(p.join(projectRoot.path, 'src', 'lib'))
         ..createSync(recursive: true);
@@ -46,7 +48,8 @@ void main() {
     });
 
     test('uses explicit config path relative to cwd', () {
-      final projectRoot = Directory(p.join(tempDir.path, 'project'))..createSync();
+      final projectRoot = Directory(p.join(tempDir.path, 'project'))
+        ..createSync();
       final configDir = Directory(p.join(projectRoot.path, 'config'))
         ..createSync();
       final configFile = File(p.join(configDir.path, 'brick-gen.json'))
@@ -62,7 +65,8 @@ void main() {
     });
 
     test('uses explicit absolute config path', () {
-      final projectRoot = Directory(p.join(tempDir.path, 'project'))..createSync();
+      final projectRoot = Directory(p.join(tempDir.path, 'project'))
+        ..createSync();
       final configFile = File(p.join(projectRoot.path, 'brick-gen.json'))
         ..writeAsStringSync('{}');
 
@@ -96,7 +100,8 @@ void main() {
     });
 
     test('throws when explicit config path does not exist', () {
-      final projectRoot = Directory(p.join(tempDir.path, 'project'))..createSync();
+      final projectRoot = Directory(p.join(tempDir.path, 'project'))
+        ..createSync();
 
       expect(
         () => discoverBrickGenConfig(
