@@ -4,7 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 void main() {
-  const projectRoot = '/project/root';
+  final projectRoot = p.join('project', 'root');
 
   group('resolvePathFromProjectRoot', () {
     test('joins relative paths to project root', () {
@@ -18,7 +18,7 @@ void main() {
     });
 
     test('returns absolute paths unchanged', () {
-      const absolutePath = '/absolute/reference';
+      final absolutePath = p.absolute(p.join('absolute', 'reference'));
 
       expect(
         resolvePathFromProjectRoot(
@@ -33,7 +33,7 @@ void main() {
       expect(
         resolvePathFromProjectRoot(
           projectRoot: projectRoot,
-          path: 'brick/../target',
+          path: p.join('brick', '..', 'target'),
         ),
         p.join(projectRoot, 'target'),
       );
@@ -42,7 +42,7 @@ void main() {
 
   group('resolveReferencePath', () {
     test('uses config reference when no CLI override is provided', () {
-      const config = BrickGenConfig(reference: 'src/ref');
+      final config = BrickGenConfig(reference: p.join('src', 'ref'));
 
       expect(
         resolveReferencePath(projectRoot: projectRoot, config: config),
@@ -51,15 +51,15 @@ void main() {
     });
 
     test('uses CLI override over config reference', () {
-      const config = BrickGenConfig(reference: 'src/ref');
+      final config = BrickGenConfig(reference: p.join('src', 'ref'));
 
       expect(
         resolveReferencePath(
           projectRoot: projectRoot,
           config: config,
-          cliOverride: 'override/ref',
+          cliOverride: p.join('override', 'ref'),
         ),
-        p.join(projectRoot, 'override/ref'),
+        p.join(projectRoot, 'override', 'ref'),
       );
     });
 
@@ -74,7 +74,7 @@ void main() {
 
     test('resolves absolute CLI override as-is', () {
       const config = BrickGenConfig();
-      const absoluteOverride = '/custom/reference';
+      final absoluteOverride = p.absolute(p.join('custom', 'reference'));
 
       expect(
         resolveReferencePath(
@@ -89,24 +89,24 @@ void main() {
 
   group('resolveTargetPath', () {
     test('uses config target when no CLI override is provided', () {
-      const config = BrickGenConfig(target: 'out/template');
+      final config = BrickGenConfig(target: p.join('out', 'template'));
 
       expect(
         resolveTargetPath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, 'out/template'),
+        p.join(projectRoot, 'out', 'template'),
       );
     });
 
     test('uses CLI override over config target', () {
-      const config = BrickGenConfig(target: 'out/template');
+      final config = BrickGenConfig(target: p.join('out', 'template'));
 
       expect(
         resolveTargetPath(
           projectRoot: projectRoot,
           config: config,
-          cliOverride: 'override/template',
+          cliOverride: p.join('override', 'template'),
         ),
-        p.join(projectRoot, 'override/template'),
+        p.join(projectRoot, 'override', 'template'),
       );
     });
 
