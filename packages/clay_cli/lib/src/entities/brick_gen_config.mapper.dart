@@ -29,14 +29,7 @@ class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
     'reference',
     _$reference,
     opt: true,
-    def: defaultReferencePath,
-  );
-  static String _$target(BrickGenConfig v) => v.target;
-  static const Field<BrickGenConfig, String> _f$target = Field(
-    'target',
-    _$target,
-    opt: true,
-    def: defaultTargetPath,
+    def: BrickGenConfig.defaultReferencePath,
   );
   static List<String> _$ignore(BrickGenConfig v) => v.ignore;
   static const Field<BrickGenConfig, List<String>> _f$ignore = Field(
@@ -56,23 +49,29 @@ class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
       v.lineDeletions;
   static const Field<BrickGenConfig, List<LineDeletion>> _f$lineDeletions =
       Field('lineDeletions', _$lineDeletions, opt: true, def: const []);
+  static String _$target(BrickGenConfig v) => v.target;
+  static const Field<BrickGenConfig, String> _f$target = Field(
+    'target',
+    _$target,
+    opt: true,
+  );
 
   @override
   final MappableFields<BrickGenConfig> fields = const {
     #reference: _f$reference,
-    #target: _f$target,
     #ignore: _f$ignore,
     #replacements: _f$replacements,
     #lineDeletions: _f$lineDeletions,
+    #target: _f$target,
   };
 
   static BrickGenConfig _instantiate(DecodingData data) {
     return BrickGenConfig(
       reference: data.dec(_f$reference),
-      target: data.dec(_f$target),
       ignore: data.dec(_f$ignore),
       replacements: data.dec(_f$replacements),
       lineDeletions: data.dec(_f$lineDeletions),
+      target: data.dec(_f$target),
     );
   }
 
@@ -146,10 +145,10 @@ abstract class BrickGenConfigCopyWith<$R, $In extends BrickGenConfig, $Out>
       LineDeletionCopyWith<$R, LineDeletion, LineDeletion>> get lineDeletions;
   $R call({
     String? reference,
-    String? target,
     List<String>? ignore,
     List<Replacement>? replacements,
     List<LineDeletion>? lineDeletions,
+    String? target,
   });
   BrickGenConfigCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
@@ -190,27 +189,27 @@ class _BrickGenConfigCopyWithImpl<$R, $Out>
   @override
   $R call({
     String? reference,
-    String? target,
     List<String>? ignore,
     List<Replacement>? replacements,
     List<LineDeletion>? lineDeletions,
+    Object? target = $none,
   }) =>
       $apply(
         FieldCopyWithData({
           if (reference != null) #reference: reference,
-          if (target != null) #target: target,
           if (ignore != null) #ignore: ignore,
           if (replacements != null) #replacements: replacements,
           if (lineDeletions != null) #lineDeletions: lineDeletions,
+          if (target != $none) #target: target,
         }),
       );
   @override
   BrickGenConfig $make(CopyWithData data) => BrickGenConfig(
         reference: data.get(#reference, or: $value.reference),
-        target: data.get(#target, or: $value.target),
         ignore: data.get(#ignore, or: $value.ignore),
         replacements: data.get(#replacements, or: $value.replacements),
         lineDeletions: data.get(#lineDeletions, or: $value.lineDeletions),
+        target: data.get(#target, or: $value.target),
       );
 
   @override

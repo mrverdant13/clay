@@ -45,8 +45,8 @@ void main() {
 
       final config = await loadBrickGenConfig(configPath: configFile.path);
 
-      expect(config.reference, defaultReferencePath);
-      expect(config.target, defaultTargetPath);
+      expect(config.reference, BrickGenConfig.defaultReferencePath);
+      expect(config.target, BrickGenConfig.defaultTargetPath);
     });
 
     test('throws when config file does not exist', () async {

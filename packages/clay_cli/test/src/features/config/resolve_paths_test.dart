@@ -46,7 +46,7 @@ void main() {
 
       expect(
         resolveReferencePath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, 'src/ref'),
+        p.join(projectRoot, 'src', 'ref'),
       );
     });
 
@@ -64,16 +64,16 @@ void main() {
     });
 
     test('falls back to built-in default when config uses default', () {
-      const config = BrickGenConfig();
+      final config = BrickGenConfig();
 
       expect(
         resolveReferencePath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, defaultReferencePath),
+        p.join(projectRoot, BrickGenConfig.defaultReferencePath),
       );
     });
 
     test('resolves absolute CLI override as-is', () {
-      const config = BrickGenConfig();
+      final config = BrickGenConfig();
       final absoluteOverride = p.absolute(p.join('custom', 'reference'));
 
       expect(
@@ -111,11 +111,11 @@ void main() {
     });
 
     test('falls back to built-in default when config uses default', () {
-      const config = BrickGenConfig();
+      final config = BrickGenConfig();
 
       expect(
         resolveTargetPath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, defaultTargetPath),
+        p.join(projectRoot, BrickGenConfig.defaultTargetPath),
       );
     });
   });
