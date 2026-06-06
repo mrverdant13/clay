@@ -13,19 +13,17 @@ String applyLineDeletions({
   required List<LineDeletion> lineDeletions,
 }) {
   final lines = LineSplitter.split(content);
-  final applyableDeletions = lineDeletions.where(
-    (deletion) => path.equals(deletion.filePath, filePath),
-  );
-  final deletableRanges = applyableDeletions.expand(
-    (deletion) => deletion.ranges,
-  );
-  if (deletableRanges.isEmpty) {
+  final applicableRanges = lineDeletions
+      .where((deletion) => path.equals(deletion.filePath, filePath))
+      .expand((deletion) => deletion.ranges)
+      .toList();
+  if (applicableRanges.isEmpty) {
     return content;
   }
 
   final buffer = StringBuffer();
   for (final (lineIndex, lineContent) in lines.indexed) {
-    final shouldBeDropped = deletableRanges.any(
+    final shouldBeDropped = applicableRanges.any(
       (range) => range.contains(lineIndex),
     );
     if (!shouldBeDropped) {
