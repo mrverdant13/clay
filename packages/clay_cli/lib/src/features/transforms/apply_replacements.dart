@@ -1,6 +1,7 @@
 import 'package:clay_cli/src/entities/replacement.dart';
 
-/// Applies a single [replacement] to [input], interpolating `${n}` capture groups.
+/// Applies a single [replacement] to [input], interpolating `${n}` capture
+/// groups.
 String applyReplacement({
   required String input,
   required Replacement replacement,

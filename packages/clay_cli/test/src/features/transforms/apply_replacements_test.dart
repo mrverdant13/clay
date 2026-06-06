@@ -80,7 +80,7 @@ void main() {
 
     test('applies replacements to file paths', () {
       final replacements = [
-        Replacement(from: RegExp(r'reference/'), to: 'template/'),
+        Replacement(from: RegExp('reference/'), to: 'template/'),
         Replacement(from: RegExp(r'\.dart$'), to: '.mustache'),
       ];
       const input = 'reference/lib/main.dart';
