@@ -6,41 +6,47 @@ import 'dart:convert';
 /// `with` marker indents each replacement line by N spaces.
 String applyReplaceBlocks({required String content}) {
   const nl = r'(?:\r?\n)';
-  const patternGroups = [
+  final patternGroups = [
     (
-      r'\/\*replace-start\*\/ *' +
-          nl +
-          r'*.*?' +
-          nl +
-          r'* *\/\*with(?: +i(?<indentation>\d+))?\*\/ *' +
-          nl +
-          r'(?<replacement>.*?)' +
-          nl +
-          r' *\/\*replace-end\*\/',
+      [
+        r'\/\*replace-start\*\/ *',
+        nl,
+        '*.*?',
+        nl,
+        r'* *\/\*with(?: +i(?<indentation>\d+))?\*\/ *',
+        nl,
+        '(?<replacement>.*?)',
+        nl,
+        r' *\/\*replace-end\*\/',
+      ].join(),
       r'\/\/ (?<line>.*)',
     ),
     (
-      r'#replace-start# *' +
-          nl +
-          r'*.*?' +
-          nl +
-          r'* *#with(?: +i(?<indentation>\d+))?# *' +
-          nl +
-          r'(?<replacement>.*?)' +
-          nl +
-          r' *#replace-end#',
+      [
+        '#replace-start# *',
+        nl,
+        '*.*?',
+        nl,
+        r'* *#with(?: +i(?<indentation>\d+))?# *',
+        nl,
+        '(?<replacement>.*?)',
+        nl,
+        ' *#replace-end#',
+      ].join(),
       '# (?<line>.*)',
     ),
     (
-      r'<!--replace-start--> *' +
-          nl +
-          r'*.*?' +
-          nl +
-          r'* *<!--with(?: +i(?<indentation>\d+))?--> *' +
-          nl +
-          r'(?<replacement>.*?)' +
-          nl +
-          r' *<!--replace-end-->',
+      [
+        '<!--replace-start--> *',
+        nl,
+        '*.*?',
+        nl,
+        r'* *<!--with(?: +i(?<indentation>\d+))?--> *',
+        nl,
+        '(?<replacement>.*?)',
+        nl,
+        ' *<!--replace-end-->',
+      ].join(),
       '<!-- (?<line>.*)-->',
     ),
   ];
