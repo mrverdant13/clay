@@ -4,7 +4,10 @@ import 'package:mason_logger/mason_logger.dart';
 /// Runs the Clay CLI with the given [args].
 Future<int> clay({
   required List<String> args,
-  Logger? logger,
+  required Logger logger,
 }) {
-  return ClayCommandRunner(logger: logger).run(args);
+  final runner = ClayCommandRunner(
+    logger: logger,
+  );
+  return runner.run(args);
 }
