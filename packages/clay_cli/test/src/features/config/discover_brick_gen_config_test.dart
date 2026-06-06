@@ -94,6 +94,11 @@ void main() {
                 (error) => error.searchedPaths,
                 'searchedPaths',
                 isNotEmpty,
+              )
+              .having(
+                (error) => error.toString(),
+                'toString',
+                contains('Searched paths:'),
               ),
         ),
       );
