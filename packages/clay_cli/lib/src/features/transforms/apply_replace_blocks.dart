@@ -8,6 +8,7 @@ String applyReplaceBlocks({required String content}) {
   const nl = r'(?:\r?\n)';
   final patternGroups = [
     (
+      'C-style comment (expected // <content>)',
       [
         r'\/\*replace-start\*\/ *',
         nl,
@@ -22,6 +23,7 @@ String applyReplaceBlocks({required String content}) {
       r'\/\/ (?<line>.*)',
     ),
     (
+      'hash comment (expected # <content>)',
       [
         '#replace-start# *',
         nl,
@@ -36,6 +38,7 @@ String applyReplaceBlocks({required String content}) {
       '# (?<line>.*)',
     ),
     (
+      'HTML comment (expected <!-- <content>-->)',
       [
         '<!--replace-start--> *',
         nl,
@@ -52,7 +55,7 @@ String applyReplaceBlocks({required String content}) {
   ];
 
   return patternGroups.fold(content, (resolved, patternGroup) {
-    final (replacementPattern, linePattern) = patternGroup;
+    final (flavorLabel, replacementPattern, linePattern) = patternGroup;
     final replacementRegex = RegExp(replacementPattern, dotAll: true);
     final lineRegex = RegExp(linePattern, dotAll: true);
     return resolved.replaceAllMapped(replacementRegex, (match) {
@@ -62,7 +65,13 @@ String applyReplaceBlocks({required String content}) {
       final replacement = match.namedGroup('replacement') ?? '';
       final lines = LineSplitter.split(replacement);
       return lines.map((line) {
-        final lineMatch = lineRegex.allMatches(line).single;
+        final lineMatch = lineRegex.firstMatch(line);
+        if (lineMatch == null) {
+          throw FormatException(
+            'Invalid replace-block line for $flavorLabel: '
+            'expected a comment-prefixed line but got "$line".',
+          );
+        }
         final lineContent = lineMatch.namedGroup('line') ?? '';
         return ' ' * indentation + lineContent;
       }).join('\n');
