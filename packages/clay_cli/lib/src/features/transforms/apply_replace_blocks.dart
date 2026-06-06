@@ -5,17 +5,42 @@ import 'dart:convert';
 /// Supports C-style, hash, and HTML comment flavors. Optional `i<N>` on the
 /// `with` marker indents each replacement line by N spaces.
 String applyReplaceBlocks({required String content}) {
+  const nl = r'(?:\r?\n)';
   const patternGroups = [
     (
-      r'\/\*replace-start\*\/ *\n*.*?\n* *\/\*with(?: +i(?<indentation>\d+))?\*\/ *\n(?<replacement>.*?)\n *\/\*replace-end\*\/',
+      r'\/\*replace-start\*\/ *' +
+          nl +
+          r'*.*?' +
+          nl +
+          r'* *\/\*with(?: +i(?<indentation>\d+))?\*\/ *' +
+          nl +
+          r'(?<replacement>.*?)' +
+          nl +
+          r' *\/\*replace-end\*\/',
       r'\/\/ (?<line>.*)',
     ),
     (
-      r'#replace-start# *\n*.*?\n* *#with(?: +i(?<indentation>\d+))?# *\n(?<replacement>.*?)\n *#replace-end#',
+      r'#replace-start# *' +
+          nl +
+          r'*.*?' +
+          nl +
+          r'* *#with(?: +i(?<indentation>\d+))?# *' +
+          nl +
+          r'(?<replacement>.*?)' +
+          nl +
+          r' *#replace-end#',
       '# (?<line>.*)',
     ),
     (
-      r'<!--replace-start--> *\n*.*?\n* *<!--with(?: +i(?<indentation>\d+))?--> *\n(?<replacement>.*?)\n *<!--replace-end-->',
+      r'<!--replace-start--> *' +
+          nl +
+          r'*.*?' +
+          nl +
+          r'* *<!--with(?: +i(?<indentation>\d+))?--> *' +
+          nl +
+          r'(?<replacement>.*?)' +
+          nl +
+          r' *<!--replace-end-->',
       '<!-- (?<line>.*)-->',
     ),
   ];
