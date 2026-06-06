@@ -166,7 +166,7 @@ Clay accepts legacy config files that omit `reference`, `target`, and `ignore`; 
 
 `replacements` accept a plain string (treated as regex) or `{ "pattern": string, "dotAll"?: boolean }` for the `from` field; `to` supports `${n}` capture-group interpolation. They are applied sequentially to file paths and contents. `lineDeletions` use zero-based, inclusive line ranges relative to the target directory root and run before content replacements and annotation transforms.
 
-`ignore` uses gitignore-compatible syntax (`*`, `**`, leading `/`, `!` negation). During `clay gen`, matching files are excluded from the copied output.
+`ignore` uses gitignore-compatible syntax (`*`, `**`, leading `/`, `!` negation). During `clay gen`, matching files are excluded from the copied output. Patterns must use POSIX-style forward slashes (`/`) and are interpreted relative to the reference or target root — a leading `/` anchors to that root (for example `/build/` matches only `build/` at the top level), not to the OS filesystem root. Windows-absolute paths such as `C:/...` are rejected when the config is loaded; POSIX-style root anchors such as `/Users/app/build/` are allowed because they match relative to the reference or target root. Backslash separators (`\`) are not supported in ignore patterns.
 
 Further reference docs (planned):
 
