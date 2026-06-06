@@ -68,7 +68,8 @@ bool matchesIgnorePattern({
   final globPatterns = expandIgnorePattern(pattern);
 
   return globPatterns.any(
-    (globPattern) => Glob(globPattern, context: p.posix).matches(normalizedPath),
+    (globPattern) =>
+        Glob(globPattern, context: p.posix).matches(normalizedPath),
   );
 }
 

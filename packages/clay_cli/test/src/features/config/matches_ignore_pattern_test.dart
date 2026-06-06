@@ -118,7 +118,10 @@ void main() {
         isTrue,
       );
       expect(
-        matchesIgnorePattern(relativePath: 'src/.DS_Store', pattern: '.DS_Store'),
+        matchesIgnorePattern(
+          relativePath: 'src/.DS_Store',
+          pattern: '.DS_Store',
+        ),
         isTrue,
       );
     });
