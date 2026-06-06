@@ -61,6 +61,31 @@ after
       expect(result, expected);
     });
 
+    test('throws FormatException when with section line is invalid', () {
+      const input = '''
+line/*replace-start*/
+old
+/*with i0*/
+// valid
+not a comment
+/*replace-end*/
+''';
+
+      expect(
+        () => applyReplaceBlocks(content: input),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('C-style comment'),
+              contains('not a comment'),
+            ),
+          ),
+        ),
+      );
+    });
+
     test('returns content unchanged when no replace blocks are present', () {
       const input = '''
 line 0
