@@ -11,10 +11,10 @@ import 'package:test/test.dart';
 void main() {
   group('BrickGenConfig', () {
     test('can be instantiated with defaults', () {
-      const config = BrickGenConfig();
+      final config = BrickGenConfig();
       expect(config, isA<BrickGenConfig>());
-      expect(config.reference, defaultReferencePath);
-      expect(config.target, defaultTargetPath);
+      expect(config.reference, BrickGenConfig.defaultReferencePath);
+      expect(config.target, BrickGenConfig.defaultTargetPath);
       expect(config.ignore, isEmpty);
       expect(config.replacements, isEmpty);
       expect(config.lineDeletions, isEmpty);
@@ -54,15 +54,15 @@ void main() {
           {'from': r'^from$', 'to': 'to'},
         ],
       });
-      expect(config.reference, defaultReferencePath);
-      expect(config.target, defaultTargetPath);
+      expect(config.reference, BrickGenConfig.defaultReferencePath);
+      expect(config.target, BrickGenConfig.defaultTargetPath);
       expect(config.ignore, isEmpty);
       expect(config.lineDeletions, isEmpty);
     });
 
     test('can be compared', () {
-      const reference = BrickGenConfig();
-      const same = BrickGenConfig();
+      final reference = BrickGenConfig();
+      final same = BrickGenConfig();
       final other = BrickGenConfig(
         replacements: [Replacement(from: RegExp(r'^from$'), to: 'to')],
       );
@@ -72,8 +72,8 @@ void main() {
     });
 
     test('has consistent hash code', () {
-      const reference = BrickGenConfig();
-      const same = BrickGenConfig();
+      final reference = BrickGenConfig();
+      final same = BrickGenConfig();
       final other = BrickGenConfig(
         replacements: [Replacement(from: RegExp(r'^from$'), to: 'to')],
       );
@@ -107,8 +107,8 @@ void main() {
               jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
           final config = BrickGenConfig.fromJson(json);
 
-          expect(config.reference, defaultReferencePath);
-          expect(config.target, defaultTargetPath);
+          expect(config.reference, BrickGenConfig.defaultReferencePath);
+          expect(config.target, BrickGenConfig.defaultTargetPath);
           expect(config.ignore, isEmpty);
           expect(config.replacements, isNotEmpty);
 

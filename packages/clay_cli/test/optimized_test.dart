@@ -11,7 +11,11 @@ import 'src/entities/brick_gen_config_test.dart' as _i5;
 import 'src/entities/line_deletion_test.dart' as _i6;
 import 'src/entities/line_range_test.dart' as _i7;
 import 'src/entities/replacement_test.dart' as _i8;
-import 'src/utils/regex_hook_test.dart' as _i9;
+import 'src/features/config/brick_gen_config_exception_test.dart' as _i9;
+import 'src/features/config/discover_brick_gen_config_test.dart' as _i10;
+import 'src/features/config/load_brick_gen_config_test.dart' as _i11;
+import 'src/features/config/resolve_paths_test.dart' as _i12;
+import 'src/utils/regex_hook_test.dart' as _i13;
 
 void main() {
   group(
@@ -63,9 +67,33 @@ void main() {
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/config/brick_gen_config_exception_test.dart',
     () {
       _i9.main();
+    },
+  );
+  group(
+    'src/features/config/discover_brick_gen_config_test.dart',
+    () {
+      _i10.main();
+    },
+  );
+  group(
+    'src/features/config/load_brick_gen_config_test.dart',
+    () {
+      _i11.main();
+    },
+  );
+  group(
+    'src/features/config/resolve_paths_test.dart',
+    () {
+      _i12.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i13.main();
     },
   );
 }
