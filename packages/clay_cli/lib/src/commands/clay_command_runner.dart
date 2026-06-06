@@ -8,9 +8,9 @@ import 'package:mason_logger/mason_logger.dart';
 /// {@endtemplate}
 class ClayCommandRunner extends CommandRunner<int> {
   /// {@macro clay_cli.clay_command_runner}
-  ClayCommandRunner({Logger? logger})
-      : logger = logger ?? Logger(),
-        super(
+  ClayCommandRunner({
+    required this.logger,
+  }) : super(
           packageName,
           'A toolchain for authoring Mason brick templates from reference '
           'projects.',

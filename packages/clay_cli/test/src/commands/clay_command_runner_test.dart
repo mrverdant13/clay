@@ -1,31 +1,109 @@
-import 'package:clay_cli/src/commands/clay_command_runner.dart';
+import 'dart:async';
+
+import 'package:args/command_runner.dart';
+import 'package:clay_cli/clay_cli.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class _RecordingLogger extends Logger {
-  _RecordingLogger() : super(level: Level.quiet);
+class _MockLogger extends Mock implements Logger {}
 
-  final messages = <String>[];
+class FakeCommand extends ClayCommand {
+  FakeCommand({
+    required Future<void> Function() run,
+  })  : _run = run,
+        super();
+
+  final Future<void> Function() _run;
 
   @override
-  void info(String? message, {LogStyle? style}) {
-    if (message != null) {
-      messages.add(message);
-    }
+  String get name => 'fake-command';
+
+  @override
+  String get description => 'Fake command';
+
+  @override
+  Future<int> run() async {
+    await _run();
+    return 0;
   }
 }
 
 void main() {
   group('ClayCommandRunner', () {
+    late Logger logger;
+
+    setUp(() {
+      logger = _MockLogger();
+    });
+
+    test('can be instantiated', () {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      );
+      expect(runner, isNotNull);
+    });
+
+    test('printUsage prints usage', () {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      )..printUsage();
+
+      verify(() => logger.info(runner.usage)).called(1);
+    });
+
+    test('--verbose sets logger level to verbose', () async {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      );
+
+      final exitCode = await runner.run(const ['--verbose']);
+      expect(exitCode, ExitCode.success.code);
+      verify(() => logger.level = Level.verbose).called(1);
+    });
+
     test('--version prints package version and exits successfully', () async {
-      final logger = _RecordingLogger();
-      final runner = ClayCommandRunner(logger: logger);
+      final runner = ClayCommandRunner(
+        logger: logger,
+      );
 
       final exitCode = await runner.run(const ['--version']);
 
       expect(exitCode, ExitCode.success.code);
-      expect(logger.messages, contains(packageVersion));
+      verify(() => logger.info(packageVersion)).called(1);
+    });
+
+    test('prints error message and usage on $FormatException', () async {
+      final subCommand = FakeCommand(
+        run: () async {
+          throw const FormatException('Invalid command');
+        },
+      );
+      final runner = ClayCommandRunner(
+        logger: logger,
+      )..addCommand(subCommand);
+
+      await runner.run(const ['fake-command']);
+      verify(() => logger.err('Invalid command')).called(1);
+      verify(() => logger.info('')).called(1);
+      verify(() => logger.info(runner.usage)).called(1);
+    });
+
+    test('prints error message and usage on $UsageException', () async {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      );
+      final subCommand = FakeCommand(
+        run: () async {
+          throw UsageException('Invalid command', runner.usage);
+        },
+      );
+      runner.addCommand(subCommand);
+      await runner.run(const ['fake-command']);
+      verify(() => logger.err('Invalid command')).called(1);
+      verify(() => logger.info('')).called(1);
+      verify(() => logger.info(runner.usage)).called(1);
     });
   });
 }
