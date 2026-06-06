@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
@@ -110,6 +111,80 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('throws when ignore patterns use backslashes', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString(
+        jsonEncode({
+          'ignore': ['build/', r'packages\app\build'],
+        }),
+      );
+
+      expect(
+        () => loadBrickGenConfig(configPath: configFile.path),
+        throwsA(
+          isA<BrickGenConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid ignore patterns'),
+              contains('POSIX-style forward slashes'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when ignore patterns use Windows-absolute paths', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString('''
+{
+  "ignore": ["build/", "C:/Users/app/build"]
+}
+''');
+
+      expect(
+        () => loadBrickGenConfig(configPath: configFile.path),
+        throwsA(
+          isA<BrickGenConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid ignore patterns'),
+              contains('Windows-absolute paths'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('accepts root-anchored ignore patterns', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString('''
+{
+  "ignore": ["/build/", "packages/app/.dart_tool/"]
+}
+''');
+
+      final config = await loadBrickGenConfig(configPath: configFile.path);
+
+      expect(config.ignore, ['/build/', 'packages/app/.dart_tool/']);
+    });
+
+    test('accepts POSIX-looking root-anchored ignore patterns', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString('''
+{
+  "ignore": ["/Users/app/build/", "/home/user/.cache/"]
+}
+''');
+
+      final config = await loadBrickGenConfig(configPath: configFile.path);
+
+      expect(config.ignore, ['/Users/app/build/', '/home/user/.cache/']);
     });
   });
 }

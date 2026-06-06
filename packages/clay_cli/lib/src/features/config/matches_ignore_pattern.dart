@@ -2,8 +2,7 @@ import 'package:glob/glob.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
-/// Normalizes [relativePath] to a POSIX-style path relative to the reference
-/// root.
+/// Normalizes [relativePath] to a POSIX-style path relative to a scan root.
 @visibleForTesting
 String normalizeIgnoreRelativePath(String relativePath) {
   final normalized = relativePath.replaceAll(r'\', '/');
@@ -13,49 +12,111 @@ String normalizeIgnoreRelativePath(String relativePath) {
   );
 }
 
+/// Returns an error message when [pattern] is invalid for ignore matching.
+///
+/// Patterns must use POSIX-style forward slashes. Gitignore root anchors such
+/// as `/build/` refer to the reference or target root, not the OS filesystem
+/// root.
+@visibleForTesting
+String? ignorePatternValidationError(String pattern) {
+  var body = pattern;
+  if (body.startsWith('!')) {
+    body = body.substring(1);
+  }
+  if (body.isEmpty) {
+    return null;
+  }
+
+  if (body.contains(r'\')) {
+    return 'ignore pattern must use POSIX-style forward slashes: $pattern';
+  }
+  if (RegExp('^[a-zA-Z]:/').hasMatch(body)) {
+    return 'ignore pattern must be relative to the scan root; '
+        'Windows-absolute paths are not allowed: $pattern';
+  }
+  if (body.startsWith('//')) {
+    return 'ignore pattern must be relative to the scan root; '
+        'use a single leading / to anchor to the scan root: $pattern';
+  }
+
+  return null;
+}
+
+/// Validates [patterns] for ignore matching.
+///
+/// Throws [FormatException] when a pattern is invalid.
+void validateIgnorePatterns(List<String> patterns) {
+  for (final pattern in patterns) {
+    final error = ignorePatternValidationError(pattern);
+    if (error != null) {
+      throw FormatException(error);
+    }
+  }
+}
+
+/// Returns the normalized path of [absolutePath] relative to [rootDirectory].
+///
+/// Returns `null` when [absolutePath] is outside [rootDirectory].
+@visibleForTesting
+String? relativePathWithinRoot({
+  required String rootDirectory,
+  required String absolutePath,
+}) {
+  final relative = p.normalize(p.relative(absolutePath, from: rootDirectory));
+  if (p.isAbsolute(relative)) {
+    return null;
+  }
+  final normalized = normalizeIgnoreRelativePath(relative);
+  if (normalized == '..' || normalized.startsWith('../')) {
+    return null;
+  }
+  return normalized;
+}
+
 /// Expands a gitignore-style [pattern] into glob patterns for matching.
 @visibleForTesting
 List<String> expandIgnorePattern(String pattern) {
   var rootAnchored = false;
-  if (pattern.startsWith('/')) {
+  var body = pattern;
+  if (body.startsWith('/')) {
     rootAnchored = true;
-    pattern = pattern.substring(1);
+    body = body.substring(1);
   }
 
   var directoryOnly = false;
-  if (pattern.endsWith('/')) {
+  if (body.endsWith('/')) {
     directoryOnly = true;
-    pattern = pattern.substring(0, pattern.length - 1);
+    body = body.substring(0, body.length - 1);
   }
 
-  if (pattern.isEmpty) {
+  if (body.isEmpty) {
     return const [];
   }
 
-  final hasSlash = pattern.contains('/');
+  final hasSlash = body.contains('/');
   final anchored = rootAnchored || hasSlash;
 
   if (directoryOnly) {
     if (anchored) {
-      return [pattern, '$pattern/**'];
+      return [body, '$body/**'];
     }
     return [
-      pattern,
-      '$pattern/**',
-      '**/$pattern',
-      '**/$pattern/**',
+      body,
+      '$body/**',
+      '**/$body',
+      '**/$body/**',
     ];
   }
 
   if (!anchored) {
-    return [pattern, '**/$pattern'];
+    return [body, '**/$body'];
   }
 
-  if (pattern.startsWith('**/')) {
-    return [pattern, pattern.substring(3)];
+  if (body.startsWith('**/')) {
+    return [body, body.substring(3)];
   }
 
-  return [pattern];
+  return [body];
 }
 
 /// Returns whether [relativePath] matches a single gitignore-style [pattern].
@@ -75,7 +136,7 @@ bool matchesIgnorePattern({
 
 /// Returns whether [relativePath] is excluded by [patterns].
 ///
-/// [relativePath] must be relative to the reference directory root.
+/// [relativePath] must be relative to the scan root (reference or target).
 /// [patterns] use gitignore-compatible syntax, including `!` negation.
 bool matchesIgnorePatterns({
   required String relativePath,
@@ -105,4 +166,25 @@ bool matchesIgnorePatterns({
   }
 
   return ignored;
+}
+
+/// Returns whether [absolutePath] under [rootDirectory] is excluded by
+/// [patterns].
+bool shouldIgnoreAtRoot({
+  required String rootDirectory,
+  required String absolutePath,
+  required List<String> patterns,
+}) {
+  final relativePath = relativePathWithinRoot(
+    rootDirectory: rootDirectory,
+    absolutePath: absolutePath,
+  );
+  if (relativePath == null) {
+    return false;
+  }
+
+  return matchesIgnorePatterns(
+    relativePath: relativePath,
+    patterns: patterns,
+  );
 }

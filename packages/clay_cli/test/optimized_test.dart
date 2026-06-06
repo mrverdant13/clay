@@ -14,8 +14,9 @@ import 'src/entities/replacement_test.dart' as _i8;
 import 'src/features/config/brick_gen_config_exception_test.dart' as _i9;
 import 'src/features/config/discover_brick_gen_config_test.dart' as _i10;
 import 'src/features/config/load_brick_gen_config_test.dart' as _i11;
-import 'src/features/config/resolve_paths_test.dart' as _i12;
-import 'src/utils/regex_hook_test.dart' as _i13;
+import 'src/features/config/matches_ignore_pattern_test.dart' as _i12;
+import 'src/features/config/resolve_paths_test.dart' as _i13;
+import 'src/utils/regex_hook_test.dart' as _i14;
 
 void main() {
   group(
@@ -85,15 +86,21 @@ void main() {
     },
   );
   group(
-    'src/features/config/resolve_paths_test.dart',
+    'src/features/config/matches_ignore_pattern_test.dart',
     () {
       _i12.main();
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/config/resolve_paths_test.dart',
     () {
       _i13.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i14.main();
     },
   );
 }

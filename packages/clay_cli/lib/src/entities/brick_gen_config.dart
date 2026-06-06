@@ -36,6 +36,10 @@ class BrickGenConfig with BrickGenConfigMappable {
   final String target;
 
   /// Gitignore-style glob patterns excluded from template output.
+  ///
+  /// Patterns must use POSIX-style forward slashes and are relative to the
+  /// reference or target root. A leading `/` anchors to that root;
+  /// Windows-absolute paths are rejected at load time.
   final List<String> ignore;
 
   /// Regex replacements applied to file paths and contents.
