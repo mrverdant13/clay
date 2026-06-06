@@ -9,9 +9,8 @@ String applyRemotions({required String content}) {
     '#drop#.*',
     '<!--drop-->.*',
   ];
-  final blockDropPattern = blockDropPatterns
-      .map((pattern) => '(?:$pattern)')
-      .join('|');
+  final blockDropPattern =
+      blockDropPatterns.map((pattern) => '(?:$pattern)').join('|');
   final blockDropRegex = RegExp(blockDropPattern, dotAll: true);
   final afterDropContent = content.replaceAll(blockDropRegex, '');
 
