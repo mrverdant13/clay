@@ -17,8 +17,9 @@ import 'src/features/config/load_brick_gen_config_test.dart' as _i11;
 import 'src/features/config/matches_ignore_pattern_test.dart' as _i12;
 import 'src/features/config/resolve_paths_test.dart' as _i13;
 import 'src/features/transforms/apply_line_deletions_test.dart' as _i14;
-import 'src/features/transforms/apply_replacements_test.dart' as _i15;
-import 'src/utils/regex_hook_test.dart' as _i16;
+import 'src/features/transforms/apply_remotions_test.dart' as _i15;
+import 'src/features/transforms/apply_replacements_test.dart' as _i16;
+import 'src/utils/regex_hook_test.dart' as _i17;
 
 void main() {
   group(
@@ -106,15 +107,21 @@ void main() {
     },
   );
   group(
-    'src/features/transforms/apply_replacements_test.dart',
+    'src/features/transforms/apply_remotions_test.dart',
     () {
       _i15.main();
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/transforms/apply_replacements_test.dart',
     () {
       _i16.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i17.main();
     },
   );
 }
