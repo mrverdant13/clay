@@ -2,7 +2,8 @@ import 'package:clay_cli/src/entities/brick_gen_config.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
-/// Resolves [path] relative to [projectRoot], or returns [path] when absolute.
+/// Resolves [path] relative to [projectRoot], or returns the normalized [path]
+/// when it is absolute.
 @visibleForTesting
 String resolvePathFromProjectRoot({
   required String projectRoot,
