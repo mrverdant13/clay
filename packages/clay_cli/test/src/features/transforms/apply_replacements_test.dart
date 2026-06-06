@@ -53,12 +53,10 @@ void main() {
           to: r'replacement ZzZzZzZ (group value: ${1})',
         ),
       ];
-      const input =
-          'This is some test pattern. '
+      const input = 'This is some test pattern. '
           'This is another test pattern. '
           'This is a test pattern with a group value of asdf.';
-      const expected =
-          'This is a replacement XxXxXxX. '
+      const expected = 'This is a replacement XxXxXxX. '
           'This is a replacement YyYyYyY. '
           'This is a replacement ZzZzZzZ (group value: asdf).';
 
