@@ -79,5 +79,37 @@ void main() {
         ),
       );
     });
+
+    test('throws when config file contains invalid schema', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString('{"replacements": "invalid"}');
+
+      expect(
+        () => loadBrickGenConfig(configPath: configFile.path),
+        throwsA(
+          isA<BrickGenConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(contains('Failed to parse'), contains(configFile.path)),
+          ),
+        ),
+      );
+    });
+
+    test('throws when config file is not a JSON object', () async {
+      final configFile = File(p.join(tempDir.path, 'brick-gen.json'));
+      await configFile.writeAsString('[]');
+
+      expect(
+        () => loadBrickGenConfig(configPath: configFile.path),
+        throwsA(
+          isA<BrickGenConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(contains('Failed to parse'), contains(configFile.path)),
+          ),
+        ),
+      );
+    });
   });
 }
