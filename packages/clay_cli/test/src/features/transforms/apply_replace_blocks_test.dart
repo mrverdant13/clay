@@ -72,5 +72,24 @@ line 2
 
       expect(result, input);
     });
+
+    test('resolves replace blocks in CRLF content', () {
+      const input = 'line0\r\n'
+          'line/*replace-start*/\r\n'
+          'ignored\r\n'
+          '/*with i0*/\r\n'
+          '// 1\r\n'
+          '// line2\r\n'
+          '/*replace-end*/\r\n'
+          'line3\r\n';
+      const expected = 'line0\r\n'
+          'line1\n'
+          'line2\r\n'
+          'line3\r\n';
+
+      final result = applyReplaceBlocks(content: input);
+
+      expect(result, expected);
+    });
   });
 }
