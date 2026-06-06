@@ -30,13 +30,11 @@ String applyReplaceBlocks({required String content}) {
           int.tryParse(match.namedGroup('indentation') ?? '') ?? 0;
       final replacement = match.namedGroup('replacement') ?? '';
       final lines = LineSplitter.split(replacement);
-      return lines
-          .map((line) {
-            final lineMatch = lineRegex.allMatches(line).single;
-            final lineContent = lineMatch.namedGroup('line') ?? '';
-            return ' ' * indentation + lineContent;
-          })
-          .join('\n');
+      return lines.map((line) {
+        final lineMatch = lineRegex.allMatches(line).single;
+        final lineContent = lineMatch.namedGroup('line') ?? '';
+        return ' ' * indentation + lineContent;
+      }).join('\n');
     });
   });
 }
