@@ -76,6 +76,72 @@ not a comment
       );
     });
 
+    test('throws FormatException when C-style line is not comment-prefixed', () {
+      const input = '''
+line/*insert-start*/
+code // not comment-prefixed
+/*insert-end*/
+''';
+
+      expect(
+        () => applyInsertBlocks(content: input),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('C-style comment'),
+              contains('code // not comment-prefixed'),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws FormatException when hash line is not comment-prefixed', () {
+      const input = '''
+#insert-start#
+code # not comment-prefixed
+#insert-end#
+''';
+
+      expect(
+        () => applyInsertBlocks(content: input),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('hash comment'),
+              contains('code # not comment-prefixed'),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws FormatException when HTML line is not comment-prefixed', () {
+      const input = '''
+<!--insert-start-->
+code <!-- not comment-prefixed-->
+<!--insert-end-->
+''';
+
+      expect(
+        () => applyInsertBlocks(content: input),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('HTML comment'),
+              contains('code <!-- not comment-prefixed-->'),
+            ),
+          ),
+        ),
+      );
+    });
+
     test('returns content unchanged when no insert blocks are present', () {
       const input = '''
 line 0
