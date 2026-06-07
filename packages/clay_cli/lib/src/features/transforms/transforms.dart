@@ -4,3 +4,4 @@ export 'apply_mustache_tags.dart';
 export 'apply_remotions.dart';
 export 'apply_replace_blocks.dart';
 export 'apply_replacements.dart';
+export 'apply_spacing_groups.dart';
