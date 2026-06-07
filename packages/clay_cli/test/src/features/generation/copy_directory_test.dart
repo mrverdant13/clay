@@ -54,8 +54,7 @@ void main() {
         ..writeAsStringSync('external');
       final externalDir = Directory(p.join(tempDir.path, 'external_dir'))
         ..createSync();
-      Link(p.join(sourceDir.path, 'linked.txt'))
-          .createSync(externalFile.path);
+      Link(p.join(sourceDir.path, 'linked.txt')).createSync(externalFile.path);
       Link(p.join(sourceDir.path, 'linked_dir')).createSync(externalDir.path);
 
       await copyDirectory(source: sourceDir, destination: destinationDir);

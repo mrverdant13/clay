@@ -49,7 +49,8 @@ void main() {
           absolutePath: p.join(targetRoot, 'nested', 'file.txt'),
           targetAbsolutePath: targetRoot,
           replacements: [
-            Replacement(from: RegExp(r'nested/file\.txt'), to: '../outside.txt'),
+            Replacement(
+                from: RegExp(r'nested/file\.txt'), to: '../outside.txt'),
           ],
         ),
         throwsA(
