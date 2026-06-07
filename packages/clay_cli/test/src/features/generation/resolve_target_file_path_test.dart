@@ -50,7 +50,9 @@ void main() {
           targetAbsolutePath: targetRoot,
           replacements: [
             Replacement(
-                from: RegExp(r'nested/file\.txt'), to: '../outside.txt'),
+              from: RegExp(r'nested/file\.txt'),
+              to: '../outside.txt',
+            ),
           ],
         ),
         throwsA(
