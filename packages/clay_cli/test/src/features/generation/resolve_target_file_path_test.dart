@@ -36,7 +36,10 @@ void main() {
           absolutePath: p.join(targetRoot, 'file.txt'),
           targetAbsolutePath: targetRoot,
           replacements: [
-            Replacement(from: RegExp(r'file\.txt'), to: '/etc/passwd'),
+            Replacement(
+              from: RegExp(r'file\.txt'),
+              to: p.absolute('outside.txt'),
+            ),
           ],
         ),
         throwsA(isA<GenerationException>()),
