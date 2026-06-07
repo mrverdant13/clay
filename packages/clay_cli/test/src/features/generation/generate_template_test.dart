@@ -101,6 +101,68 @@ void main() {
       );
     });
 
+    test('throws when reference and target paths are equal', () async {
+      expect(
+        () => generateTemplate(
+          config: BrickGenConfig(),
+          referencePath: referenceDir.path,
+          targetPath: referenceDir.path,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('must differ'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when the target is inside the reference', () async {
+      final nestedTarget = Directory(p.join(referenceDir.path, 'output'))
+        ..createSync(recursive: true);
+
+      expect(
+        () => generateTemplate(
+          config: BrickGenConfig(),
+          referencePath: referenceDir.path,
+          targetPath: nestedTarget.path,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('inside the reference directory'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when the reference is inside the target', () async {
+      targetDir.createSync(recursive: true);
+      final nestedReference = Directory(p.join(targetDir.path, 'reference'))
+        ..createSync(recursive: true);
+      File(p.join(nestedReference.path, 'hello.txt'))
+          .writeAsStringSync('hello\n');
+
+      expect(
+        () => generateTemplate(
+          config: BrickGenConfig(),
+          referencePath: nestedReference.path,
+          targetPath: targetDir.path,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('inside the target directory'),
+          ),
+        ),
+      );
+
+      expect(nestedReference.existsSync(), isTrue);
+    });
+
     test('throws when the reference directory is missing', () async {
       referenceDir.deleteSync(recursive: true);
 

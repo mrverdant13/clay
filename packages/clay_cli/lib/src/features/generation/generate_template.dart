@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay_cli/src/features/generation/assert_distinct_reference_and_target_paths.dart';
 import 'package:clay_cli/src/features/generation/copy_directory.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
@@ -22,6 +23,11 @@ Future<void> generateTemplate({
       'Reference directory not found ($referencePath).',
     );
   }
+
+  assertDistinctReferenceAndTargetPaths(
+    referencePath: referencePath,
+    targetPath: targetPath,
+  );
 
   final targetDir = Directory(targetPath);
   if (targetDir.existsSync()) {
