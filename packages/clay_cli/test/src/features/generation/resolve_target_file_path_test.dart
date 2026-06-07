@@ -44,13 +44,14 @@ void main() {
     });
 
     test('throws when a replacement escapes the target root', () {
+      final nestedFile = p.join('nested', 'file.txt');
       expect(
         () => resolveTargetFilePath(
-          absolutePath: p.join(targetRoot, 'nested', 'file.txt'),
+          absolutePath: p.join(targetRoot, nestedFile),
           targetAbsolutePath: targetRoot,
           replacements: [
             Replacement(
-              from: RegExp(r'nested/file\.txt'),
+              from: RegExp('^${RegExp.escape(nestedFile)}\$'),
               to: '../outside.txt',
             ),
           ],
