@@ -58,7 +58,8 @@ Future<void> generateTemplate({
   );
 }
 
-/// Applies ignore rules, path renames, and content transforms to copied entries.
+/// Applies ignore rules, path renames, and content transforms to copied
+/// entries.
 @visibleForTesting
 Future<void> processCopiedTargetEntities({
   required List<FileSystemEntity> targetEntities,
