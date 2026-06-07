@@ -24,7 +24,9 @@ import 'src/features/transforms/apply_remotions_test.dart' as _i18;
 import 'src/features/transforms/apply_replace_blocks_test.dart' as _i19;
 import 'src/features/transforms/apply_replacements_test.dart' as _i20;
 import 'src/features/transforms/apply_spacing_groups_test.dart' as _i21;
-import 'src/utils/regex_hook_test.dart' as _i22;
+import 'src/features/transforms/resolve_reference_content_test.dart' as _i22;
+import 'src/features/transforms/skip_content_transforms_test.dart' as _i23;
+import 'src/utils/regex_hook_test.dart' as _i24;
 
 void main() {
   group(
@@ -154,9 +156,21 @@ void main() {
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/transforms/resolve_reference_content_test.dart',
     () {
       _i22.main();
+    },
+  );
+  group(
+    'src/features/transforms/skip_content_transforms_test.dart',
+    () {
+      _i23.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i24.main();
     },
   );
 }
