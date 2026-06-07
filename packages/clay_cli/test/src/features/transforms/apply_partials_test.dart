@@ -153,6 +153,60 @@ plain text
       expect(tempDir.listSync(), isEmpty);
     });
 
+    test('trims whitespace from partial names', () {
+      const input = '/*partial v  partialA  */content/*partial ^  partialA  */';
+
+      final result = applyPartials(
+        content: input,
+        targetAbsolutePath: tempDir.path,
+      );
+
+      expect(result, '{{> partialA.partial }}');
+
+      final partialFile = File(
+        p.join(tempDir.path, '{{~ partialA.partial }}'),
+      );
+      expect(partialFile.readAsStringSync(), 'content');
+    });
+
+    test('throws FormatException for invalid partial names', () {
+      const invalidNames = [
+        '../evil',
+        'foo/bar',
+        '..',
+        '.',
+        '   ',
+        r'foo\bar',
+      ];
+
+      for (final name in invalidNames) {
+        final input = '''
+/*partial v $name*/payload
+/*partial ^ $name*/
+''';
+
+        expect(
+          () => applyPartials(
+            content: input,
+            targetAbsolutePath: tempDir.path,
+          ),
+          throwsA(
+            isA<FormatException>().having(
+              (error) => error.message,
+              'message',
+              contains('Invalid partial name'),
+            ),
+          ),
+          reason: 'partial name "$name" should be rejected',
+        );
+        expect(
+          tempDir.listSync(),
+          isEmpty,
+          reason: 'no files should be created for "$name"',
+        );
+      }
+    });
+
     test('overwrites an existing partial file with the same name', () {
       const input = '''
 /*partial v shared*/new content
