@@ -8,16 +8,17 @@ import 'package:path/path.dart' as p;
 /// [targetAbsolutePath] and replaces each block with `{{> name.partial }}`.
 /// Supports C-style, hash, and HTML comment flavors.
 ///
-/// Partial names are trimmed and must not be empty, `.`, `..`, or contain
-/// path separators. Invalid names throw [FormatException].
+/// Surrounding whitespace in markers is ignored. Partial names must not be
+/// empty, `.`, `..`, or contain path separators. Invalid names throw
+/// [FormatException].
 String applyPartials({
   required String content,
   required String targetAbsolutePath,
 }) {
   const partialPatterns = [
-    r'\/\*partial v (?<partialName>.*?)\*\/(?<partialPayload>.*?)\/\*partial \^ \k<partialName>\*\/',
-    r'#partial v (?<partialName>.*?)#(?<partialPayload>.*?)#partial \^ \k<partialName>#',
-    r'<!--partial v (?<partialName>.*?)-->(?<partialPayload>.*?)<!--partial \^ \k<partialName>-->',
+    r'\/\*partial v\s+(?<partialName>[^\s*/]+)\s*\*\/(?<partialPayload>.*?)\/\*partial \^ \s*\k<partialName>\s*\*\/',
+    r'#partial v\s+(?<partialName>[^\s#]+)\s*#(?<partialPayload>.*?)#partial \^ \s*\k<partialName>\s*#',
+    r'<!--partial v\s+(?<partialName>[^\s>-]+)\s*-->(?<partialPayload>.*?)<!--partial \^ \s*\k<partialName>\s*-->',
   ];
 
   return partialPatterns.fold(content, (resolved, pattern) {
