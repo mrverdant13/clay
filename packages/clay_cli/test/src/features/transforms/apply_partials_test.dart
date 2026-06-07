@@ -170,7 +170,17 @@ plain text
     });
 
     test('throws FormatException for invalid partial names', () {
-      for (final name in ['..', '.', r'foo\bar']) {
+      for (final name in [
+        '..',
+        '.',
+        r'foo\bar',
+        'foo:bar',
+        'foo<bar',
+        'foo>bar',
+        'foo"bar',
+        'foo|bar',
+        'foo?bar',
+      ]) {
         final input = '''
 /*partial v $name*/payload
 /*partial ^ $name*/
@@ -202,6 +212,7 @@ plain text
       const unmatchableNames = [
         '../evil',
         'foo/bar',
+        'foo*bar',
         '   ',
       ];
 

@@ -9,8 +9,8 @@ import 'package:path/path.dart' as p;
 /// Supports C-style, hash, and HTML comment flavors.
 ///
 /// Surrounding whitespace in markers is ignored. Partial names must not be
-/// empty, `.`, `..`, or contain path separators. Invalid names throw
-/// [FormatException].
+/// empty, `.`, `..`, contain path separators, or include characters that are
+/// invalid in filenames. Invalid names throw [FormatException].
 String applyPartials({
   required String content,
   required String targetAbsolutePath,
@@ -36,16 +36,20 @@ String applyPartials({
   });
 }
 
+final _invalidPartialNameCharacters = RegExp(r'[\r\n<>:"|?*]');
+
 String _validatedPartialName(String rawName) {
   final name = rawName.trim();
   if (name.isEmpty ||
       name == '.' ||
       name == '..' ||
       name.contains('/') ||
-      name.contains(r'\')) {
+      name.contains(r'\') ||
+      _invalidPartialNameCharacters.hasMatch(name)) {
     throw FormatException(
       'Invalid partial name "$rawName": must be non-empty and must not be '
-      '".", "..", or contain path separators.',
+      '".", "..", contain path separators, or include filename-invalid '
+      'characters.',
     );
   }
   return name;
