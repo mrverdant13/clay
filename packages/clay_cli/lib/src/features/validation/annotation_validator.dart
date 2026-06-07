@@ -465,10 +465,10 @@ enum _ReplaceMarkerKind {
   ;
 
   String get label => switch (this) {
-    _ReplaceMarkerKind.start => 'replace-start',
-    _ReplaceMarkerKind.withMarker => 'with',
-    _ReplaceMarkerKind.end => 'replace-end',
-  };
+        _ReplaceMarkerKind.start => 'replace-start',
+        _ReplaceMarkerKind.withMarker => 'with',
+        _ReplaceMarkerKind.end => 'replace-end',
+      };
 }
 
 class _ReplaceMarkerSet {
