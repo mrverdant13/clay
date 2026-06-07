@@ -205,6 +205,27 @@ void main() {
       expect(nestedReference.existsSync(), isTrue);
     });
 
+    test('throws when the target is the filesystem root', () async {
+      final rootPath = Platform.isWindows
+          ? '${Directory.current.path.split(':').first}:\\'
+          : '/';
+
+      expect(
+        () => generateTemplate(
+          config: BrickGenConfig(),
+          referencePath: referenceDir.path,
+          targetPath: rootPath,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('filesystem root'),
+          ),
+        ),
+      );
+    });
+
     test('throws when the reference directory is missing', () async {
       referenceDir.deleteSync(recursive: true);
 
