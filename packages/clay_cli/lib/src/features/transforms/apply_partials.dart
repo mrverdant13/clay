@@ -8,8 +8,8 @@ import 'package:path/path.dart' as p;
 /// [targetAbsolutePath] and replaces each block with `{{> name.partial }}`.
 /// Supports C-style, hash, and HTML comment flavors.
 ///
-/// [partialName] values are trimmed and must not be empty, `.`, `..`, or
-/// contain path separators. Invalid names throw [FormatException].
+/// Partial names are trimmed and must not be empty, `.`, `..`, or contain
+/// path separators. Invalid names throw [FormatException].
 String applyPartials({
   required String content,
   required String targetAbsolutePath,
