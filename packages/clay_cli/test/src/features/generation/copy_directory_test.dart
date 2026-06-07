@@ -48,6 +48,33 @@ void main() {
       expect(destinationDir.existsSync(), isTrue);
       expect(destinationDir.listSync(), isEmpty);
     });
+
+    test('copies symlinks without following them', () async {
+      final externalFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      final externalDir = Directory(p.join(tempDir.path, 'external_dir'))
+        ..createSync();
+      Link(p.join(sourceDir.path, 'linked.txt'))
+          .createSync(externalFile.path);
+      Link(p.join(sourceDir.path, 'linked_dir')).createSync(externalDir.path);
+
+      await copyDirectory(source: sourceDir, destination: destinationDir);
+
+      final copiedLink = Link(p.join(destinationDir.path, 'linked.txt'));
+      expect(copiedLink.existsSync(), isTrue);
+      expect(copiedLink.targetSync(), externalFile.path);
+      expect(
+        File(p.join(destinationDir.path, 'external.txt')).existsSync(),
+        isFalse,
+      );
+
+      final copiedDirLink = Link(p.join(destinationDir.path, 'linked_dir'));
+      expect(copiedDirLink.existsSync(), isTrue);
+      expect(
+        Directory(p.join(destinationDir.path, 'external_dir')).existsSync(),
+        isFalse,
+      );
+    });
   });
 
   group('copyFileToDestination', () {

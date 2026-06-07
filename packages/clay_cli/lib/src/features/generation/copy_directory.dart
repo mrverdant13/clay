@@ -25,7 +25,7 @@ Future<void> copyDirectory({
     await destination.create(recursive: true);
   }
 
-  await for (final entity in source.list()) {
+  await for (final entity in source.list(followLinks: false)) {
     final destinationPath = p.join(
       destination.path,
       p.basename(entity.path),
@@ -40,6 +40,8 @@ Future<void> copyDirectory({
         file: entity,
         destinationPath: destinationPath,
       );
+    } else if (entity is Link) {
+      await Link(destinationPath).create(entity.targetSync());
     }
   }
 }
