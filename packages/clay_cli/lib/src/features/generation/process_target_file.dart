@@ -70,7 +70,7 @@ Future<void> _resolveTargetFileContents({
   late final String content;
   try {
     content = await file.readAsString();
-  } on FormatException {
+  } on FileSystemException {
     return;
   }
   final resolvedContent = resolveReferenceContent(

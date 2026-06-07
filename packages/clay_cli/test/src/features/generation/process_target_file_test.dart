@@ -108,5 +108,20 @@ void main() {
 
       expect(file.readAsBytesSync(), bytes);
     });
+
+    test('skips content transforms for invalid UTF-8 text files', () async {
+      final bytes = [0xFF, 0xFE, 0x00];
+      final file = File(p.join(targetDir.path, 'notes.txt'))
+        ..createSync()
+        ..writeAsBytesSync(bytes);
+
+      await processTargetFile(
+        file: file,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(),
+      );
+
+      expect(file.readAsBytesSync(), bytes);
+    });
   });
 }
