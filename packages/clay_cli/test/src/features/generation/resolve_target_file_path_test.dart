@@ -30,6 +30,20 @@ void main() {
       );
     });
 
+    test('normalizes a relative absolutePath before applying replacements', () {
+      final relativeTargetRoot = p.join('project', 'target');
+      final relativeFilePath = p.join(relativeTargetRoot, 'from', 'file.txt');
+
+      expect(
+        resolveTargetFilePath(
+          absolutePath: relativeFilePath,
+          targetAbsolutePath: relativeTargetRoot,
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+        ),
+        p.join(p.absolute(relativeTargetRoot), 'to', 'file.txt'),
+      );
+    });
+
     test('throws when a replacement produces an absolute path', () {
       expect(
         () => resolveTargetFilePath(

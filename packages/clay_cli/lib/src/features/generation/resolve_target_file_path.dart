@@ -10,7 +10,11 @@ String resolveTargetFilePath({
   required List<Replacement> replacements,
 }) {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
-  final relativePath = p.relative(absolutePath, from: normalizedTarget);
+  final normalizedAbsolutePath = p.normalize(p.absolute(absolutePath));
+  final relativePath = p.relative(
+    normalizedAbsolutePath,
+    from: normalizedTarget,
+  );
   final resolvedRelativePath = applyReplacements(
     input: relativePath,
     replacements: replacements,

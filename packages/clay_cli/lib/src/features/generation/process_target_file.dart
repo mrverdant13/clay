@@ -14,9 +14,12 @@ Future<void> processTargetFile({
   required String targetAbsolutePath,
   required BrickGenConfig config,
 }) async {
+  final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
+  final normalizedFilePath = p.normalize(p.absolute(file.path));
+
   if (shouldIgnoreAtRoot(
-    rootDirectory: targetAbsolutePath,
-    absolutePath: file.path,
+    rootDirectory: normalizedTarget,
+    absolutePath: normalizedFilePath,
     patterns: config.ignore,
   )) {
     final parent = file.parent;
@@ -25,19 +28,19 @@ Future<void> processTargetFile({
     }
     pruneEmptyParentDirectories(
       startingDirectory: parent,
-      stopAt: Directory(targetAbsolutePath),
+      stopAt: Directory(normalizedTarget),
     );
     return;
   }
 
   final resolvedPath = resolveTargetFilePath(
-    absolutePath: file.path,
-    targetAbsolutePath: targetAbsolutePath,
+    absolutePath: normalizedFilePath,
+    targetAbsolutePath: normalizedTarget,
     replacements: config.replacements,
   );
 
   final resultingFile = await () async {
-    if (p.equals(resolvedPath, file.path)) {
+    if (p.equals(resolvedPath, normalizedFilePath)) {
       return file;
     }
     final dir = Directory(p.dirname(resolvedPath));
@@ -49,7 +52,7 @@ Future<void> processTargetFile({
 
   await _resolveTargetFileContents(
     file: resultingFile,
-    targetAbsolutePath: targetAbsolutePath,
+    targetAbsolutePath: normalizedTarget,
     config: config,
   );
 }
@@ -59,9 +62,11 @@ Future<void> _resolveTargetFileContents({
   required String targetAbsolutePath,
   required BrickGenConfig config,
 }) async {
+  final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
+  final normalizedFilePath = p.normalize(p.absolute(file.path));
   final targetRelativePath = p.relative(
-    file.path,
-    from: targetAbsolutePath,
+    normalizedFilePath,
+    from: normalizedTarget,
   );
   if (shouldSkipContentTransforms(targetRelativePath)) {
     return;
@@ -76,7 +81,7 @@ Future<void> _resolveTargetFileContents({
   final resolvedContent = resolveReferenceContent(
     content: content,
     targetRelativePath: targetRelativePath,
-    targetAbsolutePath: targetAbsolutePath,
+    targetAbsolutePath: normalizedTarget,
     config: config,
   );
   await file.writeAsString(resolvedContent);
