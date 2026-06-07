@@ -50,26 +50,30 @@ Future<void> generateTemplate({
       .where((entity) => entity is File || entity is Link)
       .toList();
 
-  assertUniqueResolvedPaths(
-    entityPaths: targetEntities.map((entity) => entity.path),
-    targetAbsolutePath: normalizedTargetPath,
-    config: config,
-  );
+  final resolvedPaths = <String, String>{};
+  for (final entity in targetEntities) {
+    registerResolvedPath(
+      resolvedPaths: resolvedPaths,
+      entityPath: entity.path,
+      targetAbsolutePath: normalizedTargetPath,
+      config: config,
+    );
 
-  await Future.wait<void>([
-    for (final entity in targetEntities)
-      switch (entity) {
-        final File file => processTargetFile(
+    switch (entity) {
+      case final File file:
+        await processTargetFile(
           file: file,
           targetAbsolutePath: normalizedTargetPath,
           config: config,
-        ),
-        final Link link => processTargetLink(
+        );
+      case final Link link:
+        await processTargetLink(
           link: link,
           targetAbsolutePath: normalizedTargetPath,
           config: config,
-        ),
-        _ => throw StateError('Unexpected entity type: ${entity.runtimeType}'),
-      },
-  ]);
+        );
+      default:
+        throw StateError('Unexpected entity type: ${entity.runtimeType}');
+    }
+  }
 }
