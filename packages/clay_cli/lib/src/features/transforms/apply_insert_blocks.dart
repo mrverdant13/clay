@@ -16,7 +16,7 @@ String applyInsertBlocks({required String content}) {
         nl,
         r' *\/\*insert-end\*\/',
       ].join(),
-      r'\/\/ (?<line>.*)',
+      r'^\/\/ (?<line>.*)$',
     ),
     (
       'hash comment (expected # <content>)',
@@ -27,7 +27,7 @@ String applyInsertBlocks({required String content}) {
         nl,
         ' *#insert-end#',
       ].join(),
-      '# (?<line>.*)',
+      r'^# (?<line>.*)$',
     ),
     (
       'HTML comment (expected <!-- <content>-->)',
@@ -38,7 +38,7 @@ String applyInsertBlocks({required String content}) {
         nl,
         ' *<!--insert-end-->',
       ].join(),
-      '<!-- (?<line>.*)-->',
+      r'^<!-- (?<line>.*?)-->$',
     ),
   ];
 
