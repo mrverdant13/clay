@@ -76,7 +76,8 @@ not a comment
       );
     });
 
-    test('throws FormatException when C-style line is not comment-prefixed', () {
+    test('throws FormatException when C-style line is not comment-prefixed',
+        () {
       const input = '''
 line/*insert-start*/
 code // not comment-prefixed
