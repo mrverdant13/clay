@@ -48,8 +48,10 @@ void main() {
       );
 
       expect(Directory(p.join(stopAt.path, 'keep')).existsSync(), isTrue);
-      expect(Directory(p.join(stopAt.path, 'keep', 'empty')).existsSync(),
-          isFalse,);
+      expect(
+        Directory(p.join(stopAt.path, 'keep', 'empty')).existsSync(),
+        isFalse,
+      );
     });
 
     test('does not delete stopAt even when empty', () {
