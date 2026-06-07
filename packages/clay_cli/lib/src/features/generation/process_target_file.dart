@@ -17,18 +17,14 @@ Future<void> processTargetFile({
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedFilePath = p.normalize(p.absolute(file.path));
 
-  if (shouldIgnoreAtRoot(
-    rootDirectory: normalizedTarget,
-    absolutePath: normalizedFilePath,
+  if (_shouldIgnoreEntity(
+    normalizedTarget: normalizedTarget,
+    normalizedEntityPath: normalizedFilePath,
     patterns: config.ignore,
   )) {
-    final parent = file.parent;
-    if (file.existsSync()) {
-      await file.delete();
-    }
-    pruneEmptyParentDirectories(
-      startingDirectory: parent,
-      stopAt: Directory(normalizedTarget),
+    await _deleteEntityAndPruneParents(
+      entity: file,
+      normalizedTarget: normalizedTarget,
     );
     return;
   }
@@ -39,22 +35,92 @@ Future<void> processTargetFile({
     replacements: config.replacements,
   );
 
-  final resultingFile = await () async {
-    if (p.equals(resolvedPath, normalizedFilePath)) {
-      return file;
-    }
-    final dir = Directory(p.dirname(resolvedPath));
-    if (!dir.existsSync()) {
-      await dir.create(recursive: true);
-    }
-    return file.rename(resolvedPath);
-  }();
+  final resultingFile = await _renameEntity(
+    entity: file,
+    normalizedEntityPath: normalizedFilePath,
+    resolvedPath: resolvedPath,
+  );
 
   await _resolveTargetFileContents(
     file: resultingFile,
     targetAbsolutePath: normalizedTarget,
     config: config,
   );
+}
+
+/// Applies ignore rules and path renames to [link].
+Future<void> processTargetLink({
+  required Link link,
+  required String targetAbsolutePath,
+  required BrickGenConfig config,
+}) async {
+  final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
+  final normalizedLinkPath = p.normalize(p.absolute(link.path));
+
+  if (_shouldIgnoreEntity(
+    normalizedTarget: normalizedTarget,
+    normalizedEntityPath: normalizedLinkPath,
+    patterns: config.ignore,
+  )) {
+    await _deleteEntityAndPruneParents(
+      entity: link,
+      normalizedTarget: normalizedTarget,
+    );
+    return;
+  }
+
+  final resolvedPath = resolveTargetFilePath(
+    absolutePath: normalizedLinkPath,
+    targetAbsolutePath: normalizedTarget,
+    replacements: config.replacements,
+  );
+
+  await _renameEntity(
+    entity: link,
+    normalizedEntityPath: normalizedLinkPath,
+    resolvedPath: resolvedPath,
+  );
+}
+
+bool _shouldIgnoreEntity({
+  required String normalizedTarget,
+  required String normalizedEntityPath,
+  required List<String> patterns,
+}) {
+  return shouldIgnoreAtRoot(
+    rootDirectory: normalizedTarget,
+    absolutePath: normalizedEntityPath,
+    patterns: patterns,
+  );
+}
+
+Future<void> _deleteEntityAndPruneParents({
+  required FileSystemEntity entity,
+  required String normalizedTarget,
+}) async {
+  final parent = entity.parent;
+  if (entity.existsSync()) {
+    await entity.delete();
+  }
+  pruneEmptyParentDirectories(
+    startingDirectory: parent,
+    stopAt: Directory(normalizedTarget),
+  );
+}
+
+Future<T> _renameEntity<T extends FileSystemEntity>({
+  required T entity,
+  required String normalizedEntityPath,
+  required String resolvedPath,
+}) async {
+  if (p.equals(resolvedPath, normalizedEntityPath)) {
+    return entity;
+  }
+  final dir = Directory(p.dirname(resolvedPath));
+  if (!dir.existsSync()) {
+    await dir.create(recursive: true);
+  }
+  return await entity.rename(resolvedPath) as T;
 }
 
 Future<void> _resolveTargetFileContents({

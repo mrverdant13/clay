@@ -38,6 +38,43 @@ void main() {
       expect(Directory(p.join(targetDir.path, 'build')).existsSync(), isFalse);
     });
 
+    test('deletes ignored symlinks and prunes empty parents', () async {
+      final externalFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      Directory(p.join(targetDir.path, 'build')).createSync(recursive: true);
+      final ignoredLink = Link(p.join(targetDir.path, 'build', 'link.txt'))
+        ..createSync(externalFile.path);
+
+      await processTargetLink(
+        link: ignoredLink,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(ignore: const ['build/']),
+      );
+
+      expect(ignoredLink.existsSync(), isFalse);
+      expect(Directory(p.join(targetDir.path, 'build')).existsSync(), isFalse);
+    });
+
+    test('renames symlinks using replacements', () async {
+      final externalFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      final originalLink = Link(p.join(targetDir.path, 'from_link.txt'))
+        ..createSync(externalFile.path);
+
+      await processTargetLink(
+        link: originalLink,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+        ),
+      );
+
+      expect(originalLink.existsSync(), isFalse);
+      final renamedLink = Link(p.join(targetDir.path, 'to_link.txt'));
+      expect(renamedLink.existsSync(), isTrue);
+      expect(renamedLink.targetSync(), externalFile.path);
+    });
+
     test('renames files using replacements', () async {
       final originalFile = File(p.join(targetDir.path, 'from.txt'))
         ..createSync()

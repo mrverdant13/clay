@@ -125,6 +125,49 @@ void main() {
       expect(outputFile.readAsStringSync(), 'class Widget {}\n');
     });
 
+    test('excludes ignored symlinks and prunes empty directories', () async {
+      final linkedFile = File(p.join(referenceDir.path, 'build', 'output.txt'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('ignored');
+      Link(p.join(referenceDir.path, 'build', 'link.txt'))
+          .createSync(linkedFile.path);
+
+      await generateTemplate(
+        config: BrickGenConfig(ignore: const ['build/']),
+        referencePath: referenceDir.path,
+        targetPath: targetDir.path,
+      );
+
+      expect(
+        Link(p.join(targetDir.path, 'build', 'link.txt')).existsSync(),
+        isFalse,
+      );
+      expect(Directory(p.join(targetDir.path, 'build')).existsSync(), isFalse);
+    });
+
+    test('renames symlinks using replacements', () async {
+      final externalFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      Link(p.join(referenceDir.path, 'from_link.txt'))
+          .createSync(externalFile.path);
+
+      await generateTemplate(
+        config: BrickGenConfig(
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+        ),
+        referencePath: referenceDir.path,
+        targetPath: targetDir.path,
+      );
+
+      expect(
+        Link(p.join(targetDir.path, 'from_link.txt')).existsSync(),
+        isFalse,
+      );
+      final renamedLink = Link(p.join(targetDir.path, 'to_link.txt'));
+      expect(renamedLink.existsSync(), isTrue);
+      expect(renamedLink.targetSync(), externalFile.path);
+    });
+
     test('replaces an existing target directory', () async {
       targetDir.createSync(recursive: true);
       File(p.join(targetDir.path, 'stale.txt')).writeAsStringSync('stale\n');

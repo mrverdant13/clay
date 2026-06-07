@@ -44,17 +44,25 @@ Future<void> generateTemplate({
     destination: targetDir,
   );
 
-  final files = targetDir
+  final targetEntities = targetDir
       .listSync(recursive: true, followLinks: false)
-      .whereType<File>()
+      .where((entity) => entity is File || entity is Link)
       .toList();
 
   await Future.wait<void>([
-    for (final file in files)
-      processTargetFile(
-        file: file,
-        targetAbsolutePath: normalizedTargetPath,
-        config: config,
-      ),
+    for (final entity in targetEntities)
+      switch (entity) {
+        final File file => processTargetFile(
+          file: file,
+          targetAbsolutePath: normalizedTargetPath,
+          config: config,
+        ),
+        final Link link => processTargetLink(
+          link: link,
+          targetAbsolutePath: normalizedTargetPath,
+          config: config,
+        ),
+        _ => throw StateError('Unexpected entity type: ${entity.runtimeType}'),
+      },
   ]);
 }
