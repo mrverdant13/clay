@@ -93,5 +93,20 @@ void main() {
 
       expect(file.readAsStringSync(), 'line\n');
     });
+
+    test('leaves binary files unchanged', () async {
+      final bytes = [0xFF, 0xD8, 0xFF, 0x00, 0x01];
+      final file = File(p.join(targetDir.path, 'assets', 'logo.jpg'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(bytes);
+
+      await processTargetFile(
+        file: file,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(),
+      );
+
+      expect(file.readAsBytesSync(), bytes);
+    });
   });
 }

@@ -67,7 +67,12 @@ Future<void> _resolveTargetFileContents({
     return;
   }
 
-  final content = await file.readAsString();
+  late final String content;
+  try {
+    content = await file.readAsString();
+  } on FormatException {
+    return;
+  }
   final resolvedContent = resolveReferenceContent(
     content: content,
     targetRelativePath: targetRelativePath,

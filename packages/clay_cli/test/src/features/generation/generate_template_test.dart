@@ -41,6 +41,24 @@ void main() {
       );
     });
 
+    test('copies binary assets without attempting text transforms', () async {
+      final bytes = [0xFF, 0xD8, 0xFF, 0x00, 0x01];
+      File(p.join(referenceDir.path, 'assets', 'logo.jpg'))
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(bytes);
+
+      await generateTemplate(
+        config: BrickGenConfig(),
+        referencePath: referenceDir.path,
+        targetPath: targetDir.path,
+      );
+
+      expect(
+        File(p.join(targetDir.path, 'assets', 'logo.jpg')).readAsBytesSync(),
+        bytes,
+      );
+    });
+
     test('excludes ignored files and prunes empty directories', () async {
       File(p.join(referenceDir.path, 'lib', 'main.dart'))
         ..createSync(recursive: true)
