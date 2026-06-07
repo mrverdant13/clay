@@ -154,7 +154,7 @@ plain text
     });
 
     test('trims whitespace from partial names', () {
-      const input = '/*partial v  partialA  */content/*partial ^  partialA  */';
+      const input = '/*partial v  partialA  */content/*partial ^ partialA  */';
 
       final result = applyPartials(
         content: input,
@@ -170,16 +170,7 @@ plain text
     });
 
     test('throws FormatException for invalid partial names', () {
-      const invalidNames = [
-        '../evil',
-        'foo/bar',
-        '..',
-        '.',
-        '   ',
-        r'foo\bar',
-      ];
-
-      for (final name in invalidNames) {
+      for (final name in ['..', '.', r'foo\bar']) {
         final input = '''
 /*partial v $name*/payload
 /*partial ^ $name*/
@@ -198,6 +189,35 @@ plain text
             ),
           ),
           reason: 'partial name "$name" should be rejected',
+        );
+        expect(
+          tempDir.listSync(),
+          isEmpty,
+          reason: 'no files should be created for "$name"',
+        );
+      }
+    });
+
+    test('leaves partial blocks with unmatchable names unchanged', () {
+      const unmatchableNames = [
+        '../evil',
+        'foo/bar',
+        '   ',
+      ];
+
+      for (final name in unmatchableNames) {
+        final input = '''
+/*partial v $name*/payload
+/*partial ^ $name*/
+''';
+
+        expect(
+          applyPartials(
+            content: input,
+            targetAbsolutePath: tempDir.path,
+          ),
+          input,
+          reason: 'partial name "$name" should not be resolved',
         );
         expect(
           tempDir.listSync(),
