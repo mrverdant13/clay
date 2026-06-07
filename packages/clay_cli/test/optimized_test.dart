@@ -19,11 +19,12 @@ import 'src/features/config/resolve_paths_test.dart' as _i13;
 import 'src/features/transforms/apply_insert_blocks_test.dart' as _i14;
 import 'src/features/transforms/apply_line_deletions_test.dart' as _i15;
 import 'src/features/transforms/apply_mustache_tags_test.dart' as _i16;
-import 'src/features/transforms/apply_remotions_test.dart' as _i17;
-import 'src/features/transforms/apply_replace_blocks_test.dart' as _i18;
-import 'src/features/transforms/apply_replacements_test.dart' as _i19;
-import 'src/features/transforms/apply_spacing_groups_test.dart' as _i20;
-import 'src/utils/regex_hook_test.dart' as _i21;
+import 'src/features/transforms/apply_partials_test.dart' as _i17;
+import 'src/features/transforms/apply_remotions_test.dart' as _i18;
+import 'src/features/transforms/apply_replace_blocks_test.dart' as _i19;
+import 'src/features/transforms/apply_replacements_test.dart' as _i20;
+import 'src/features/transforms/apply_spacing_groups_test.dart' as _i21;
+import 'src/utils/regex_hook_test.dart' as _i22;
 
 void main() {
   group(
@@ -123,33 +124,39 @@ void main() {
     },
   );
   group(
-    'src/features/transforms/apply_remotions_test.dart',
+    'src/features/transforms/apply_partials_test.dart',
     () {
       _i17.main();
     },
   );
   group(
-    'src/features/transforms/apply_replace_blocks_test.dart',
+    'src/features/transforms/apply_remotions_test.dart',
     () {
       _i18.main();
     },
   );
   group(
-    'src/features/transforms/apply_replacements_test.dart',
+    'src/features/transforms/apply_replace_blocks_test.dart',
     () {
       _i19.main();
     },
   );
   group(
-    'src/features/transforms/apply_spacing_groups_test.dart',
+    'src/features/transforms/apply_replacements_test.dart',
     () {
       _i20.main();
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/transforms/apply_spacing_groups_test.dart',
     () {
       _i21.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i22.main();
     },
   );
 }
