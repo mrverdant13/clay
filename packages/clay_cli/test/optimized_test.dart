@@ -26,7 +26,8 @@ import 'src/features/transforms/apply_replacements_test.dart' as _i20;
 import 'src/features/transforms/apply_spacing_groups_test.dart' as _i21;
 import 'src/features/transforms/resolve_reference_content_test.dart' as _i22;
 import 'src/features/transforms/skip_content_transforms_test.dart' as _i23;
-import 'src/utils/regex_hook_test.dart' as _i24;
+import 'src/features/validation/annotation_validator_test.dart' as _i24;
+import 'src/utils/regex_hook_test.dart' as _i25;
 
 void main() {
   group(
@@ -168,9 +169,15 @@ void main() {
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/validation/annotation_validator_test.dart',
     () {
       _i24.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i25.main();
     },
   );
 }
