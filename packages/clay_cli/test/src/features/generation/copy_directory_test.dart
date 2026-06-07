@@ -49,4 +49,36 @@ void main() {
       expect(destinationDir.listSync(), isEmpty);
     });
   });
+
+  group('copyFileToDestination', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('clay_copy_file_');
+    });
+
+    tearDown(() {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('creates missing parent directories', () async {
+      final sourceFile = File(p.join(tempDir.path, 'source.txt'))
+        ..writeAsStringSync('payload');
+      final destinationPath = p.join(
+        tempDir.path,
+        'missing',
+        'nested',
+        'out.txt',
+      );
+
+      await copyFileToDestination(
+        file: sourceFile,
+        destinationPath: destinationPath,
+      );
+
+      expect(File(destinationPath).readAsStringSync(), 'payload');
+    });
+  });
 }

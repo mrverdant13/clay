@@ -55,6 +55,31 @@ void main() {
       expect(File(p.join(targetDir.path, 'to.txt')).existsSync(), isTrue);
     });
 
+    test('renames files into nested directories', () async {
+      final originalFile = File(p.join(targetDir.path, 'flat.txt'))
+        ..createSync()
+        ..writeAsStringSync('content');
+
+      await processTargetFile(
+        file: originalFile,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [
+            Replacement(
+              from: RegExp(r'^flat\.txt$'),
+              to: 'nested/deep/flat.txt',
+            ),
+          ],
+        ),
+      );
+
+      expect(originalFile.existsSync(), isFalse);
+      expect(
+        File(p.join(targetDir.path, 'nested', 'deep', 'flat.txt')).existsSync(),
+        isTrue,
+      );
+    });
+
     test('applies content transforms to non-binary files', () async {
       final file = File(p.join(targetDir.path, 'file.txt'))
         ..createSync()
