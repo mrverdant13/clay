@@ -6,3 +6,5 @@ export 'apply_remotions.dart';
 export 'apply_replace_blocks.dart';
 export 'apply_replacements.dart';
 export 'apply_spacing_groups.dart';
+export 'resolve_reference_content.dart';
+export 'skip_content_transforms.dart';
