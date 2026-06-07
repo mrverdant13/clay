@@ -1,5 +1,6 @@
 export 'apply_insert_blocks.dart';
 export 'apply_line_deletions.dart';
+export 'apply_partials.dart';
 export 'apply_mustache_tags.dart';
 export 'apply_remotions.dart';
 export 'apply_replace_blocks.dart';
