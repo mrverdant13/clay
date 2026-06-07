@@ -84,6 +84,30 @@ void main() {
       expect(Directory(p.join(targetDir.path, 'build')).existsSync(), isFalse);
     });
 
+    test('applies transforms when paths are relative to the working directory',
+        () async {
+      final previousWorkingDirectory = Directory.current.path;
+      Directory.current = tempDir.path;
+      try {
+        File(p.join('reference', 'from_widget.dart'))
+            .writeAsStringSync('class Widget {}\n/*drop*/\n');
+
+        await generateTemplate(
+          config: BrickGenConfig(
+            replacements: [Replacement(from: RegExp('from'), to: 'to')],
+          ),
+          referencePath: 'reference',
+          targetPath: 'target',
+        );
+
+        final outputFile = File(p.join('target', 'to_widget.dart'));
+        expect(outputFile.existsSync(), isTrue);
+        expect(outputFile.readAsStringSync(), 'class Widget {}\n');
+      } finally {
+        Directory.current = previousWorkingDirectory;
+      }
+    });
+
     test('applies path renames and content transforms', () async {
       File(p.join(referenceDir.path, 'from_widget.dart'))
           .writeAsStringSync('class Widget {}\n/*drop*/\n');

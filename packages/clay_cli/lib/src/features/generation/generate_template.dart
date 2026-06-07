@@ -5,6 +5,7 @@ import 'package:clay_cli/src/features/generation/assert_distinct_reference_and_t
 import 'package:clay_cli/src/features/generation/copy_directory.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
+import 'package:path/path.dart' as p;
 
 /// Copies [referencePath] to [targetPath] and applies [config] transforms.
 ///
@@ -17,8 +18,7 @@ Future<void> generateTemplate({
   required String referencePath,
   required String targetPath,
 }) async {
-  final referenceDir = Directory(referencePath);
-  if (!referenceDir.existsSync()) {
+  if (!Directory(referencePath).existsSync()) {
     throw GenerationException(
       'Reference directory not found ($referencePath).',
     );
@@ -29,7 +29,10 @@ Future<void> generateTemplate({
     targetPath: targetPath,
   );
 
-  final targetDir = Directory(targetPath);
+  final normalizedReferencePath = p.normalize(p.absolute(referencePath));
+  final normalizedTargetPath = p.normalize(p.absolute(targetPath));
+  final referenceDir = Directory(normalizedReferencePath);
+  final targetDir = Directory(normalizedTargetPath);
   if (targetDir.existsSync()) {
     await targetDir.delete(recursive: true);
   }
@@ -48,7 +51,7 @@ Future<void> generateTemplate({
     for (final file in files)
       processTargetFile(
         file: file,
-        targetAbsolutePath: targetPath,
+        targetAbsolutePath: normalizedTargetPath,
         config: config,
       ),
   ]);
