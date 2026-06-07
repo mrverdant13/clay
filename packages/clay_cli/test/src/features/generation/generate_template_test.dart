@@ -168,6 +168,35 @@ void main() {
       expect(renamedLink.targetSync(), externalFile.path);
     });
 
+    test('throws when path replacements collide', () async {
+      File(p.join(referenceDir.path, 'a_widget.dart'))
+          .writeAsStringSync('a');
+      File(p.join(referenceDir.path, 'b_widget.dart'))
+          .writeAsStringSync('b');
+
+      expect(
+        () => generateTemplate(
+          config: BrickGenConfig(
+            replacements: [
+              Replacement(
+                from: RegExp(r'^.+_widget\.dart$'),
+                to: 'widget.dart',
+              ),
+            ],
+          ),
+          referencePath: referenceDir.path,
+          targetPath: targetDir.path,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path replacement collision'),
+          ),
+        ),
+      );
+    });
+
     test('replaces an existing target directory', () async {
       targetDir.createSync(recursive: true);
       File(p.join(targetDir.path, 'stale.txt')).writeAsStringSync('stale\n');

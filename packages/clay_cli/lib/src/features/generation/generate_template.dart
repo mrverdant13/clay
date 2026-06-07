@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
 import 'package:clay_cli/src/features/generation/assert_distinct_reference_and_target_paths.dart';
 import 'package:clay_cli/src/features/generation/assert_safe_target_path.dart';
+import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.dart';
 import 'package:clay_cli/src/features/generation/copy_directory.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
@@ -48,6 +49,12 @@ Future<void> generateTemplate({
       .listSync(recursive: true, followLinks: false)
       .where((entity) => entity is File || entity is Link)
       .toList();
+
+  assertUniqueResolvedPaths(
+    entityPaths: targetEntities.map((entity) => entity.path),
+    targetAbsolutePath: normalizedTargetPath,
+    config: config,
+  );
 
   await Future.wait<void>([
     for (final entity in targetEntities)
