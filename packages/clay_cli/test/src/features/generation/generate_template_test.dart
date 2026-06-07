@@ -169,10 +169,8 @@ void main() {
     });
 
     test('throws when path replacements collide', () async {
-      File(p.join(referenceDir.path, 'a_widget.dart'))
-          .writeAsStringSync('a');
-      File(p.join(referenceDir.path, 'b_widget.dart'))
-          .writeAsStringSync('b');
+      File(p.join(referenceDir.path, 'a_widget.dart')).writeAsStringSync('a');
+      File(p.join(referenceDir.path, 'b_widget.dart')).writeAsStringSync('b');
 
       expect(
         () => generateTemplate(
