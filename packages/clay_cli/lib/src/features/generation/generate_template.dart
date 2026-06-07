@@ -7,6 +7,7 @@ import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.da
 import 'package:clay_cli/src/features/generation/copy_directory.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 /// Copies [referencePath] to [targetPath] and applies [config] transforms.
@@ -50,6 +51,20 @@ Future<void> generateTemplate({
       .where((entity) => entity is File || entity is Link)
       .toList();
 
+  await processCopiedTargetEntities(
+    targetEntities: targetEntities,
+    normalizedTargetPath: normalizedTargetPath,
+    config: config,
+  );
+}
+
+/// Applies ignore rules, path renames, and content transforms to copied entries.
+@visibleForTesting
+Future<void> processCopiedTargetEntities({
+  required List<FileSystemEntity> targetEntities,
+  required String normalizedTargetPath,
+  required BrickGenConfig config,
+}) async {
   final resolvedPaths = <String, String>{};
   for (final entity in targetEntities) {
     registerResolvedPath(

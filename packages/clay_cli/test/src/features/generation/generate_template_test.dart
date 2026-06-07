@@ -296,6 +296,26 @@ void main() {
       );
     });
 
+    test('throws when an unexpected entity type is processed', () async {
+      targetDir.createSync(recursive: true);
+      Directory(p.join(targetDir.path, 'nested')).createSync();
+
+      expect(
+        () => processCopiedTargetEntities(
+          targetEntities: [Directory(p.join(targetDir.path, 'nested'))],
+          normalizedTargetPath: targetDir.path,
+          config: BrickGenConfig(),
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('Unexpected entity type'),
+          ),
+        ),
+      );
+    });
+
     test('throws when the reference directory is missing', () async {
       referenceDir.deleteSync(recursive: true);
 
