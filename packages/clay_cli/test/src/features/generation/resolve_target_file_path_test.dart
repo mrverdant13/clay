@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 void main() {
   group('resolveTargetFilePath', () {
-    const targetRoot = '/project/target';
+    final targetRoot = p.join('project', 'target');
 
     test('returns the original path when no replacements match', () {
       expect(
