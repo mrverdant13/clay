@@ -10,10 +10,10 @@ void pruneEmptyParentDirectories({
   required Directory stopAt,
 }) {
   var current = startingDirectory;
-  final normalizedStopAt = p.normalize(stopAt.path);
+  final normalizedStopAt = p.normalize(p.absolute(stopAt.path));
 
   while (true) {
-    final normalizedCurrent = p.normalize(current.path);
+    final normalizedCurrent = p.normalize(p.absolute(current.path));
     if (normalizedCurrent == normalizedStopAt) {
       return;
     }

@@ -62,5 +62,22 @@ void main() {
 
       expect(stopAt.existsSync(), isTrue);
     });
+
+    test('prunes empty parents when paths use parent-directory segments', () {
+      Directory(p.join(stopAt.path, 'a', 'b', 'c'))
+        ..createSync(recursive: true)
+        ..deleteSync();
+
+      pruneEmptyParentDirectories(
+        startingDirectory: Directory(p.join(stopAt.path, 'a', 'b', '..', 'b')),
+        stopAt: Directory(
+          p.join(tempDir.path, '..', p.basename(tempDir.path), 'target'),
+        ),
+      );
+
+      expect(Directory(p.join(stopAt.path, 'a')).existsSync(), isFalse);
+      expect(Directory(p.join(stopAt.path, 'a', 'b')).existsSync(), isFalse);
+      expect(stopAt.existsSync(), isTrue);
+    });
   });
 }
