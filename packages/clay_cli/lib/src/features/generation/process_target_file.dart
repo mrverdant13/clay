@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
-import 'package:meta/meta.dart';
 import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
 import 'package:clay_cli/src/features/generation/prune_empty_directories.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';
 import 'package:clay_cli/src/features/transforms/resolve_reference_content.dart';
 import 'package:clay_cli/src/features/transforms/skip_content_transforms.dart';
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 /// Applies ignore rules, path renames, and content transforms to [file].

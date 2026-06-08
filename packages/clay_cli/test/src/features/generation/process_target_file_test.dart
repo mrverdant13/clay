@@ -81,7 +81,7 @@ void main() {
       final otherExternal = File(p.join(tempDir.path, 'other.txt'))
         ..writeAsStringSync('other');
       Link(p.join(targetDir.path, 'to_link.txt'))
-        ..createSync(otherExternal.path);
+          .createSync(otherExternal.path);
       final sourceLink = Link(p.join(targetDir.path, 'from_link.txt'))
         ..createSync(externalFile.path);
 
@@ -142,7 +142,7 @@ void main() {
     });
 
     test('renames files over ignored directory destinations', () async {
-      Directory(p.join(targetDir.path, 'build'))..createSync();
+      Directory(p.join(targetDir.path, 'build')).createSync();
       final sourceFile = File(p.join(targetDir.path, 'from.txt'))
         ..createSync()
         ..writeAsStringSync('source');
