@@ -1,8 +1,8 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/src/version.dart';
-import 'package:meta/meta.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:meta/meta.dart';
 
 /// {@template clay_cli.clay_command_runner}
 /// The runner for the Clay CLI.

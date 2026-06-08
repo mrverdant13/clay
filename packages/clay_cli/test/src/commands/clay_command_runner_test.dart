@@ -80,8 +80,14 @@ void main() {
         'fake-command',
       ]);
 
-      expect(results.option(ClayCommandRunner.configOptionName), 'brick-gen.json');
-      expect(results.option(ClayCommandRunner.cwdOptionName), '/tmp/project');
+      expect(
+        results.option(ClayCommandRunner.configOptionName),
+        'brick-gen.json',
+      );
+      expect(
+        results.option(ClayCommandRunner.cwdOptionName),
+        '/tmp/project',
+      );
       expect(results.command?.name, 'fake-command');
     });
 
