@@ -1,7 +1,8 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
-import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
+import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart'
+    show normalizeIgnoreRelativePath, shouldIgnoreAtRoot;
 import 'package:clay_cli/src/features/generation/prune_empty_directories.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';
 import 'package:clay_cli/src/features/transforms/resolve_reference_content.dart';
@@ -184,9 +185,11 @@ Future<void> _resolveTargetFileContents({
 }) async {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedFilePath = p.normalize(p.absolute(file.path));
-  final targetRelativePath = p.relative(
-    normalizedFilePath,
-    from: normalizedTarget,
+  final targetRelativePath = normalizeIgnoreRelativePath(
+    p.relative(
+      normalizedFilePath,
+      from: normalizedTarget,
+    ),
   );
   if (shouldSkipContentTransforms(targetRelativePath)) {
     return;

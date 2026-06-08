@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay_cli/src/entities/line_deletion.dart';
+import 'package:clay_cli/src/entities/line_range.dart';
 import 'package:clay_cli/src/entities/replacement.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
 import 'package:path/path.dart' as p;
@@ -189,6 +191,33 @@ void main() {
         isTrue,
       );
     });
+
+    test(
+      'applies line deletions when relative paths use backslashes',
+      () async {
+        final file = File(p.join(targetDir.path, 'nested', 'file.txt'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('drop\nkeep\n');
+
+        await processTargetFile(
+          file: file,
+          targetAbsolutePath: targetDir.path,
+          config: BrickGenConfig(
+            lineDeletions: const [
+              LineDeletion(
+                filePath: 'nested/file.txt',
+                ranges: [LineRange(start: 0, end: 0)],
+              ),
+            ],
+          ),
+        );
+
+        expect(file.readAsStringSync(), 'keep\n');
+      },
+      skip: !Platform.isWindows
+          ? 'Path separator normalization is only required on Windows'
+          : false,
+    );
 
     test('applies content transforms to non-binary files', () async {
       final file = File(p.join(targetDir.path, 'file.txt'))
