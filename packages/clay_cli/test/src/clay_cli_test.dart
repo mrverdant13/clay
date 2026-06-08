@@ -6,6 +6,15 @@ import 'package:test/test.dart';
 class _MockLogger extends Mock implements Logger {}
 
 void main() {
+  group('public API', () {
+    test('exports documented programmatic APIs', () {
+      expect(loadBrickGenConfig, isA<Function>());
+      expect(resolveReferenceContent, isA<Function>());
+      expect(generateTemplate, isA<Function>());
+      expect(validateAnnotations, isA<Function>());
+    });
+  });
+
   group('clay', () {
     late Logger logger;
 
