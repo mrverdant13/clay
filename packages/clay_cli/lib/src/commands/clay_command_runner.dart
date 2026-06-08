@@ -16,9 +16,36 @@ class ClayCommandRunner extends CommandRunner<int> {
           'projects.',
         ) {
     argParser
-      ..addFlag('version', negatable: false, help: 'Print the current version.')
-      ..addFlag('verbose', help: 'Verbose logging.');
+      ..addFlag(
+        versionOptionName,
+        negatable: false,
+        help: 'Print the current version.',
+      )
+      ..addFlag(
+        verboseOptionName,
+        help: 'Verbose logging.',
+      )
+      ..addOption(
+        configOptionName,
+        help: 'Path to brick-gen.json (skips discovery).',
+      )
+      ..addOption(
+        cwdOptionName,
+        help: 'Working directory for config discovery.',
+      );
   }
+
+  /// Option name for `--version`.
+  static const versionOptionName = 'version';
+
+  /// Option name for `--verbose`.
+  static const verboseOptionName = 'verbose';
+
+  /// Option name for `--config`.
+  static const configOptionName = 'config';
+
+  /// Option name for `--cwd`.
+  static const cwdOptionName = 'cwd';
 
   /// The logger for the command runner.
   final Logger logger;
@@ -26,11 +53,23 @@ class ClayCommandRunner extends CommandRunner<int> {
   @override
   void printUsage() => logger.info(usage);
 
+  /// {@template clay_cli.clay_command_runner.config_path}
+  /// The path to the config file.
+  /// {@endtemplate}
+  late final String? configPath;
+
+  /// {@template clay_cli.clay_command_runner.cwd}
+  /// The working directory for config discovery.
+  /// {@endtemplate}
+  late final String? cwd;
+
   @override
   Future<int> run(Iterable<String> args) async {
     try {
       final argResults = parse(args);
-      if (argResults['verbose'] == true) {
+      configPath = argResults.option(configOptionName);
+      cwd = argResults.option(cwdOptionName);
+      if (argResults[verboseOptionName] == true) {
         logger.level = Level.verbose;
       }
       return await runCommand(argResults) ?? ExitCode.success.code;
@@ -51,7 +90,7 @@ class ClayCommandRunner extends CommandRunner<int> {
 
   @override
   Future<int?> runCommand(ArgResults topLevelResults) async {
-    if (topLevelResults['version'] == true) {
+    if (topLevelResults[versionOptionName] == true) {
       logger.info(packageVersion);
       return ExitCode.success.code;
     }

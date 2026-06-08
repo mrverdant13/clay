@@ -7,11 +7,39 @@ import 'package:mason_logger/mason_logger.dart';
 /// {@endtemplate}
 abstract class ClayCommand extends Command<int> {
   /// {@macro clay_cli.clay_command}
-  ClayCommand();
+  ClayCommand() {
+    argParser
+      ..addOption(
+        referenceOptionName,
+        help: 'Overrides brick-gen.json → reference.',
+      )
+      ..addOption(
+        targetOptionName,
+        help: 'Overrides brick-gen.json → target.',
+      );
+  }
+
+  /// Option name for `--reference`.
+  static const referenceOptionName = 'reference';
+
+  /// Option name for `--target`.
+  static const targetOptionName = 'target';
 
   @override
   ClayCommandRunner get runner => super.runner! as ClayCommandRunner;
 
   /// The logger for the command.
   Logger get logger => runner.logger;
+
+  /// {@macro clay_cli.clay_command_runner.config_path}
+  String? get configPath => runner.configPath;
+
+  /// {@macro clay_cli.clay_command_runner.cwd}
+  String? get cwd => runner.cwd;
+
+  /// Explicit `--reference` override, or `null` when omitted.
+  String? get referenceOverride => argResults?.option(referenceOptionName);
+
+  /// Explicit `--target` override, or `null` when omitted.
+  String? get targetOverride => argResults?.option(targetOptionName);
 }
