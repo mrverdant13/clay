@@ -106,7 +106,11 @@ Future<void> _deleteEntityAndPruneParents({
 }) async {
   final parent = entity.parent;
   if (entity.existsSync()) {
-    await entity.delete();
+    if (entity is Directory) {
+      await entity.delete(recursive: true);
+    } else {
+      await entity.delete();
+    }
   }
   pruneEmptyParentDirectories(
     startingDirectory: parent,

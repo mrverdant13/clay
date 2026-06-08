@@ -167,6 +167,38 @@ void main() {
       );
     });
 
+    test('renames files over ignored non-empty directory destinations',
+        () async {
+      Directory(p.join(targetDir.path, 'build')).createSync();
+      File(p.join(targetDir.path, 'build', 'stale.txt'))
+        ..createSync()
+        ..writeAsStringSync('stale');
+      final sourceFile = File(p.join(targetDir.path, 'from.txt'))
+        ..createSync()
+        ..writeAsStringSync('source');
+
+      await processTargetFile(
+        file: sourceFile,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [
+            Replacement(from: RegExp(r'^from\.txt$'), to: 'build'),
+          ],
+          ignore: const ['build/'],
+        ),
+      );
+
+      expect(sourceFile.existsSync(), isFalse);
+      expect(
+        File(p.join(targetDir.path, 'build')).readAsStringSync(),
+        'source',
+      );
+      expect(
+        File(p.join(targetDir.path, 'build', 'stale.txt')).existsSync(),
+        isFalse,
+      );
+    });
+
     test('renames files into nested directories', () async {
       final originalFile = File(p.join(targetDir.path, 'flat.txt'))
         ..createSync()
