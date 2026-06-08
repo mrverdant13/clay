@@ -63,7 +63,7 @@ void main() {
       verify(() => logger.level = Level.verbose).called(1);
     });
 
-    test('parseArguments reads --config and --cwd global options', () {
+    test('parse reads --config and --cwd global options', () {
       final runner = ClayCommandRunner(
         logger: logger,
       )..addCommand(
@@ -72,7 +72,7 @@ void main() {
           ),
         );
 
-      final results = runner.parseArguments(const [
+      final results = runner.parse(const [
         '--config',
         'brick-gen.json',
         '--cwd',

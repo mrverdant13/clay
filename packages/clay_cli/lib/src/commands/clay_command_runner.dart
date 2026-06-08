@@ -2,7 +2,6 @@ import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
-import 'package:meta/meta.dart';
 
 /// {@template clay_cli.clay_command_runner}
 /// The runner for the Clay CLI.
@@ -51,17 +50,25 @@ class ClayCommandRunner extends CommandRunner<int> {
   /// The logger for the command runner.
   final Logger logger;
 
-  /// Parses [args] without running a command.
-  @visibleForTesting
-  ArgResults parseArguments(Iterable<String> args) => parse(args);
-
   @override
   void printUsage() => logger.info(usage);
+
+  /// {@template clay_cli.clay_command_runner.config_path}
+  /// The path to the config file.
+  /// {@endtemplate}
+  late final String? configPath;
+
+  /// {@template clay_cli.clay_command_runner.cwd}
+  /// The working directory for config discovery.
+  /// {@endtemplate}
+  late final String? cwd;
 
   @override
   Future<int> run(Iterable<String> args) async {
     try {
       final argResults = parse(args);
+      configPath = argResults.option(configOptionName);
+      cwd = argResults.option(cwdOptionName);
       if (argResults[verboseOptionName] == true) {
         logger.level = Level.verbose;
       }

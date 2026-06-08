@@ -31,32 +31,15 @@ abstract class ClayCommand extends Command<int> {
   /// The logger for the command.
   Logger get logger => runner.logger;
 
-  /// Explicit `--config` path, or `null` when omitted.
-  String? get configPath =>
-      _parsedGlobalOption(ClayCommandRunner.configOptionName);
+  /// {@macro clay_cli.clay_command_runner.config_path}
+  String? get configPath => runner.configPath;
 
-  /// Explicit `--cwd` path, or `null` when omitted.
-  String? get cwd => _parsedGlobalOption(ClayCommandRunner.cwdOptionName);
+  /// {@macro clay_cli.clay_command_runner.cwd}
+  String? get cwd => runner.cwd;
 
   /// Explicit `--reference` override, or `null` when omitted.
-  String? get referenceOverride => _parsedOption(referenceOptionName);
+  String? get referenceOverride => argResults?.option(referenceOptionName);
 
   /// Explicit `--target` override, or `null` when omitted.
-  String? get targetOverride => _parsedOption(targetOptionName);
-
-  String? _parsedGlobalOption(String name) {
-    final results = globalResults;
-    if (results == null || !results.wasParsed(name)) {
-      return null;
-    }
-    return results.option(name);
-  }
-
-  String? _parsedOption(String name) {
-    final results = argResults;
-    if (results == null || !results.wasParsed(name)) {
-      return null;
-    }
-    return results.option(name);
-  }
+  String? get targetOverride => argResults?.option(targetOptionName);
 }
