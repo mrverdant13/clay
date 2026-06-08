@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/annotation_issue.dart';
+import 'package:clay_cli/src/utils/binary_content.dart';
 import 'package:path/path.dart' as p;
 
 /// Validates annotation markers in reference file contents.
@@ -56,25 +57,8 @@ class AnnotationValidator {
     return issues;
   }
 
-  static const _ignoredExtensions = {
-    '.png',
-    '.webp',
-    '.jpg',
-    '.jpeg',
-    '.gif',
-    '.ico',
-    '.jar',
-    '.keystore',
-    '.p12',
-    '.jks',
-  };
-
-  static const _ignoredBasenames = {'.DS_Store'};
-
   static bool _shouldSkipFile(String path) {
-    if (_ignoredExtensions.contains(p.extension(path))) return true;
-    if (_ignoredBasenames.contains(p.basename(path))) return true;
-    return false;
+    return shouldSkipBinaryContent(path);
   }
 
   static final _removeMarkerSets = [
