@@ -1,6 +1,7 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/src/version.dart';
+import 'package:meta/meta.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// {@template clay_cli.clay_command_runner}
@@ -16,12 +17,43 @@ class ClayCommandRunner extends CommandRunner<int> {
           'projects.',
         ) {
     argParser
-      ..addFlag('version', negatable: false, help: 'Print the current version.')
-      ..addFlag('verbose', help: 'Verbose logging.');
+      ..addFlag(
+        versionOptionName,
+        negatable: false,
+        help: 'Print the current version.',
+      )
+      ..addFlag(
+        verboseOptionName,
+        help: 'Verbose logging.',
+      )
+      ..addOption(
+        configOptionName,
+        help: 'Path to brick-gen.json (skips discovery).',
+      )
+      ..addOption(
+        cwdOptionName,
+        help: 'Working directory for config discovery.',
+      );
   }
+
+  /// Option name for `--version`.
+  static const versionOptionName = 'version';
+
+  /// Option name for `--verbose`.
+  static const verboseOptionName = 'verbose';
+
+  /// Option name for `--config`.
+  static const configOptionName = 'config';
+
+  /// Option name for `--cwd`.
+  static const cwdOptionName = 'cwd';
 
   /// The logger for the command runner.
   final Logger logger;
+
+  /// Parses [args] without running a command.
+  @visibleForTesting
+  ArgResults parseArguments(Iterable<String> args) => parse(args);
 
   @override
   void printUsage() => logger.info(usage);
@@ -30,7 +62,7 @@ class ClayCommandRunner extends CommandRunner<int> {
   Future<int> run(Iterable<String> args) async {
     try {
       final argResults = parse(args);
-      if (argResults['verbose'] == true) {
+      if (argResults[verboseOptionName] == true) {
         logger.level = Level.verbose;
       }
       return await runCommand(argResults) ?? ExitCode.success.code;
@@ -51,7 +83,7 @@ class ClayCommandRunner extends CommandRunner<int> {
 
   @override
   Future<int?> runCommand(ArgResults topLevelResults) async {
-    if (topLevelResults['version'] == true) {
+    if (topLevelResults[versionOptionName] == true) {
       logger.info(packageVersion);
       return ExitCode.success.code;
     }
