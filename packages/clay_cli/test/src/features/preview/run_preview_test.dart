@@ -69,6 +69,14 @@ void main() {
   });
 
   group('loadPreviewPartials', () {
+    test('returns an empty map when the target directory does not exist', () {
+      final tempDir =
+          Directory.systemTemp.createTempSync('clay_preview_partials_missing_');
+      tempDir.deleteSync();
+
+      expect(loadPreviewPartials(tempDir), isEmpty);
+    });
+
     test('loads partial files created during transformation', () {
       final tempDir =
           Directory.systemTemp.createTempSync('clay_preview_partials_');
@@ -255,6 +263,36 @@ class App extends Widget {
           cwd: tempDir.path,
         ),
         throwsA(isA<PreviewException>()),
+      );
+    });
+
+    test('wraps path replacement failures as PreviewException', () async {
+      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
+{
+  "reference": "reference",
+  "target": "target",
+  "replacements": [
+    {
+      "from": "widget.dart",
+      "to": "/outside/widget.dart"
+    }
+  ]
+}
+''');
+
+      await expectLater(
+        runPreview(
+          filePath: 'widget.dart',
+          templateOnly: false,
+          cwd: tempDir.path,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path replacement produced an absolute path'),
+          ),
+        ),
       );
     });
   });
