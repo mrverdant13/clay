@@ -1,6 +1,5 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
-import 'package:clay_cli/src/commands/gen_command.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -47,6 +46,9 @@ class ClayCommandRunner extends CommandRunner<int> {
 
   /// Option name for `--cwd`.
   static const cwdOptionName = 'cwd';
+
+  /// Subcommand name used when `clay` is invoked without an explicit command.
+  static const defaultCommandName = 'gen';
 
   /// The logger for the command runner.
   final Logger logger;
@@ -121,7 +123,7 @@ class ClayCommandRunner extends CommandRunner<int> {
       args.addAll(['--$cwdOptionName', workingDirectory]);
     }
     return args
-      ..add(GenCommand.commandName)
+      ..add(defaultCommandName)
       ..addAll(topLevelResults.rest);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:clay_cli/src/commands/clay_command.dart';
+import 'package:clay_cli/src/commands/clay_command_runner.dart';
 import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/run_gen.dart';
@@ -12,7 +13,7 @@ class GenCommand extends ClayCommand {
   GenCommand();
 
   /// The command name for `clay gen`.
-  static const commandName = 'gen';
+  static const commandName = ClayCommandRunner.defaultCommandName;
 
   @override
   String get name => commandName;
