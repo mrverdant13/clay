@@ -109,29 +109,52 @@ void main() {
       }
     });
 
-    test('applies chained path renames without clobbering sources', () async {
-      File(p.join(referenceDir.path, 'alpha.txt')).writeAsStringSync('alpha\n');
-      File(p.join(referenceDir.path, 'beta.txt')).writeAsStringSync('beta\n');
+    test('applies sequential path renames across directory and file segments',
+        () async {
+      File(p.join(referenceDir.path, 'reference', 'lib', 'main.dart'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('main\n');
 
       await generateTemplate(
         config: BrickGenConfig(
           replacements: [
-            Replacement(from: RegExp(r'^alpha\.txt$'), to: 'beta.txt'),
-            Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
+            Replacement(from: RegExp('reference/'), to: 'template/'),
+            Replacement(from: RegExp(r'\.dart$'), to: '.mustache'),
           ],
         ),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
 
-      expect(File(p.join(targetDir.path, 'alpha.txt')).existsSync(), isFalse);
-      expect(
-        File(p.join(targetDir.path, 'beta.txt')).readAsStringSync(),
-        'alpha\n',
+      final outputFile = File(
+        p.join(targetDir.path, 'template', 'lib', 'main.mustache'),
       );
+      expect(outputFile.existsSync(), isTrue);
+      expect(outputFile.readAsStringSync(), 'main\n');
+    });
+
+    test('throws when sequential path renames collide', () async {
+      File(p.join(referenceDir.path, 'alpha.txt')).writeAsStringSync('alpha\n');
+      File(p.join(referenceDir.path, 'beta.txt')).writeAsStringSync('beta\n');
+
       expect(
-        File(p.join(targetDir.path, 'gamma.txt')).readAsStringSync(),
-        'beta\n',
+        () => generateTemplate(
+          config: BrickGenConfig(
+            replacements: [
+              Replacement(from: RegExp(r'^alpha\.txt$'), to: 'beta.txt'),
+              Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
+            ],
+          ),
+          referencePath: referenceDir.path,
+          targetPath: targetDir.path,
+        ),
+        throwsA(
+          isA<GenerationException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path replacement collision'),
+          ),
+        ),
       );
     });
 

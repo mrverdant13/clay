@@ -72,7 +72,7 @@ void main() {
       );
     });
 
-    test('applies only the first matching path replacement', () {
+    test('applies replacements sequentially to the target-relative path', () {
       expect(
         resolveTargetFilePath(
           absolutePath: p.join(targetRoot, 'alpha.txt'),
@@ -82,7 +82,22 @@ void main() {
             Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
           ],
         ),
-        p.join(targetRoot, 'beta.txt'),
+        p.join(targetRoot, 'gamma.txt'),
+      );
+    });
+
+    test('applies multiple replacements across directory and file segments',
+        () {
+      expect(
+        resolveTargetFilePath(
+          absolutePath: p.join(targetRoot, 'reference', 'lib', 'main.dart'),
+          targetAbsolutePath: targetRoot,
+          replacements: [
+            Replacement(from: RegExp('reference/'), to: 'template/'),
+            Replacement(from: RegExp(r'\.dart$'), to: '.mustache'),
+          ],
+        ),
+        p.join(targetRoot, 'template', 'lib', 'main.mustache'),
       );
     });
 
