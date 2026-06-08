@@ -58,7 +58,7 @@ void main() {
         logger: logger,
       );
 
-      final exitCode = await runner.run(const ['--verbose']);
+      final exitCode = await runner.run(const ['--verbose', '--version']);
       expect(exitCode, ExitCode.success.code);
       verify(() => logger.level = Level.verbose).called(1);
     });
@@ -94,12 +94,13 @@ void main() {
     test('usage documents global flags', () {
       final runner = ClayCommandRunner(
         logger: logger,
-      );
+      )..addCommand(GenCommand());
 
       expect(runner.usage, contains('--config'));
       expect(runner.usage, contains('--cwd'));
       expect(runner.usage, contains('verbose'));
       expect(runner.usage, contains('--version'));
+      expect(runner.usage, contains('gen'));
     });
 
     test('--version prints package version and exits successfully', () async {

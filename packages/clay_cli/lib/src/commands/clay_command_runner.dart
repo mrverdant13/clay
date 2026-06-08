@@ -47,6 +47,9 @@ class ClayCommandRunner extends CommandRunner<int> {
   /// Option name for `--cwd`.
   static const cwdOptionName = 'cwd';
 
+  /// Subcommand name used when `clay` is invoked without an explicit command.
+  static const defaultCommandName = 'gen';
+
   /// The logger for the command runner.
   final Logger logger;
 
@@ -95,6 +98,32 @@ class ClayCommandRunner extends CommandRunner<int> {
       return ExitCode.success.code;
     }
 
+    if (topLevelResults.command == null) {
+      if (topLevelResults.flag('help') || topLevelResults.rest.isNotEmpty) {
+        return super.runCommand(topLevelResults);
+      }
+
+      return runCommand(parse(_defaultGenInvocation(topLevelResults)));
+    }
+
     return super.runCommand(topLevelResults);
+  }
+
+  List<String> _defaultGenInvocation(ArgResults topLevelResults) {
+    final args = <String>[];
+    if (topLevelResults[verboseOptionName] == true) {
+      args.add('--$verboseOptionName');
+    }
+    final config = topLevelResults.option(configOptionName);
+    if (config != null) {
+      args.addAll(['--$configOptionName', config]);
+    }
+    final workingDirectory = topLevelResults.option(cwdOptionName);
+    if (workingDirectory != null) {
+      args.addAll(['--$cwdOptionName', workingDirectory]);
+    }
+    return args
+      ..add(defaultCommandName)
+      ..addAll(topLevelResults.rest);
   }
 }

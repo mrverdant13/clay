@@ -60,6 +60,7 @@ Future<void> processCopiedTargetEntities({
   required List<FileSystemEntity> targetEntities,
   required String normalizedTargetPath,
   required BrickGenConfig config,
+  void Function(String relativePath)? onIgnoredFile,
 }) async {
   final normalizedTarget = p.normalize(p.absolute(normalizedTargetPath));
   final resolvedPaths = <String, String>{};
@@ -84,6 +85,7 @@ Future<void> processCopiedTargetEntities({
       entity: entity,
       normalizedTarget: normalizedTarget,
       patterns: config.ignore,
+      onIgnoredFile: onIgnoredFile,
     );
   }
 
@@ -180,6 +182,7 @@ Future<void> _deleteTargetEntityWhenIgnored({
   required FileSystemEntity entity,
   required String normalizedTarget,
   required List<String> patterns,
+  void Function(String relativePath)? onIgnoredFile,
 }) async {
   final normalizedEntityPath = p.normalize(p.absolute(entity.path));
   if (!_shouldIgnoreEntity(
@@ -189,6 +192,12 @@ Future<void> _deleteTargetEntityWhenIgnored({
   )) {
     return;
   }
+
+  onIgnoredFile?.call(
+    normalizeIgnoreRelativePath(
+      p.relative(normalizedEntityPath, from: normalizedTarget),
+    ),
+  );
 
   await _deleteEntityAndPruneParents(
     entity: entity,
