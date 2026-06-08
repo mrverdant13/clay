@@ -13,7 +13,7 @@ class GenCommand extends ClayCommand {
   GenCommand();
 
   /// The command name for `clay gen`.
-  static const commandName = ClayCommandRunner.defaultCommandName;
+  static const String commandName = ClayCommandRunner.defaultCommandName;
 
   @override
   String get name => commandName;
