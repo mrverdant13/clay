@@ -94,13 +94,16 @@ void main() {
     test('usage documents global flags', () {
       final runner = ClayCommandRunner(
         logger: logger,
-      )..addCommand(GenCommand());
+      )
+        ..addCommand(GenCommand())
+        ..addCommand(ValidateCommand());
 
       expect(runner.usage, contains('--config'));
       expect(runner.usage, contains('--cwd'));
       expect(runner.usage, contains('verbose'));
       expect(runner.usage, contains('--version'));
       expect(runner.usage, contains('gen'));
+      expect(runner.usage, contains('validate'));
     });
 
     test('--version prints package version and exits successfully', () async {
