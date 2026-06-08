@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:meta/meta.dart';
 import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
 import 'package:clay_cli/src/features/generation/prune_empty_directories.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';
@@ -150,7 +151,7 @@ Future<void> _deleteIgnoredDestinationIfPresent({
     return;
   }
 
-  final destination = _entityAtPath(resolvedPath);
+  final destination = entityAtPath(resolvedPath);
   if (destination == null) {
     return;
   }
@@ -161,8 +162,14 @@ Future<void> _deleteIgnoredDestinationIfPresent({
   );
 }
 
-FileSystemEntity? _entityAtPath(String path) {
-  return switch (FileSystemEntity.typeSync(path)) {
+/// Returns the [FileSystemEntity] at [path], or `null` when it does not exist.
+@visibleForTesting
+FileSystemEntity? entityAtPath(
+  String path, {
+  FileSystemEntityType Function(String path)? resolveType,
+}) {
+  final type = (resolveType ?? FileSystemEntity.typeSync)(path);
+  return switch (type) {
     FileSystemEntityType.file => File(path),
     FileSystemEntityType.link => Link(path),
     FileSystemEntityType.directory => Directory(path),
@@ -185,12 +192,8 @@ Future<void> _resolveTargetFileContents({
     return;
   }
 
-  late final String content;
-  try {
-    content = await file.readAsString();
-  } on FileSystemException {
-    return;
-  } on FormatException {
+  final content = await readFileTextOrNull(file);
+  if (content == null) {
     return;
   }
   final resolvedContent = resolveReferenceContent(
@@ -200,4 +203,19 @@ Future<void> _resolveTargetFileContents({
     config: config,
   );
   await file.writeAsString(resolvedContent);
+}
+
+/// Reads [file] as text, returning `null` when decoding or I/O fails.
+@visibleForTesting
+Future<String?> readFileTextOrNull(
+  File file, {
+  Future<String> Function(File file)? readContent,
+}) async {
+  try {
+    return await (readContent ?? (file) => file.readAsString())(file);
+  } on FileSystemException {
+    return null;
+  } on FormatException {
+    return null;
+  }
 }

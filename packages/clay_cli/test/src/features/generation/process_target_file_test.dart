@@ -141,6 +141,30 @@ void main() {
       );
     });
 
+    test('renames files over ignored directory destinations', () async {
+      Directory(p.join(targetDir.path, 'build'))..createSync();
+      final sourceFile = File(p.join(targetDir.path, 'from.txt'))
+        ..createSync()
+        ..writeAsStringSync('source');
+
+      await processTargetFile(
+        file: sourceFile,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [
+            Replacement(from: RegExp(r'^from\.txt$'), to: 'build'),
+          ],
+          ignore: const ['build/'],
+        ),
+      );
+
+      expect(sourceFile.existsSync(), isFalse);
+      expect(
+        File(p.join(targetDir.path, 'build')).readAsStringSync(),
+        'source',
+      );
+    });
+
     test('renames files into nested directories', () async {
       final originalFile = File(p.join(targetDir.path, 'flat.txt'))
         ..createSync()
@@ -208,6 +232,68 @@ void main() {
       );
 
       expect(file.readAsBytesSync(), bytes);
+    });
+  });
+
+  group('entityAtPath', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('clay_entity_at_path_');
+    });
+
+    tearDown(() {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('returns a link when resolveType reports a link', () {
+      final path = p.join(tempDir.path, 'link.txt');
+
+      final entity = entityAtPath(
+        path,
+        resolveType: (_) => FileSystemEntityType.link,
+      );
+
+      expect(entity, isA<Link>());
+      expect(entity!.path, path);
+    });
+
+    test('returns null when resolveType reports an unknown type', () {
+      expect(
+        entityAtPath(
+          p.join(tempDir.path, 'missing.txt'),
+          resolveType: (_) => FileSystemEntityType.notFound,
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('readFileTextOrNull', () {
+    late Directory tempDir;
+
+    setUp(() {
+      tempDir = Directory.systemTemp.createTempSync('clay_read_file_text_');
+    });
+
+    tearDown(() {
+      if (tempDir.existsSync()) {
+        tempDir.deleteSync(recursive: true);
+      }
+    });
+
+    test('returns null when readContent throws FormatException', () async {
+      final file = File(p.join(tempDir.path, 'notes.txt'))..createSync();
+
+      expect(
+        await readFileTextOrNull(
+          file,
+          readContent: (_) async => throw const FormatException('invalid'),
+        ),
+        isNull,
+      );
     });
   });
 }
