@@ -27,5 +27,5 @@ bool isFilesystemRoot(
   if (onWindows) {
     return RegExp(r'^[A-Za-z]:[/\\]?$').hasMatch(normalizedAbsolutePath);
   }
-  return normalizedAbsolutePath == p.separator;
+  return normalizedAbsolutePath == p.posix.separator;
 }
