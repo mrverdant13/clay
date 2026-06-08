@@ -51,7 +51,8 @@ String applyInsertBlocks({required String content}) {
       final insertion = match.namedGroup('insertion') ?? '';
       final lines = LineSplitter.split(insertion);
       return lines.map((line) {
-        final lineMatch = lineRegex.firstMatch(line);
+        final trimmedLine = line.trim();
+        final lineMatch = lineRegex.firstMatch(trimmedLine);
         if (lineMatch == null) {
           throw FormatException(
             'Invalid insert-block line for $flavorLabel: '

@@ -32,6 +32,37 @@ line6
       expect(result, expected);
     });
 
+    test('trims leading and trailing whitespace from comment lines', () {
+      const input = '''
+line/*insert-start*/
+              // const foo
+// bar
+              // baz
+/*insert-end*/
+#insert-start#
+    # line4
+# line5
+#insert-end#
+<!--insert-start-->
+    <!-- line a-->
+<!-- line b-->
+<!--insert-end-->
+''';
+      const expected = '''
+lineconst foo
+bar
+baz
+line4
+line5
+line a
+line b
+''';
+
+      final result = applyInsertBlocks(content: input);
+
+      expect(result, expected);
+    });
+
     test('resolves HTML comment insert blocks', () {
       const input = '''
 before
