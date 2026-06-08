@@ -39,20 +39,3 @@ String applyReplacements({
     ),
   );
 }
-
-/// Applies the first [replacements] entry that changes [input].
-String applyFirstPathReplacement({
-  required String input,
-  required List<Replacement> replacements,
-}) {
-  for (final replacement in replacements) {
-    final resolved = applyReplacement(
-      input: input,
-      replacement: replacement,
-    );
-    if (resolved != input) {
-      return resolved;
-    }
-  }
-  return input;
-}
