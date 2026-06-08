@@ -1,0 +1,57 @@
+import 'package:clay_cli/src/commands/clay_command.dart';
+import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
+import 'package:clay_cli/src/features/validation/run_validate.dart';
+import 'package:clay_cli/src/features/validation/validation_exception.dart';
+import 'package:mason_logger/mason_logger.dart';
+
+/// {@template clay_cli.validate_command}
+/// Validates annotation markers in the reference project.
+/// {@endtemplate}
+class ValidateCommand extends ClayCommand {
+  /// {@macro clay_cli.validate_command}
+  ValidateCommand();
+
+  /// The command name for `clay validate`.
+  static const String commandName = 'validate';
+
+  @override
+  String get name => commandName;
+
+  @override
+  String get description =>
+      'Validate annotation markers in the reference project.';
+
+  @override
+  Future<int> run() async {
+    try {
+      final result = await runValidate(
+        configPath: configPath,
+        cwd: cwd,
+        referenceOverride: referenceOverride,
+      );
+
+      if (logger.level == Level.verbose) {
+        logger
+          ..detail('Config: ${result.configPath}')
+          ..detail('Project root: ${result.projectRoot}')
+          ..detail('Reference: ${result.referencePath}');
+      }
+
+      if (result.issues.isEmpty) {
+        return ExitCode.success.code;
+      }
+
+      formatValidateIssues(result.issues).forEach(logger.err);
+      return validationIssuesExitCode;
+    } on BrickGenConfigNotFoundException catch (error) {
+      logger.err(error.toString());
+      return ExitCode.software.code;
+    } on BrickGenConfigException catch (error) {
+      logger.err(error.message);
+      return ExitCode.software.code;
+    } on ValidationException catch (error) {
+      logger.err(error.message);
+      return ExitCode.software.code;
+    }
+  }
+}
