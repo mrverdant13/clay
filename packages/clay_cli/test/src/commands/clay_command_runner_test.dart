@@ -63,6 +63,39 @@ void main() {
       verify(() => logger.level = Level.verbose).called(1);
     });
 
+    test('parseArguments reads --config and --cwd global options', () {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      )..addCommand(
+          FakeCommand(
+            run: () async {},
+          ),
+        );
+
+      final results = runner.parseArguments(const [
+        '--config',
+        'brick-gen.json',
+        '--cwd',
+        '/tmp/project',
+        'fake-command',
+      ]);
+
+      expect(results.option(ClayCommandRunner.configOptionName), 'brick-gen.json');
+      expect(results.option(ClayCommandRunner.cwdOptionName), '/tmp/project');
+      expect(results.command?.name, 'fake-command');
+    });
+
+    test('usage documents global flags', () {
+      final runner = ClayCommandRunner(
+        logger: logger,
+      );
+
+      expect(runner.usage, contains('--config'));
+      expect(runner.usage, contains('--cwd'));
+      expect(runner.usage, contains('verbose'));
+      expect(runner.usage, contains('--version'));
+    });
+
     test('--version prints package version and exits successfully', () async {
       final runner = ClayCommandRunner(
         logger: logger,
