@@ -39,6 +39,8 @@ Future<void> processTargetFile({
     entity: file,
     normalizedEntityPath: normalizedFilePath,
     resolvedPath: resolvedPath,
+    normalizedTarget: normalizedTarget,
+    ignorePatterns: config.ignore,
   );
 
   await _resolveTargetFileContents(
@@ -79,6 +81,8 @@ Future<void> processTargetLink({
     entity: link,
     normalizedEntityPath: normalizedLinkPath,
     resolvedPath: resolvedPath,
+    normalizedTarget: normalizedTarget,
+    ignorePatterns: config.ignore,
   );
 }
 
@@ -112,15 +116,58 @@ Future<T> _renameEntity<T extends FileSystemEntity>({
   required T entity,
   required String normalizedEntityPath,
   required String resolvedPath,
+  required String normalizedTarget,
+  required List<String> ignorePatterns,
 }) async {
   if (p.equals(resolvedPath, normalizedEntityPath)) {
     return entity;
   }
+
+  await _deleteIgnoredDestinationIfPresent(
+    resolvedPath: resolvedPath,
+    normalizedTarget: normalizedTarget,
+    ignorePatterns: ignorePatterns,
+  );
+
   final dir = Directory(p.dirname(resolvedPath));
   if (!dir.existsSync()) {
     await dir.create(recursive: true);
   }
   return await entity.rename(resolvedPath) as T;
+}
+
+Future<void> _deleteIgnoredDestinationIfPresent({
+  required String resolvedPath,
+  required String normalizedTarget,
+  required List<String> ignorePatterns,
+}) async {
+  final normalizedResolvedPath = p.normalize(p.absolute(resolvedPath));
+  if (!_shouldIgnoreEntity(
+    normalizedTarget: normalizedTarget,
+    normalizedEntityPath: normalizedResolvedPath,
+    patterns: ignorePatterns,
+  )) {
+    return;
+  }
+
+  final destination = _entityAtPath(resolvedPath);
+  if (destination == null) {
+    return;
+  }
+
+  await _deleteEntityAndPruneParents(
+    entity: destination,
+    normalizedTarget: normalizedTarget,
+  );
+}
+
+FileSystemEntity? _entityAtPath(String path) {
+  return switch (FileSystemEntity.typeSync(path)) {
+    FileSystemEntityType.file => File(path),
+    FileSystemEntityType.link => Link(path),
+    FileSystemEntityType.directory => Directory(path),
+    _ => null,
+  };
 }
 
 Future<void> _resolveTargetFileContents({

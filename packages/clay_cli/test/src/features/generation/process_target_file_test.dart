@@ -75,6 +75,31 @@ void main() {
       expect(renamedLink.targetSync(), externalFile.path);
     });
 
+    test('renames symlinks over ignored destinations', () async {
+      final externalFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      final otherExternal = File(p.join(tempDir.path, 'other.txt'))
+        ..writeAsStringSync('other');
+      Link(p.join(targetDir.path, 'to_link.txt'))
+        ..createSync(otherExternal.path);
+      final sourceLink = Link(p.join(targetDir.path, 'from_link.txt'))
+        ..createSync(externalFile.path);
+
+      await processTargetLink(
+        link: sourceLink,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+          ignore: const ['to_link.txt'],
+        ),
+      );
+
+      expect(sourceLink.existsSync(), isFalse);
+      final renamedLink = Link(p.join(targetDir.path, 'to_link.txt'));
+      expect(renamedLink.existsSync(), isTrue);
+      expect(renamedLink.targetSync(), externalFile.path);
+    });
+
     test('renames files using replacements', () async {
       final originalFile = File(p.join(targetDir.path, 'from.txt'))
         ..createSync()
@@ -90,6 +115,30 @@ void main() {
 
       expect(originalFile.existsSync(), isFalse);
       expect(File(p.join(targetDir.path, 'to.txt')).existsSync(), isTrue);
+    });
+
+    test('renames files over ignored destinations', () async {
+      File(p.join(targetDir.path, 'to.txt'))
+        ..createSync()
+        ..writeAsStringSync('ignored');
+      final sourceFile = File(p.join(targetDir.path, 'from.txt'))
+        ..createSync()
+        ..writeAsStringSync('source');
+
+      await processTargetFile(
+        file: sourceFile,
+        targetAbsolutePath: targetDir.path,
+        config: BrickGenConfig(
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+          ignore: const ['to.txt'],
+        ),
+      );
+
+      expect(sourceFile.existsSync(), isFalse);
+      expect(
+        File(p.join(targetDir.path, 'to.txt')).readAsStringSync(),
+        'source',
+      );
     });
 
     test('renames files into nested directories', () async {
