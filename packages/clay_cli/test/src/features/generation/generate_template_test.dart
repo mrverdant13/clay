@@ -109,7 +109,8 @@ void main() {
       }
     });
 
-    test('applies sequential path renames across directory and file segments', () async {
+    test('applies sequential path renames across directory and file segments',
+        () async {
       File(p.join(referenceDir.path, 'reference', 'lib', 'main.dart'))
         ..createSync(recursive: true)
         ..writeAsStringSync('main\n');

@@ -86,7 +86,8 @@ void main() {
       );
     });
 
-    test('applies multiple replacements across directory and file segments', () {
+    test('applies multiple replacements across directory and file segments',
+        () {
       expect(
         resolveTargetFilePath(
           absolutePath: p.join(targetRoot, 'reference', 'lib', 'main.dart'),
