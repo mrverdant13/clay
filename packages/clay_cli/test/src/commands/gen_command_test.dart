@@ -77,6 +77,31 @@ void main() {
       verify(() => logger.info('Files: 1')).called(1);
     });
 
+    test(
+      'runs as the default command with global --verbose and --config',
+      () async {
+        when(() => logger.level).thenReturn(Level.verbose);
+
+        final exitCode = await clay(
+          args: [
+            '--verbose',
+            '--config',
+            'brick-gen.json',
+            '--cwd',
+            tempDir.path,
+          ],
+          logger: logger,
+        );
+
+        expect(exitCode, ExitCode.success.code);
+        verify(
+          () => logger.detail(
+            'Config: ${p.normalize(p.join(tempDir.path, 'brick-gen.json'))}',
+          ),
+        ).called(1);
+      },
+    );
+
     test('logs excluded files when verbose', () async {
       File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
 {
@@ -98,6 +123,22 @@ void main() {
 
       expect(exitCode, ExitCode.success.code);
       verify(() => logger.detail('Excluded: build/output.txt')).called(1);
+    });
+
+    test('returns a non-zero exit code when config is invalid', () async {
+      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
+        '{invalid',
+      );
+
+      final exitCode = await clay(
+        args: ['gen', '--cwd', tempDir.path],
+        logger: logger,
+      );
+
+      expect(exitCode, ExitCode.software.code);
+      verify(
+        () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+      ).called(1);
     });
 
     test('returns a non-zero exit code when config is missing', () async {

@@ -18,8 +18,7 @@ class GenCommand extends ClayCommand {
   String get name => commandName;
 
   @override
-  String get description =>
-      'Generate the template from the reference project.';
+  String get description => 'Generate the template from the reference project.';
 
   @override
   Future<int> run() async {
