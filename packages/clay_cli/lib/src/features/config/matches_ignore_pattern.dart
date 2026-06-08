@@ -3,7 +3,7 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 /// Normalizes [relativePath] to a POSIX-style path relative to a scan root.
-@visibleForTesting
+@internal
 String normalizeIgnoreRelativePath(String relativePath) {
   final normalized = relativePath.replaceAll(r'\', '/');
   final segments = p.posix.split(p.posix.normalize(normalized));

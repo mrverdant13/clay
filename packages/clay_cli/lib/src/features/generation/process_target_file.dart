@@ -55,7 +55,7 @@ Future<void> processTargetFile({
 
 /// Applies ignore rules, staged path renames, and content transforms to
 /// copied entries.
-@visibleForTesting
+@internal
 Future<void> processCopiedTargetEntities({
   required List<FileSystemEntity> targetEntities,
   required String normalizedTargetPath,
