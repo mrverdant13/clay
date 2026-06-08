@@ -19,6 +19,21 @@ void main() {
       );
     });
 
+    test('applies POSIX-style replacements to backslash relative paths', () {
+      final windowsStylePath = p
+          .join(targetRoot, 'from', 'file.txt')
+          .replaceAll('/', r'\');
+
+      expect(
+        resolveTargetFilePath(
+          absolutePath: windowsStylePath,
+          targetAbsolutePath: targetRoot,
+          replacements: [Replacement(from: RegExp('from'), to: 'to')],
+        ),
+        p.join(targetRoot, 'to', 'file.txt'),
+      );
+    });
+
     test('applies replacements to the target-relative path', () {
       expect(
         resolveTargetFilePath(

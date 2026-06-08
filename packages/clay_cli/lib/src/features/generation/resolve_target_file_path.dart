@@ -1,4 +1,5 @@
 import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/transforms/apply_replacements.dart';
 import 'package:path/path.dart' as p;
@@ -11,23 +12,28 @@ String resolveTargetFilePath({
 }) {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedAbsolutePath = p.normalize(p.absolute(absolutePath));
-  final relativePath = p.relative(
-    normalizedAbsolutePath,
-    from: normalizedTarget,
+  final relativePath = normalizeIgnoreRelativePath(
+    p.relative(
+      normalizedAbsolutePath,
+      from: normalizedTarget,
+    ),
   );
   final resolvedRelativePath = applyReplacements(
     input: relativePath,
     replacements: replacements,
   );
 
-  if (p.isAbsolute(resolvedRelativePath)) {
+  if (p.posix.isAbsolute(resolvedRelativePath)) {
     throw GenerationException(
       'Path replacement produced an absolute path ($resolvedRelativePath).',
     );
   }
 
   final resolvedPath = p.normalize(
-    p.join(normalizedTarget, resolvedRelativePath),
+    p.join(
+      normalizedTarget,
+      resolvedRelativePath.replaceAll('/', p.separator),
+    ),
   );
 
   if (!p.isWithin(normalizedTarget, resolvedPath)) {
