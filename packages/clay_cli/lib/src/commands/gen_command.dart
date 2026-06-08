@@ -40,9 +40,7 @@ class GenCommand extends ClayCommand {
           ..detail('Project root: ${result.projectRoot}');
       }
 
-      for (final line in formatGenRunSummary(result)) {
-        logger.info(line);
-      }
+      formatGenRunSummary(result).forEach(logger.info);
 
       return ExitCode.success.code;
     } on BrickGenConfigNotFoundException catch (error) {

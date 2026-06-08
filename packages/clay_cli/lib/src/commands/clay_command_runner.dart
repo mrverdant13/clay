@@ -120,8 +120,8 @@ class ClayCommandRunner extends CommandRunner<int> {
     if (workingDirectory != null) {
       args.addAll(['--$cwdOptionName', workingDirectory]);
     }
-    args.add(GenCommand.commandName);
-    args.addAll(topLevelResults.rest);
-    return args;
+    return args
+      ..add(GenCommand.commandName)
+      ..addAll(topLevelResults.rest);
   }
 }

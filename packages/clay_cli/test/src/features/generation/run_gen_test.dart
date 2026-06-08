@@ -66,7 +66,9 @@ void main() {
     });
 
     test('throws when config cannot be discovered', () async {
-      final emptyDir = Directory.systemTemp.createTempSync('clay_run_gen_empty_');
+      final emptyDir = Directory.systemTemp.createTempSync(
+        'clay_run_gen_empty_',
+      );
       try {
         await expectLater(
           runGen(cwd: emptyDir.path),

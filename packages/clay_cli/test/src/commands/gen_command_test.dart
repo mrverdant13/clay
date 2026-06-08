@@ -109,7 +109,9 @@ void main() {
         );
 
         expect(exitCode, ExitCode.software.code);
-        verify(() => logger.err(any(that: contains('brick-gen.json')))).called(1);
+        verify(
+          () => logger.err(any(that: contains('brick-gen.json'))),
+        ).called(1);
       } finally {
         emptyDir.deleteSync(recursive: true);
       }

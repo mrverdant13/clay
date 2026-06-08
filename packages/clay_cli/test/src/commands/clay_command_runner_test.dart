@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/clay_cli.dart';
-import 'package:clay_cli/src/commands/gen_command.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
