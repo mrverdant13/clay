@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
 import 'package:clay_cli/src/features/generation/assert_distinct_reference_and_target_paths.dart';
 import 'package:clay_cli/src/features/generation/assert_safe_target_path.dart';
-import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.dart';
 import 'package:clay_cli/src/features/generation/copy_directory.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 /// Copies [referencePath] to [targetPath] and applies [config] transforms.
@@ -56,40 +54,4 @@ Future<void> generateTemplate({
     normalizedTargetPath: normalizedTargetPath,
     config: config,
   );
-}
-
-/// Applies ignore rules, path renames, and content transforms to copied
-/// entries.
-@visibleForTesting
-Future<void> processCopiedTargetEntities({
-  required List<FileSystemEntity> targetEntities,
-  required String normalizedTargetPath,
-  required BrickGenConfig config,
-}) async {
-  final resolvedPaths = <String, String>{};
-  for (final entity in targetEntities) {
-    registerResolvedPath(
-      resolvedPaths: resolvedPaths,
-      entityPath: entity.path,
-      targetAbsolutePath: normalizedTargetPath,
-      config: config,
-    );
-
-    switch (entity) {
-      case final File file:
-        await processTargetFile(
-          file: file,
-          targetAbsolutePath: normalizedTargetPath,
-          config: config,
-        );
-      case final Link link:
-        await processTargetLink(
-          link: link,
-          targetAbsolutePath: normalizedTargetPath,
-          config: config,
-        );
-      default:
-        throw StateError('Unexpected entity type: ${entity.runtimeType}');
-    }
-  }
 }

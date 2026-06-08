@@ -4,6 +4,7 @@ import 'package:clay_cli/src/entities/brick_gen_config.dart';
 import 'package:clay_cli/src/entities/replacement.dart';
 import 'package:clay_cli/src/features/generation/generate_template.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
+import 'package:clay_cli/src/features/generation/process_target_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
@@ -106,6 +107,32 @@ void main() {
       } finally {
         Directory.current = previousWorkingDirectory;
       }
+    });
+
+    test('applies chained path renames without clobbering sources', () async {
+      File(p.join(referenceDir.path, 'alpha.txt')).writeAsStringSync('alpha\n');
+      File(p.join(referenceDir.path, 'beta.txt')).writeAsStringSync('beta\n');
+
+      await generateTemplate(
+        config: BrickGenConfig(
+          replacements: [
+            Replacement(from: RegExp(r'^alpha\.txt$'), to: 'beta.txt'),
+            Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
+          ],
+        ),
+        referencePath: referenceDir.path,
+        targetPath: targetDir.path,
+      );
+
+      expect(File(p.join(targetDir.path, 'alpha.txt')).existsSync(), isFalse);
+      expect(
+        File(p.join(targetDir.path, 'beta.txt')).readAsStringSync(),
+        'alpha\n',
+      );
+      expect(
+        File(p.join(targetDir.path, 'gamma.txt')).readAsStringSync(),
+        'beta\n',
+      );
     });
 
     test('applies path renames and content transforms', () async {

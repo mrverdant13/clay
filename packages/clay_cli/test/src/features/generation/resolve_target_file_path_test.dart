@@ -20,13 +20,9 @@ void main() {
     });
 
     test('applies POSIX-style replacements to backslash relative paths', () {
-      final windowsStylePath = p
-          .join(targetRoot, 'from', 'file.txt')
-          .replaceAll('/', r'\');
-
       expect(
         resolveTargetFilePath(
-          absolutePath: windowsStylePath,
+          absolutePath: p.join(targetRoot, r'from\file.txt'),
           targetAbsolutePath: targetRoot,
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
         ),
@@ -72,6 +68,20 @@ void main() {
           ],
         ),
         throwsA(isA<GenerationException>()),
+      );
+    });
+
+    test('applies only the first matching path replacement', () {
+      expect(
+        resolveTargetFilePath(
+          absolutePath: p.join(targetRoot, 'alpha.txt'),
+          targetAbsolutePath: targetRoot,
+          replacements: [
+            Replacement(from: RegExp(r'^alpha\.txt$'), to: 'beta.txt'),
+            Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
+          ],
+        ),
+        p.join(targetRoot, 'beta.txt'),
       );
     });
 

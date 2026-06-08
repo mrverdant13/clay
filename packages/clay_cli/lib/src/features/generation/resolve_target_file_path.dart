@@ -18,7 +18,7 @@ String resolveTargetFilePath({
       from: normalizedTarget,
     ),
   );
-  final resolvedRelativePath = applyReplacements(
+  final resolvedRelativePath = applyFirstPathReplacement(
     input: relativePath,
     replacements: replacements,
   );

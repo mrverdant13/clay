@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:clay_cli/src/entities/brick_gen_config.dart';
 import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart'
     show normalizeIgnoreRelativePath, shouldIgnoreAtRoot;
+import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.dart';
 import 'package:clay_cli/src/features/generation/prune_empty_directories.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';
 import 'package:clay_cli/src/features/transforms/resolve_reference_content.dart';
@@ -49,6 +50,149 @@ Future<void> processTargetFile({
     file: resultingFile,
     targetAbsolutePath: normalizedTarget,
     config: config,
+  );
+}
+
+/// Applies ignore rules, staged path renames, and content transforms to
+/// copied entries.
+@visibleForTesting
+Future<void> processCopiedTargetEntities({
+  required List<FileSystemEntity> targetEntities,
+  required String normalizedTargetPath,
+  required BrickGenConfig config,
+}) async {
+  final normalizedTarget = p.normalize(p.absolute(normalizedTargetPath));
+  final resolvedPaths = <String, String>{};
+
+  for (final entity in targetEntities) {
+    if (entity is! File && entity is! Link) {
+      throw StateError('Unexpected entity type: ${entity.runtimeType}');
+    }
+  }
+
+  for (final entity in targetEntities) {
+    registerResolvedPath(
+      resolvedPaths: resolvedPaths,
+      entityPath: entity.path,
+      targetAbsolutePath: normalizedTarget,
+      config: config,
+    );
+  }
+
+  for (final entity in targetEntities) {
+    await _deleteTargetEntityWhenIgnored(
+      entity: entity,
+      normalizedTarget: normalizedTarget,
+      patterns: config.ignore,
+    );
+  }
+
+  final renamePlan = <FileSystemEntity, String>{};
+  for (final entity in targetEntities) {
+    if (!entity.existsSync()) {
+      continue;
+    }
+
+    final normalizedEntityPath = p.normalize(p.absolute(entity.path));
+    if (_shouldIgnoreEntity(
+      normalizedTarget: normalizedTarget,
+      normalizedEntityPath: normalizedEntityPath,
+      patterns: config.ignore,
+    )) {
+      continue;
+    }
+
+    renamePlan[entity] = resolveTargetFilePath(
+      absolutePath: normalizedEntityPath,
+      targetAbsolutePath: normalizedTarget,
+      replacements: config.replacements,
+    );
+  }
+
+  final stagedPaths = <String, String>{};
+  final stageDir = Directory(p.join(normalizedTarget, '.clay-stage'));
+  var stageIndex = 0;
+
+  for (final entry in renamePlan.entries) {
+    final entity = entry.key;
+    final resolvedPath = entry.value;
+    final normalizedEntityPath = p.normalize(p.absolute(entity.path));
+
+    if (p.equals(resolvedPath, normalizedEntityPath)) {
+      stagedPaths[normalizedEntityPath] = resolvedPath;
+      continue;
+    }
+
+    if (!stageDir.existsSync()) {
+      await stageDir.create(recursive: true);
+    }
+
+    final stagePath = p.join(stageDir.path, '$stageIndex');
+    stageIndex++;
+    await _renameEntity(
+      entity: entity,
+      normalizedEntityPath: normalizedEntityPath,
+      resolvedPath: stagePath,
+      normalizedTarget: normalizedTarget,
+      ignorePatterns: config.ignore,
+    );
+    stagedPaths[stagePath] = resolvedPath;
+  }
+
+  for (final entry in stagedPaths.entries) {
+    final currentPath = entry.key;
+    final finalPath = entry.value;
+    if (p.equals(currentPath, finalPath)) {
+      continue;
+    }
+
+    final entity = entityAtPath(currentPath);
+    if (entity == null) {
+      continue;
+    }
+
+    await _renameEntity(
+      entity: entity,
+      normalizedEntityPath: p.normalize(p.absolute(currentPath)),
+      resolvedPath: finalPath,
+      normalizedTarget: normalizedTarget,
+      ignorePatterns: config.ignore,
+    );
+  }
+
+  if (stageDir.existsSync()) {
+    await stageDir.delete(recursive: true);
+  }
+
+  for (final finalPath in stagedPaths.values.toSet()) {
+    final entity = entityAtPath(finalPath);
+    if (entity is File) {
+      await _resolveTargetFileContents(
+        file: entity,
+        targetAbsolutePath: normalizedTarget,
+        config: config,
+      );
+    }
+  }
+}
+
+Future<void> _deleteTargetEntityWhenIgnored({
+  required FileSystemEntity entity,
+  required String normalizedTarget,
+  required List<String> patterns,
+}) async {
+  final normalizedEntityPath = p.normalize(p.absolute(entity.path));
+  if (!_shouldIgnoreEntity(
+    normalizedTarget: normalizedTarget,
+    normalizedEntityPath: normalizedEntityPath,
+    patterns: patterns,
+  )) {
+    return;
+  }
+
+  await _deleteEntityAndPruneParents(
+    entity: entity,
+    normalizedTarget: normalizedTarget,
   );
 }
 
