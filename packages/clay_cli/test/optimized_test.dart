@@ -39,7 +39,8 @@ import 'src/features/transforms/resolve_reference_content_test.dart' as _i33;
 import 'src/features/transforms/skip_content_transforms_test.dart' as _i34;
 import 'src/features/validation/annotation_validator_test.dart' as _i35;
 import 'src/features/validation/run_validate_test.dart' as _i36;
-import 'src/utils/regex_hook_test.dart' as _i37;
+import 'src/features/validation/validation_exception_test.dart' as _i37;
+import 'src/utils/regex_hook_test.dart' as _i38;
 
 void main() {
   group(
@@ -259,9 +260,15 @@ void main() {
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/features/validation/validation_exception_test.dart',
     () {
       _i37.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i38.main();
     },
   );
 }
