@@ -1,4 +1,5 @@
 import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';
 import 'package:path/path.dart' as p;
@@ -86,7 +87,9 @@ void main() {
     });
 
     test('throws when a replacement escapes the target root', () {
-      final nestedFile = p.join('nested', 'file.txt');
+      final nestedFile = normalizeIgnoreRelativePath(
+        p.join('nested', 'file.txt'),
+      );
       expect(
         () => resolveTargetFilePath(
           absolutePath: p.join(targetRoot, nestedFile),

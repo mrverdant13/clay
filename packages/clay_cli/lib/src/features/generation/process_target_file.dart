@@ -317,7 +317,8 @@ FileSystemEntity? entityAtPath(
   String path, {
   FileSystemEntityType Function(String path)? resolveType,
 }) {
-  final type = (resolveType ?? FileSystemEntity.typeSync)(path);
+  final type = (resolveType ??
+      (path) => FileSystemEntity.typeSync(path, followLinks: false))(path);
   return switch (type) {
     FileSystemEntityType.file => File(path),
     FileSystemEntityType.link => Link(path),

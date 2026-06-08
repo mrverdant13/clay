@@ -321,6 +321,18 @@ void main() {
       expect(entity!.path, path);
     });
 
+    test('returns a link when the path points at an existing file target', () {
+      final targetFile = File(p.join(tempDir.path, 'external.txt'))
+        ..writeAsStringSync('external');
+      final path = p.join(tempDir.path, 'link.txt');
+      Link(path).createSync(targetFile.path);
+
+      final entity = entityAtPath(path);
+
+      expect(entity, isA<Link>());
+      expect(entity!.path, path);
+    });
+
     test('returns null when resolveType reports an unknown type', () {
       expect(
         entityAtPath(
