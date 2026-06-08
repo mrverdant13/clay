@@ -96,6 +96,7 @@ void main() {
         logger: logger,
       )
         ..addCommand(GenCommand())
+        ..addCommand(PreviewCommand())
         ..addCommand(ValidateCommand());
 
       expect(runner.usage, contains('--config'));
@@ -103,6 +104,7 @@ void main() {
       expect(runner.usage, contains('verbose'));
       expect(runner.usage, contains('--version'));
       expect(runner.usage, contains('gen'));
+      expect(runner.usage, contains('preview'));
       expect(runner.usage, contains('validate'));
     });
 
