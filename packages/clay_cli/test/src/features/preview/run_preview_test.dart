@@ -70,7 +70,8 @@ void main() {
 
   group('loadPreviewPartials', () {
     test('loads partial files created during transformation', () {
-      final tempDir = Directory.systemTemp.createTempSync('clay_preview_partials_');
+      final tempDir =
+          Directory.systemTemp.createTempSync('clay_preview_partials_');
       try {
         File(p.join(tempDir.path, '{{~ footer.partial }}'))
           ..createSync(recursive: true)
@@ -80,7 +81,20 @@ void main() {
         expect(
           loadPreviewPartials(tempDir),
           {
-            '{{~ footer.partial }}': [102, 111, 111, 116, 101, 114, 32, 108, 105, 110, 101, 10],
+            '{{~ footer.partial }}': [
+              102,
+              111,
+              111,
+              116,
+              101,
+              114,
+              32,
+              108,
+              105,
+              110,
+              101,
+              10,
+            ],
           },
         );
       } finally {
@@ -156,7 +170,10 @@ class App extends Widget {
         result.content,
         contains('{{^use_riverpod}}StatelessWidget{{/use_riverpod}}'),
       );
-      expect(result.content, isNot(contains('class App extends ConsumerWidget')));
+      expect(
+        result.content,
+        isNot(contains('class App extends ConsumerWidget')),
+      );
       expect(result.content, isNot(contains('remove-start')));
     });
 

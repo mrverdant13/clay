@@ -56,8 +56,7 @@ class PreviewCommand extends ClayCommand {
     }
 
     try {
-      final templateOnly =
-          argResults?[templateOnlyOptionName] == true;
+      final templateOnly = argResults?[templateOnlyOptionName] == true;
       final vars = parsePreviewVars(argResults?.option(varsOptionName));
 
       final result = await runPreview(
