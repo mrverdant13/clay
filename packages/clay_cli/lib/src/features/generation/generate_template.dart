@@ -18,6 +18,7 @@ Future<void> generateTemplate({
   required BrickGenConfig config,
   required String referencePath,
   required String targetPath,
+  void Function(String relativePath)? onIgnoredFile,
 }) async {
   if (!Directory(referencePath).existsSync()) {
     throw GenerationException(
@@ -53,5 +54,6 @@ Future<void> generateTemplate({
     targetEntities: targetEntities,
     normalizedTargetPath: normalizedTargetPath,
     config: config,
+    onIgnoredFile: onIgnoredFile,
   );
 }
