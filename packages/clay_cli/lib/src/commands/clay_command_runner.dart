@@ -1,5 +1,6 @@
 import 'package:args/args.dart';
 import 'package:args/command_runner.dart';
+import 'package:clay_cli/src/commands/gen_command.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -95,6 +96,32 @@ class ClayCommandRunner extends CommandRunner<int> {
       return ExitCode.success.code;
     }
 
+    if (topLevelResults.command == null) {
+      if (topLevelResults.flag('help') || topLevelResults.rest.isNotEmpty) {
+        return super.runCommand(topLevelResults);
+      }
+
+      return runCommand(parse(_defaultGenInvocation(topLevelResults)));
+    }
+
     return super.runCommand(topLevelResults);
+  }
+
+  List<String> _defaultGenInvocation(ArgResults topLevelResults) {
+    final args = <String>[];
+    if (topLevelResults[verboseOptionName] == true) {
+      args.add('--$verboseOptionName');
+    }
+    final config = topLevelResults.option(configOptionName);
+    if (config != null) {
+      args.addAll(['--$configOptionName', config]);
+    }
+    final workingDirectory = topLevelResults.option(cwdOptionName);
+    if (workingDirectory != null) {
+      args.addAll(['--$cwdOptionName', workingDirectory]);
+    }
+    args.add(GenCommand.commandName);
+    args.addAll(topLevelResults.rest);
+    return args;
   }
 }
