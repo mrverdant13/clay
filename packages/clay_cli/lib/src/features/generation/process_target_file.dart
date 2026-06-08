@@ -143,6 +143,8 @@ Future<void> _resolveTargetFileContents({
     content = await file.readAsString();
   } on FileSystemException {
     return;
+  } on FormatException {
+    return;
   }
   final resolvedContent = resolveReferenceContent(
     content: content,
