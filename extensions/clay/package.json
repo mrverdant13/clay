@@ -22,6 +22,21 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "grammars": [
+      {
+        "scopeName": "clay.injection",
+        "path": "./syntaxes/clay.tmLanguage.json",
+        "injectTo": [
+          "source.dart",
+          "source.shell",
+          "source.yaml",
+          "text.html",
+          "text.xml",
+          "text.html.markdown",
+          "source.ignore"
+        ]
+      }
+    ],
     "configuration": {
       "title": "Clay",
       "properties": {

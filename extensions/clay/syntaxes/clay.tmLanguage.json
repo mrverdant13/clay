@@ -1,0 +1,202 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinringert/language-json-schema/master/dist/textmate/syntax-tmLanguage.schema.json",
+  "name": "Clay Annotations",
+  "scopeName": "clay.injection",
+  "injectionSelector": "L:comment",
+  "patterns": [
+    { "include": "#dart-block-annotations" },
+    { "include": "#hash-annotations" },
+    { "include": "#html-annotations" }
+  ],
+  "repository": {
+    "dart-block-annotations": {
+      "patterns": [
+        { "include": "#dart-remove" },
+        { "include": "#dart-replace" },
+        { "include": "#dart-insert" },
+        { "include": "#dart-drop" },
+        { "include": "#dart-partial" },
+        { "include": "#dart-spacing" },
+        { "include": "#dart-mustache" }
+      ]
+    },
+    "hash-annotations": {
+      "patterns": [
+        { "include": "#hash-remove" },
+        { "include": "#hash-replace" },
+        { "include": "#hash-insert" },
+        { "include": "#hash-drop" },
+        { "include": "#hash-partial" },
+        { "include": "#hash-spacing" },
+        { "include": "#hash-mustache" }
+      ]
+    },
+    "html-annotations": {
+      "patterns": [
+        { "include": "#html-remove" },
+        { "include": "#html-replace" },
+        { "include": "#html-insert" },
+        { "include": "#html-drop" },
+        { "include": "#html-partial" },
+        { "include": "#html-spacing" },
+        { "include": "#html-mustache" }
+      ]
+    },
+
+    "dart-remove": {
+      "match": "/\\*(?:x-)?remove-start\\*/|/\\*remove-end(?:-x)?\\*/",
+      "name": "keyword.annotation.clay.remove"
+    },
+    "dart-replace": {
+      "patterns": [
+        {
+          "match": "/\\*replace-start\\*/|/\\*replace-end\\*/",
+          "name": "keyword.annotation.clay.replace.boundary"
+        },
+        {
+          "match": "/\\*with(?: +i(\\d+))?\\*/",
+          "name": "keyword.annotation.clay.replace.with",
+          "captures": {
+            "1": { "name": "constant.numeric.clay.indent" }
+          }
+        }
+      ]
+    },
+    "dart-insert": {
+      "match": "/\\*insert-start\\*/|/\\*insert-end\\*/",
+      "name": "keyword.annotation.clay.insert"
+    },
+    "dart-drop": {
+      "match": "/\\*drop\\*/",
+      "name": "keyword.annotation.clay.drop"
+    },
+    "dart-partial": {
+      "match": "/\\*partial ([v^]) ([^*]+)\\*/",
+      "name": "meta.annotation.clay.partial",
+      "captures": {
+        "1": { "name": "keyword.annotation.clay.partial.marker" },
+        "2": { "name": "entity.name.section.clay.partial" }
+      }
+    },
+    "dart-spacing": {
+      "match": "/\\*w ?((?:\\d+[v>] ?)*) ?w\\*/",
+      "name": "meta.annotation.clay.spacing",
+      "captures": {
+        "1": { "name": "constant.numeric.clay.spacing" }
+      }
+    },
+    "dart-mustache": {
+      "match": "/\\*(x)?(\\{\\{[^}]*?\\}\\})(x)?\\*/",
+      "name": "meta.annotation.clay.mustache",
+      "captures": {
+        "1": { "name": "constant.language.clay.drop-flag" },
+        "2": { "name": "entity.name.tag.mustache.clay" },
+        "3": { "name": "constant.language.clay.drop-flag" }
+      }
+    },
+
+    "hash-remove": {
+      "match": "#(?:x-)?remove-start#|#remove-end(?:-x)?#",
+      "name": "keyword.annotation.clay.remove"
+    },
+    "hash-replace": {
+      "patterns": [
+        {
+          "match": "#replace-start#|#replace-end#",
+          "name": "keyword.annotation.clay.replace.boundary"
+        },
+        {
+          "match": "#with(?: +i(\\d+))?#",
+          "name": "keyword.annotation.clay.replace.with",
+          "captures": {
+            "1": { "name": "constant.numeric.clay.indent" }
+          }
+        }
+      ]
+    },
+    "hash-insert": {
+      "match": "#insert-start#|#insert-end#",
+      "name": "keyword.annotation.clay.insert"
+    },
+    "hash-drop": {
+      "match": "#drop#",
+      "name": "keyword.annotation.clay.drop"
+    },
+    "hash-partial": {
+      "match": "#partial ([v^]) ([^#]+)#",
+      "name": "meta.annotation.clay.partial",
+      "captures": {
+        "1": { "name": "keyword.annotation.clay.partial.marker" },
+        "2": { "name": "entity.name.section.clay.partial" }
+      }
+    },
+    "hash-spacing": {
+      "match": "#w ?((?:\\d+[v>] ?)*) ?w#",
+      "name": "meta.annotation.clay.spacing",
+      "captures": {
+        "1": { "name": "constant.numeric.clay.spacing" }
+      }
+    },
+    "hash-mustache": {
+      "match": "#(x)?(\\{\\{[^}]*?\\}\\})(x)?#",
+      "name": "meta.annotation.clay.mustache",
+      "captures": {
+        "1": { "name": "constant.language.clay.drop-flag" },
+        "2": { "name": "entity.name.tag.mustache.clay" },
+        "3": { "name": "constant.language.clay.drop-flag" }
+      }
+    },
+
+    "html-remove": {
+      "match": "<!--(?:x-)?remove-start-->|<!--remove-end(?:-x)?-->",
+      "name": "keyword.annotation.clay.remove"
+    },
+    "html-replace": {
+      "patterns": [
+        {
+          "match": "<!--replace-start-->|<!--replace-end-->",
+          "name": "keyword.annotation.clay.replace.boundary"
+        },
+        {
+          "match": "<!--with(?: +i(\\d+))?-->",
+          "name": "keyword.annotation.clay.replace.with",
+          "captures": {
+            "1": { "name": "constant.numeric.clay.indent" }
+          }
+        }
+      ]
+    },
+    "html-insert": {
+      "match": "<!--insert-start-->|<!--insert-end-->",
+      "name": "keyword.annotation.clay.insert"
+    },
+    "html-drop": {
+      "match": "<!--drop-->",
+      "name": "keyword.annotation.clay.drop"
+    },
+    "html-partial": {
+      "match": "<!--partial ([v^]) (.*?)-->",
+      "name": "meta.annotation.clay.partial",
+      "captures": {
+        "1": { "name": "keyword.annotation.clay.partial.marker" },
+        "2": { "name": "entity.name.section.clay.partial" }
+      }
+    },
+    "html-spacing": {
+      "match": "<!--w ?((?:\\d+[v>] ?)*) ?w-->",
+      "name": "meta.annotation.clay.spacing",
+      "captures": {
+        "1": { "name": "constant.numeric.clay.spacing" }
+      }
+    },
+    "html-mustache": {
+      "match": "<!--(x)?(\\{\\{[^}]*?\\}\\})(x)?-->",
+      "name": "meta.annotation.clay.mustache",
+      "captures": {
+        "1": { "name": "constant.language.clay.drop-flag" },
+        "2": { "name": "entity.name.tag.mustache.clay" },
+        "3": { "name": "constant.language.clay.drop-flag" }
+      }
+    }
+  }
+}
