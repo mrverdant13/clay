@@ -8,7 +8,7 @@ void main() {
     late E2eFixtureProject project;
 
     setUp(() {
-      project = E2eFixtureProject.create(
+      project = E2eFixtureProject.withFiles(
         configJson: '''
 {
   "reference": "reference",

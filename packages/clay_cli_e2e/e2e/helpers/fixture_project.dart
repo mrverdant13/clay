@@ -6,17 +6,8 @@ import 'package:path/path.dart' as p;
 class E2eFixtureProject {
   E2eFixtureProject._(this.root);
 
-  /// Project root containing `brick-gen.json`.
-  final Directory root;
-
-  /// Reference directory under [root].
-  Directory get referenceDir => Directory(p.join(root.path, 'reference'));
-
-  /// Target directory under [root].
-  Directory get targetDir => Directory(p.join(root.path, 'target'));
-
   /// Creates a fixture with [configJson] and [referenceFiles].
-  static E2eFixtureProject create({
+  factory E2eFixtureProject.withFiles({
     String? configJson,
     Map<String, String> referenceFiles = const {},
   }) {
@@ -35,13 +26,22 @@ class E2eFixtureProject {
       ..createSync(recursive: true);
 
     for (final entry in referenceFiles.entries) {
-      final file = File(p.join(referenceDir.path, entry.key))
-        ..createSync(recursive: true);
-      file.writeAsStringSync(entry.value);
+      File(p.join(referenceDir.path, entry.key))
+        ..createSync(recursive: true)
+        ..writeAsStringSync(entry.value);
     }
 
     return E2eFixtureProject._(root);
   }
+
+  /// Project root containing `brick-gen.json`.
+  final Directory root;
+
+  /// Reference directory under [root].
+  Directory get referenceDir => Directory(p.join(root.path, 'reference'));
+
+  /// Target directory under [root].
+  Directory get targetDir => Directory(p.join(root.path, 'target'));
 
   /// Deletes the temporary project tree.
   void dispose() {

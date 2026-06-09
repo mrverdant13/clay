@@ -8,7 +8,7 @@ void main() {
     late E2eFixtureProject project;
 
     setUp(() {
-      project = E2eFixtureProject.create(
+      project = E2eFixtureProject.withFiles(
         referenceFiles: {
           'main.dart': 'void main() {}\n',
         },
@@ -35,7 +35,7 @@ void main() {
       'reports issues to stderr and exits with code 1',
       () async {
         project.dispose();
-        project = E2eFixtureProject.create(
+        project = E2eFixtureProject.withFiles(
           referenceFiles: {
             'broken.dart': '/*remove-start*/\n',
           },

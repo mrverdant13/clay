@@ -11,7 +11,7 @@ void main() {
     late E2eFixtureProject project;
 
     setUp(() {
-      project = E2eFixtureProject.create(
+      project = E2eFixtureProject.withFiles(
         referenceFiles: {
           'main.dart': 'void main() {}\n',
           'lib/widget.dart': 'class Widget {}\n',
@@ -71,7 +71,7 @@ void main() {
       'excludes files matched by ignore patterns',
       () async {
         project.dispose();
-        project = E2eFixtureProject.create(
+        project = E2eFixtureProject.withFiles(
           configJson: '''
 {
   "reference": "reference",

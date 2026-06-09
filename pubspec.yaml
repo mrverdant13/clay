@@ -122,6 +122,8 @@ melos:
       description: Run E2E tests
       run: >
         dart test --run-skipped --tags e2e e2e
+      exec:
+        concurrency: 1
       packageFilters:
         category:
           - e2e
