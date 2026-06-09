@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/clay_cli.dart';
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 class _MockLogger extends Mock implements Logger {}
@@ -33,6 +35,10 @@ class FakeCommand extends ClayCommand {
 void main() {
   group('ClayCommandRunner', () {
     late Logger logger;
+
+    setUpAll(() {
+      registerFallbackValue(Level.info);
+    });
 
     setUp(() {
       logger = _MockLogger();
@@ -133,6 +139,47 @@ void main() {
       verify(() => logger.err('Invalid command')).called(1);
       verify(() => logger.info('')).called(1);
       verify(() => logger.info(runner.usage)).called(1);
+    });
+
+    test('forwards --config and --cwd when running the default command',
+        () async {
+      when(() => logger.level).thenReturn(Level.info);
+      when(() => logger.info(any())).thenReturn(null);
+
+      final tempDir = Directory.systemTemp.createTempSync(
+        'clay_default_command_',
+      );
+      try {
+        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
+{
+  "reference": "reference",
+  "target": "target"
+}
+''');
+        final referenceDir = Directory(p.join(tempDir.path, 'reference'))
+          ..createSync(recursive: true);
+        File(p.join(referenceDir.path, 'main.dart'))
+            .writeAsStringSync('main\n');
+
+        final runner = ClayCommandRunner(
+          logger: logger,
+        )
+          ..addCommand(GenCommand())
+          ..addCommand(PreviewCommand())
+          ..addCommand(ValidateCommand());
+
+        final exitCode = await runner.run([
+          '--config',
+          'brick-gen.json',
+          '--cwd',
+          tempDir.path,
+        ]);
+
+        expect(exitCode, ExitCode.success.code);
+        verify(() => logger.info('Files: 1')).called(1);
+      } finally {
+        tempDir.deleteSync(recursive: true);
+      }
     });
 
     test('prints error message and usage on $UsageException', () async {
