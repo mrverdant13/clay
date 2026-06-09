@@ -38,26 +38,40 @@ List<String> scanImportViolations({
       continue;
     }
 
-    final uriMatch = uriPattern.firstMatch(line);
-    if (uriMatch == null) {
-      continue;
+    final directiveStartLine = index + 1;
+    final directiveLines = <String>[];
+    var directiveEndIndex = index;
+
+    while (directiveEndIndex < lines.length) {
+      directiveLines.add(lines[directiveEndIndex]);
+      if (lines[directiveEndIndex].contains(';')) {
+        break;
+      }
+      directiveEndIndex++;
     }
 
-    final uri = uriMatch.group(1)!;
-    if (uri.startsWith('dart:') || !uri.startsWith('package:')) {
-      continue;
-    }
+    final directive = directiveLines.join('\n');
+    index = directiveEndIndex;
 
-    if (uri.contains('/_internal/') || uri.endsWith('/_internal')) {
-      violations.add('$relativePath:${index + 1}: internal path $uri');
-      continue;
-    }
+    for (final uriMatch in uriPattern.allMatches(directive)) {
+      final uri = uriMatch.group(1)!;
+      if (uri.startsWith('dart:') || !uri.startsWith('package:')) {
+        continue;
+      }
 
-    final packageName = uri.substring('package:'.length).split('/').first;
-    if (!allowedPackages.contains(packageName)) {
-      violations.add(
-        '$relativePath:${index + 1}: disallowed package $packageName',
-      );
+      if (uri.contains('/_internal/') || uri.endsWith('/_internal')) {
+        violations.add(
+          '$relativePath:$directiveStartLine: internal path $uri',
+        );
+        continue;
+      }
+
+      final packageName = uri.substring('package:'.length).split('/').first;
+      if (!allowedPackages.contains(packageName)) {
+        violations.add(
+          '$relativePath:$directiveStartLine: disallowed package $packageName',
+        );
+      }
     }
   }
 
@@ -65,6 +79,75 @@ List<String> scanImportViolations({
 }
 
 void main() {
+  group('scanImportViolations', () {
+    const allowedPackages = {'clay_cli', 'path'};
+    const relativePath = 'example.dart';
+
+    test('allows a single-line package import', () {
+      expect(
+        scanImportViolations(
+          lines: ["import 'package:clay_cli/foo.dart';"],
+          relativePath: relativePath,
+          allowedPackages: allowedPackages,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('allows a multi-line show import', () {
+      expect(
+        scanImportViolations(
+          lines: [
+            "import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart'",
+            '    show normalizeIgnoreRelativePath, shouldIgnoreAtRoot;',
+          ],
+          relativePath: relativePath,
+          allowedPackages: allowedPackages,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('flags disallowed packages in conditional imports', () {
+      expect(
+        scanImportViolations(
+          lines: [
+            "import 'package:clay_cli/foo.dart'",
+            "    if (dart.library.io) 'package:evil/bar.dart';",
+          ],
+          relativePath: relativePath,
+          allowedPackages: allowedPackages,
+        ),
+        ['example.dart:1: disallowed package evil'],
+      );
+    });
+
+    test('flags internal package paths', () {
+      expect(
+        scanImportViolations(
+          lines: ["import 'package:clay_cli/src/_internal/hidden.dart';"],
+          relativePath: relativePath,
+          allowedPackages: allowedPackages,
+        ),
+        [
+          'example.dart:1: internal path '
+              'package:clay_cli/src/_internal/hidden.dart',
+        ],
+      );
+    });
+
+    test('ignores dart: imports', () {
+      expect(
+        scanImportViolations(
+          lines: ["import 'dart:io';"],
+          relativePath: relativePath,
+          allowedPackages: allowedPackages,
+        ),
+        isEmpty,
+      );
+    });
+  });
+
   group('import boundary', () {
     const allowedPackages = {
       'args',
