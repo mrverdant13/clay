@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:clay_cli/src/features/config/discover_brick_gen_config.dart';
@@ -82,10 +81,21 @@ Future<PreviewRunResult> runPreview({
     filePath: filePath,
     referencePath: referencePath,
   );
-  final file = File(resolvedFilePath);
-  if (!file.existsSync()) {
-    throw PreviewException('File not found: $resolvedFilePath');
+  final entityType = FileSystemEntity.typeSync(
+    resolvedFilePath,
+    followLinks: false,
+  );
+  switch (entityType) {
+    case FileSystemEntityType.notFound:
+      throw PreviewException('File not found: $resolvedFilePath');
+    case FileSystemEntityType.directory:
+    case FileSystemEntityType.link:
+      throw PreviewException('Path is not a file: $resolvedFilePath');
+    case FileSystemEntityType.file:
+      break;
   }
+
+  final file = File(resolvedFilePath);
 
   final tempTargetDir = await Directory.systemTemp.createTemp('clay_preview_');
   try {

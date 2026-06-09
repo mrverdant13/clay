@@ -215,6 +215,23 @@ class App extends Widget {
       expect(result.content, contains('footer line'));
     });
 
+    test('throws when the reference path is a directory', () async {
+      await expectLater(
+        runPreview(
+          filePath: 'reference',
+          templateOnly: false,
+          cwd: tempDir.path,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path is not a file'),
+          ),
+        ),
+      );
+    });
+
     test('throws when the reference file does not exist', () async {
       await expectLater(
         runPreview(
