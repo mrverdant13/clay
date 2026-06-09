@@ -23,6 +23,47 @@ Directory _packageRoot() {
   }
 }
 
+/// Scans [lines] for disallowed `package:` imports.
+List<String> scanImportViolations({
+  required List<String> lines,
+  required String relativePath,
+  required Set<String> allowedPackages,
+}) {
+  final violations = <String>[];
+  final uriPattern = RegExp("['\"]([^'\"]+)['\"]");
+
+  for (var index = 0; index < lines.length; index++) {
+    final line = lines[index].trimLeft();
+    if (!line.startsWith('import ')) {
+      continue;
+    }
+
+    final uriMatch = uriPattern.firstMatch(line);
+    if (uriMatch == null) {
+      continue;
+    }
+
+    final uri = uriMatch.group(1)!;
+    if (uri.startsWith('dart:') || !uri.startsWith('package:')) {
+      continue;
+    }
+
+    if (uri.contains('/_internal/') || uri.endsWith('/_internal')) {
+      violations.add('$relativePath:${index + 1}: internal path $uri');
+      continue;
+    }
+
+    final packageName = uri.substring('package:'.length).split('/').first;
+    if (!allowedPackages.contains(packageName)) {
+      violations.add(
+        '$relativePath:${index + 1}: disallowed package $packageName',
+      );
+    }
+  }
+
+  return violations;
+}
+
 void main() {
   group('import boundary', () {
     const allowedPackages = {
@@ -51,36 +92,13 @@ void main() {
         }
 
         final relativePath = p.relative(entity.path, from: libDir.path);
-        final lines = entity.readAsLinesSync();
-
-        for (var index = 0; index < lines.length; index++) {
-          final line = lines[index].trimLeft();
-          if (!line.startsWith('import ')) {
-            continue;
-          }
-
-          final uriMatch = RegExp("['\"]([^'\"]+)['\"]").firstMatch(line);
-          if (uriMatch == null) {
-            continue;
-          }
-
-          final uri = uriMatch.group(1)!;
-          if (uri.startsWith('dart:') || !uri.startsWith('package:')) {
-            continue;
-          }
-
-          if (uri.contains('/_internal/') || uri.endsWith('/_internal')) {
-            violations.add('$relativePath:${index + 1}: internal path $uri');
-            continue;
-          }
-
-          final packageName = uri.substring('package:'.length).split('/').first;
-          if (!allowedPackages.contains(packageName)) {
-            violations.add(
-              '$relativePath:${index + 1}: disallowed package $packageName',
-            );
-          }
-        }
+        violations.addAll(
+          scanImportViolations(
+            lines: entity.readAsLinesSync(),
+            relativePath: relativePath,
+            allowedPackages: allowedPackages,
+          ),
+        );
       }
 
       expect(
