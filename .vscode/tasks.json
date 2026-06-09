@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "watch: clay extension",
+      "type": "shell",
+      "command": "pnpm run watch",
+      "options": {
+        "cwd": "${workspaceFolder}/extensions/clay"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "esbuild",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": "Watching for changes"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "compile: clay extension",
+      "type": "shell",
+      "command": "pnpm run compile",
+      "options": {
+        "cwd": "${workspaceFolder}/extensions/clay"
+      },
+      "group": "build"
+    }
+  ]
+}
