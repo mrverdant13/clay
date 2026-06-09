@@ -216,9 +216,11 @@ class App extends Widget {
     });
 
     test('throws when the reference path is a directory', () async {
+      Directory(p.join(referenceDir.path, 'nested')).createSync();
+
       await expectLater(
         runPreview(
-          filePath: 'reference',
+          filePath: 'nested',
           templateOnly: false,
           cwd: tempDir.path,
         ),
