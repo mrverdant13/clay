@@ -81,21 +81,7 @@ Future<PreviewRunResult> runPreview({
     filePath: filePath,
     referencePath: referencePath,
   );
-  final entityType = FileSystemEntity.typeSync(
-    resolvedFilePath,
-    followLinks: false,
-  );
-  switch (entityType) {
-    case FileSystemEntityType.file:
-      break;
-    case FileSystemEntityType.notFound:
-      throw PreviewException('File not found: $resolvedFilePath');
-    case FileSystemEntityType.directory:
-    case FileSystemEntityType.link:
-    case FileSystemEntityType.pipe:
-    case FileSystemEntityType.unixDomainSock:
-      throw PreviewException('Path is not a file: $resolvedFilePath');
-  }
+  assertPreviewPathIsFile(resolvedFilePath);
 
   final file = File(resolvedFilePath);
 
@@ -147,6 +133,29 @@ Future<PreviewRunResult> runPreview({
     if (tempTargetDir.existsSync()) {
       await tempTargetDir.delete(recursive: true);
     }
+  }
+}
+
+/// Throws when [resolvedFilePath] does not refer to a readable file.
+@visibleForTesting
+void assertPreviewPathIsFile(
+  String resolvedFilePath, {
+  FileSystemEntityType Function(String path)? resolveEntityType,
+}) {
+  final entityType = (resolveEntityType ??
+      (path) => FileSystemEntity.typeSync(path, followLinks: false))(
+    resolvedFilePath,
+  );
+  switch (entityType) {
+    case FileSystemEntityType.file:
+      return;
+    case FileSystemEntityType.notFound:
+      throw PreviewException('File not found: $resolvedFilePath');
+    case FileSystemEntityType.directory:
+    case FileSystemEntityType.link:
+    case FileSystemEntityType.pipe:
+    case FileSystemEntityType.unixDomainSock:
+      throw PreviewException('Path is not a file: $resolvedFilePath');
   }
 }
 

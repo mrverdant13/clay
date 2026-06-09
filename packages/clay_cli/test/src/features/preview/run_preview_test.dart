@@ -68,6 +68,100 @@ void main() {
     });
   });
 
+  group('assertPreviewPathIsFile', () {
+    const path = '/tmp/reference/widget.dart';
+
+    test('allows files', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.file,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('throws when the path does not exist', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.notFound,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            'File not found: $path',
+          ),
+        ),
+      );
+    });
+
+    test('throws when the path is a directory', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.directory,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            'Path is not a file: $path',
+          ),
+        ),
+      );
+    });
+
+    test('throws when the path is a symlink', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.link,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            'Path is not a file: $path',
+          ),
+        ),
+      );
+    });
+
+    test('throws when the path is a fifo', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.pipe,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            'Path is not a file: $path',
+          ),
+        ),
+      );
+    });
+
+    test('throws when the path is a unix domain socket', () {
+      expect(
+        () => assertPreviewPathIsFile(
+          path,
+          resolveEntityType: (_) => FileSystemEntityType.unixDomainSock,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            'Path is not a file: $path',
+          ),
+        ),
+      );
+    });
+  });
+
   group('loadPreviewPartials', () {
     test('returns an empty map when the target directory does not exist', () {
       final tempDir = Directory.systemTemp
@@ -221,69 +315,6 @@ class App extends Widget {
       await expectLater(
         runPreview(
           filePath: 'nested',
-          templateOnly: false,
-          cwd: tempDir.path,
-        ),
-        throwsA(
-          isA<PreviewException>().having(
-            (error) => error.message,
-            'message',
-            contains('Path is not a file'),
-          ),
-        ),
-      );
-    });
-
-    test('throws when the reference path is a symlink', () async {
-      Link(p.join(referenceDir.path, 'linked.dart'))
-          .createSync(referenceFilePath);
-
-      await expectLater(
-        runPreview(
-          filePath: 'linked.dart',
-          templateOnly: false,
-          cwd: tempDir.path,
-        ),
-        throwsA(
-          isA<PreviewException>().having(
-            (error) => error.message,
-            'message',
-            contains('Path is not a file'),
-          ),
-        ),
-      );
-    });
-
-    test('throws when the reference path is a fifo', () async {
-      Process.runSync('mkfifo', [p.join(referenceDir.path, 'preview.fifo')]);
-
-      await expectLater(
-        runPreview(
-          filePath: 'preview.fifo',
-          templateOnly: false,
-          cwd: tempDir.path,
-        ),
-        throwsA(
-          isA<PreviewException>().having(
-            (error) => error.message,
-            'message',
-            contains('Path is not a file'),
-          ),
-        ),
-      );
-    });
-
-    test('throws when the reference path is a unix domain socket', () async {
-      final socketPath = p.join(referenceDir.path, 'preview.sock');
-      final server = await ServerSocket.bind(
-        InternetAddress(socketPath, type: InternetAddressType.unix),
-        0,
-      );
-      addTearDown(server.close);
-
-      await expectLater(
-        runPreview(
-          filePath: 'preview.sock',
           templateOnly: false,
           cwd: tempDir.path,
         ),
