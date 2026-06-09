@@ -1,5 +1,6 @@
 import 'package:clay_cli/src/commands/clay_command_runner.dart';
 import 'package:clay_cli/src/commands/gen_command.dart';
+import 'package:clay_cli/src/commands/preview_command.dart';
 import 'package:clay_cli/src/commands/validate_command.dart';
 import 'package:mason_logger/mason_logger.dart';
 
@@ -12,6 +13,7 @@ Future<int> clay({
     logger: logger,
   )
     ..addCommand(GenCommand())
+    ..addCommand(PreviewCommand())
     ..addCommand(ValidateCommand());
   return runner.run(args);
 }
