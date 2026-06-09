@@ -234,6 +234,69 @@ class App extends Widget {
       );
     });
 
+    test('throws when the reference path is a symlink', () async {
+      Link(p.join(referenceDir.path, 'linked.dart'))
+          .createSync(referenceFilePath);
+
+      await expectLater(
+        runPreview(
+          filePath: 'linked.dart',
+          templateOnly: false,
+          cwd: tempDir.path,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path is not a file'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when the reference path is a fifo', () async {
+      Process.runSync('mkfifo', [p.join(referenceDir.path, 'preview.fifo')]);
+
+      await expectLater(
+        runPreview(
+          filePath: 'preview.fifo',
+          templateOnly: false,
+          cwd: tempDir.path,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path is not a file'),
+          ),
+        ),
+      );
+    });
+
+    test('throws when the reference path is a unix domain socket', () async {
+      final socketPath = p.join(referenceDir.path, 'preview.sock');
+      final server = await ServerSocket.bind(
+        InternetAddress(socketPath, type: InternetAddressType.unix),
+        0,
+      );
+      addTearDown(server.close);
+
+      await expectLater(
+        runPreview(
+          filePath: 'preview.sock',
+          templateOnly: false,
+          cwd: tempDir.path,
+        ),
+        throwsA(
+          isA<PreviewException>().having(
+            (error) => error.message,
+            'message',
+            contains('Path is not a file'),
+          ),
+        ),
+      );
+    });
+
     test('throws when the reference file does not exist', () async {
       await expectLater(
         runPreview(

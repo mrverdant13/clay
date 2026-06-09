@@ -32,7 +32,19 @@ void main() {
 
     test('throws for invalid pairs', () {
       expect(() => parsePreviewVars('not-a-pair'), throwsFormatException);
-      expect(() => parsePreviewVars(' =value'), throwsFormatException);
+    });
+
+    test('throws when the key is empty after trimming whitespace', () {
+      expect(
+        () => parsePreviewVars(' =value'),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            'Invalid --vars entry (expected key=value):  =value',
+          ),
+        ),
+      );
     });
   });
 }

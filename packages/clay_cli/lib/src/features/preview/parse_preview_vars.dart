@@ -6,7 +6,7 @@ Map<String, dynamic> parsePreviewVars(String? raw) {
 
   return {
     for (final pair in raw.split(','))
-      if (pair.trim().isNotEmpty) ..._parsePreviewVarPair(pair.trim()),
+      if (pair.trim().isNotEmpty) ..._parsePreviewVarPair(pair),
   };
 }
 
