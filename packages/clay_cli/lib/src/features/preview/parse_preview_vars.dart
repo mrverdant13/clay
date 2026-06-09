@@ -19,6 +19,12 @@ Map<String, dynamic> _parsePreviewVarPair(String pair) {
   }
 
   final key = pair.substring(0, separatorIndex).trim();
+  if (key.isEmpty) {
+    throw FormatException(
+      'Invalid --vars entry (expected key=value): $pair',
+    );
+  }
+
   final rawValue = pair.substring(separatorIndex + 1).trim();
   return {key: _parsePreviewVarValue(rawValue)};
 }

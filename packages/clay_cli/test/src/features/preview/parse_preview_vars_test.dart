@@ -32,6 +32,7 @@ void main() {
 
     test('throws for invalid pairs', () {
       expect(() => parsePreviewVars('not-a-pair'), throwsFormatException);
+      expect(() => parsePreviewVars(' =value'), throwsFormatException);
     });
   });
 }
