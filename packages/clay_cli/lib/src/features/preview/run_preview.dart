@@ -176,7 +176,7 @@ Map<String, List<int>> loadPreviewPartials(Directory targetDir) {
   }
 
   final partials = <String, List<int>>{};
-  for (final entity in targetDir.listSync(recursive: true)) {
+  for (final entity in targetDir.listSync(recursive: true, followLinks: false)) {
     if (entity is! File) {
       continue;
     }
@@ -186,7 +186,7 @@ Map<String, List<int>> loadPreviewPartials(Directory targetDir) {
       continue;
     }
 
-    partials[name] = utf8.encode(entity.readAsStringSync());
+    partials[name] = entity.readAsBytesSync();
   }
 
   return partials;
