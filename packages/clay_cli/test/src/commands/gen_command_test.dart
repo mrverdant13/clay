@@ -141,6 +141,22 @@ void main() {
       ).called(1);
     });
 
+    test('returns a non-zero exit code when config schema is invalid', () async {
+      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
+        '{"replacements": "invalid"}',
+      );
+
+      final exitCode = await clay(
+        args: ['gen', '--cwd', tempDir.path],
+        logger: logger,
+      );
+
+      expect(exitCode, ExitCode.software.code);
+      verify(
+        () => logger.err(any(that: contains('Failed to parse'))),
+      ).called(1);
+    });
+
     test('returns a non-zero exit code when config is missing', () async {
       final emptyDir = Directory.systemTemp.createTempSync('clay_gen_empty_');
       try {
