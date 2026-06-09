@@ -8,6 +8,9 @@
 # Coverage
 **/coverage/
 
+# Node (VS Code extension)
+**/node_modules/
+
 # Melos / IDE
 **/.idea/
 **/melos_overrides.yaml

@@ -1,0 +1,49 @@
+{
+  "name": "clay",
+  "displayName": "Clay",
+  "description": "Editor support for Clay annotation markers in reference projects.",
+  "version": "0.0.1",
+  "packageManager": "pnpm@9.15.9",
+  "publisher": "mrverdant13",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrverdant13/clay.git",
+    "directory": "extensions/clay"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Clay",
+      "properties": {
+        "clay.cliPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and `~/.pub-cache/bin`. Install with `dart pub global activate clay_cli` after release, or use `dart run` against the workspace package during development."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "pnpm run compile && vsce package --no-dependencies",
+    "vscode:prepublish": "pnpm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.7.2"
+  }
+}
