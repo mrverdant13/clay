@@ -70,9 +70,9 @@ void main() {
 
   group('loadPreviewPartials', () {
     test('returns an empty map when the target directory does not exist', () {
-      final tempDir =
-          Directory.systemTemp.createTempSync('clay_preview_partials_missing_');
-      tempDir.deleteSync();
+      final tempDir = Directory.systemTemp
+          .createTempSync('clay_preview_partials_missing_')
+        ..deleteSync();
 
       expect(loadPreviewPartials(tempDir), isEmpty);
     });

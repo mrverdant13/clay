@@ -86,13 +86,15 @@ Future<PreviewRunResult> runPreview({
     followLinks: false,
   );
   switch (entityType) {
+    case FileSystemEntityType.file:
+      break;
     case FileSystemEntityType.notFound:
       throw PreviewException('File not found: $resolvedFilePath');
     case FileSystemEntityType.directory:
     case FileSystemEntityType.link:
+    case FileSystemEntityType.pipe:
+    case FileSystemEntityType.unixDomainSock:
       throw PreviewException('Path is not a file: $resolvedFilePath');
-    case FileSystemEntityType.file:
-      break;
   }
 
   final file = File(resolvedFilePath);
