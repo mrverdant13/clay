@@ -3,10 +3,10 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:clay_cli/clay_cli.dart';
-import 'package:path/path.dart' as p;
 import 'package:clay_cli/src/version.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 class _MockLogger extends Mock implements Logger {}
