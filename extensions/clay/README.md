@@ -2,7 +2,7 @@
 
 Editor support for [Clay](https://github.com/mrverdant13/clay) annotation markers in reference projects. The extension complements the [`clay`](../../packages/clay_cli/) CLI by providing in-editor tooling for authoring Mason brick templates from runnable reference code.
 
-> **Status:** Early scaffold. Syntax highlighting, preview commands, and decoration features are landing in follow-up work. The extension loads and compiles; see [Development](#development) to run it locally.
+> **Status:** Early development. Annotation syntax highlighting is available; preview commands, block shading, and folding land in follow-up work.
 
 ---
 
@@ -48,7 +48,7 @@ Additional `clay.colors.*` settings for annotation shading will be added in a la
 
 ## Planned capabilities
 
-- Annotation syntax highlighting (all marker types, three comment flavors)
+- Annotation syntax highlighting (all marker types, three comment flavors) — **available**
 - Block/range shading and code folding
 - **Clay: Preview generated output** — full Mustache resolution with variable prompts
 - **Clay: Preview template output** — annotations and `brick-gen.json` transforms only
@@ -63,6 +63,7 @@ Additional `clay.colors.*` settings for annotation shading will be added in a la
 | --- | --- |
 | `pnpm run compile` | One-off esbuild bundle to `out/extension.js` |
 | `pnpm run watch` | Rebuild on source changes (used by the VS Code launch task) |
+| `pnpm test` | Compile smoke test and grammar validation |
 | `pnpm run package` | Compile and produce a `.vsix` via `@vscode/vsce` |
 
 Source lives under `src/`. TypeScript is bundled with esbuild; `vscode` is marked external and provided by the host at runtime.

@@ -175,6 +175,7 @@
   "scripts": {
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
+    "test": "node --test test/smoke.test.mjs",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
   },
