@@ -22,6 +22,130 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "editor.tokenColorCustomizations": {
+        "textMateRules": [
+          {
+            "scope": [
+              "keyword.annotation.clay.remove",
+              "keyword.annotation.clay.drop",
+              "constant.language.clay.drop-flag"
+            ],
+            "settings": {
+              "foreground": "#F48771",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "keyword.annotation.clay.replace.boundary",
+            "settings": {
+              "foreground": "#E5A84B",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "keyword.annotation.clay.replace.with",
+            "settings": {
+              "foreground": "#4EC9B0",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "keyword.annotation.clay.insert",
+            "settings": {
+              "foreground": "#C586C0",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": [
+              "meta.annotation.clay.partial",
+              "keyword.annotation.clay.partial.marker",
+              "entity.name.section.clay.partial"
+            ],
+            "settings": {
+              "foreground": "#569CD6",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "entity.name.tag.mustache.clay",
+            "settings": {
+              "foreground": "#C678DD",
+              "fontStyle": "bold"
+            }
+          },
+          {
+            "scope": "meta.annotation.clay.spacing",
+            "settings": {
+              "foreground": "#A0A1A7",
+              "fontStyle": "bold"
+            }
+          }
+        ],
+        "[Default Light+]": {
+          "textMateRules": [
+            {
+              "scope": [
+                "keyword.annotation.clay.remove",
+                "keyword.annotation.clay.drop",
+                "constant.language.clay.drop-flag"
+              ],
+              "settings": {
+                "foreground": "#D16969",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": "keyword.annotation.clay.replace.boundary",
+              "settings": {
+                "foreground": "#B8890B",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": "keyword.annotation.clay.replace.with",
+              "settings": {
+                "foreground": "#098658",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": "keyword.annotation.clay.insert",
+              "settings": {
+                "foreground": "#A626A4",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": [
+                "meta.annotation.clay.partial",
+                "keyword.annotation.clay.partial.marker",
+                "entity.name.section.clay.partial"
+              ],
+              "settings": {
+                "foreground": "#0451A5",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": "entity.name.tag.mustache.clay",
+              "settings": {
+                "foreground": "#AF00DB",
+                "fontStyle": "bold"
+              }
+            },
+            {
+              "scope": "meta.annotation.clay.spacing",
+              "settings": {
+                "foreground": "#6A737D",
+                "fontStyle": "bold"
+              }
+            }
+          ]
+        }
+      }
+    },
     "grammars": [
       {
         "scopeName": "clay.injection",
