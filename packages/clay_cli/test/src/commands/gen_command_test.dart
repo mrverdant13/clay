@@ -141,7 +141,8 @@ void main() {
       ).called(1);
     });
 
-    test('returns a non-zero exit code when config schema is invalid', () async {
+    test('returns a non-zero exit code when config schema is invalid',
+        () async {
       File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
         '{"replacements": "invalid"}',
       );
