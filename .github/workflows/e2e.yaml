@@ -1,0 +1,27 @@
+# E2E workflow
+name: Dart E2E
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    name: Run E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        run: dart pub global activate melos 7.5.1
+      - name: Initialize melos
+        run: melos bs
+      - name: Run E2E tests
+        run: melos run test.e2e.all
