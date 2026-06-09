@@ -13,6 +13,15 @@ void main() {
       expect(generateTemplate, isA<Function>());
       expect(validateAnnotations, isA<Function>());
     });
+
+    test('exports entity types used by programmatic APIs', () {
+      expect(BrickGenConfig, isA<Type>());
+      expect(AnnotationIssue, isA<Type>());
+    });
+
+    test('exports the CLI entrypoint', () {
+      expect(clay, isA<Function>());
+    });
   });
 
   group('clay', () {

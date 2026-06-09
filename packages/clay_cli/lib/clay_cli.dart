@@ -1,4 +1,5 @@
-/// Clay CLI package.
+/// Programmatic APIs for loading config, transforming reference content,
+/// generating templates, and validating annotations.
 library;
 
 export 'src/clay_cli.dart';

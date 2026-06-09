@@ -44,7 +44,8 @@ import 'src/features/transforms/skip_content_transforms_test.dart' as _i38;
 import 'src/features/validation/annotation_validator_test.dart' as _i39;
 import 'src/features/validation/run_validate_test.dart' as _i40;
 import 'src/features/validation/validation_exception_test.dart' as _i41;
-import 'src/utils/regex_hook_test.dart' as _i42;
+import 'src/public_api/import_boundary_test.dart' as _i42;
+import 'src/utils/regex_hook_test.dart' as _i43;
 
 void main() {
   group(
@@ -294,9 +295,15 @@ void main() {
     },
   );
   group(
-    'src/utils/regex_hook_test.dart',
+    'src/public_api/import_boundary_test.dart',
     () {
       _i42.main();
+    },
+  );
+  group(
+    'src/utils/regex_hook_test.dart',
+    () {
+      _i43.main();
     },
   );
 }
