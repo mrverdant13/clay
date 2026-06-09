@@ -130,8 +130,7 @@ void main() {
           allowedPackages: allowedPackages,
         ),
         [
-          'example.dart:1: internal path '
-              'package:clay_cli/src/_internal/hidden.dart',
+          'example.dart:1: internal path package:clay_cli/src/_internal/hidden.dart',
         ],
       );
     });
