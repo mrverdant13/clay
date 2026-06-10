@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import type { ExtensionContext } from 'vscode';
 
 import type { BrickVariable } from './brickVariables';
 
@@ -7,7 +7,7 @@ export type PreviewVarValue = string | boolean;
 const STORAGE_KEY_PREFIX = 'clay.previewVariables.';
 
 export function loadSavedPreviewVariables(
-  context: vscode.ExtensionContext,
+  context: ExtensionContext,
   scopeName: string,
   variables: BrickVariable[],
 ): Record<string, PreviewVarValue> {
@@ -29,7 +29,7 @@ export function loadSavedPreviewVariables(
 }
 
 export async function savePreviewVariables(
-  context: vscode.ExtensionContext,
+  context: ExtensionContext,
   scopeName: string,
   values: Record<string, PreviewVarValue>,
 ): Promise<void> {

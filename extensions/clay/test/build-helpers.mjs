@@ -82,5 +82,5 @@ await esbuild.build({
   outfile: join(extensionRoot, 'test/out/previewVariableState.cjs'),
   format: 'cjs',
   platform: 'node',
-  external: ['vscode'],
+  external: [],
 });
