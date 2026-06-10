@@ -71,8 +71,17 @@ test('extension registers block shading and folding', () => {
     'utf8',
   );
 
-  assert.match(extensionSource, /registerAnnotationHighlighting/);
-  assert.match(extensionSource, /registerBlockFolding/);
+  const activateStart = extensionSource.indexOf(
+    'export function activate(context: vscode.ExtensionContext): void {',
+  );
+  assert.ok(activateStart >= 0, 'activate() not found');
+
+  const activateEnd = extensionSource.indexOf('\nexport function deactivate');
+  assert.ok(activateEnd > activateStart, 'deactivate() not found');
+  const activateBody = extensionSource.slice(activateStart, activateEnd);
+
+  assert.match(activateBody, /\bregisterAnnotationHighlighting\s*\(\s*context\s*\)/);
+  assert.match(activateBody, /\bregisterBlockFolding\s*\(\s*context\s*\)/);
 });
 
 test('extension compiles', () => {
