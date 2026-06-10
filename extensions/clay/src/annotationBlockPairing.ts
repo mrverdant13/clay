@@ -53,7 +53,7 @@ function collectNamedMarkers(
       kind,
       offset,
       length: match[0].length,
-      name: match[1] ?? '',
+      name: (match[1] ?? '').trim(),
     });
   }
 

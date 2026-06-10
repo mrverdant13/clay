@@ -43,6 +43,14 @@ test('findNamedPairedBlockSpans matches partial names', () => {
   assert.equal(text.slice(spans[0].start, spans[0].end), text.trim());
 });
 
+test('findNamedPairedBlockSpans ignores incidental whitespace in partial names', () => {
+  const text = '/*partial v foo */body/*partial ^ foo*/';
+  const spans = findNamedPairedBlockSpans(text, PARTIAL_MARKER_SETS.slice(0, 1));
+
+  assert.equal(spans.length, 1);
+  assert.equal(text.slice(spans[0].start, spans[0].end), text.trim());
+});
+
 test('findPairedBlockSpans pairs replace boundaries', () => {
   const text = [
     '/*replace-start*/',
