@@ -2,27 +2,47 @@
 
 Editor support for [Clay](https://github.com/mrverdant13/clay) annotation markers in reference projects. The extension complements the [`clay`](../../packages/clay_cli/) CLI by providing in-editor tooling for authoring Mason brick templates from runnable reference code.
 
-> **Status:** Early development. Annotation syntax highlighting, block shading, code folding, preview commands, and configurable annotation colors are available.
-
 ---
 
 ## Prerequisites
 
 - **VS Code** 1.85 or newer
+- **`clay` CLI** — required for preview commands (see [CLI setup](#cli-setup) below)
+
+For extension development only:
+
 - **Node.js** 20.x
 - **pnpm** 9.x — [installation guide](https://pnpm.io/installation), or:
   ```bash
   corepack enable
   corepack prepare pnpm@9 --activate
   ```
-- **`clay` CLI** — required for preview commands. During monorepo development, run the CLI from the repo root:
-  ```bash
-  dart run packages/clay_cli/bin/clay.dart --version
-  ```
 
 ---
 
-## Installation (development)
+## Installation
+
+### From the Marketplace
+
+The Clay extension will be published to the [Visual Studio Marketplace](https://marketplace.visualstudio.com/) alongside the first `clay_cli` release. Until then, install from a VSIX (see below) or run the extension from source during development.
+
+### From a VSIX
+
+Build a package from this repository:
+
+```bash
+cd extensions/clay
+pnpm install
+pnpm run package
+```
+
+Install the generated `.vsix` in VS Code:
+
+1. Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+2. Run **Extensions: Install from VSIX…**.
+3. Select the `.vsix` file produced by `pnpm run package`.
+
+### Development (Extension Development Host)
 
 From the repository root:
 
@@ -32,64 +52,37 @@ pnpm install
 pnpm run compile
 ```
 
-To launch the extension in an Extension Development Host, open the **clay** repo in VS Code and choose **Run Clay Extension** from the Run and Debug panel (see [`.vscode/launch.json`](../../.vscode/launch.json)).
+Open the **clay** monorepo in VS Code, then start the **Run Clay Extension** launch configuration from the Run and Debug panel. This opens a new window with the extension loaded against your workspace.
 
 ---
 
-## Settings
+## CLI setup
 
-| Setting | Description |
-| --- | --- |
-| `clay.cliPath` | Path to the `clay` executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. After `clay_cli` is published, install with `dart pub global activate clay_cli`. |
+Preview commands spawn the `clay` CLI. The extension resolves an executable in this order:
 
-### Annotation colors
+1. **`clay.cliPath`** — when set in workspace or user settings, this path is tried first.
+2. **`clay`** on `PATH`.
+3. **Dart install bin** — platform-specific default location under the Dart SDK install.
+4. **Pub-cache bin** — `~/.pub-cache/bin/clay` (or `%LOCALAPPDATA%\Pub\Cache\bin\clay.bat` on Windows).
+5. **Workspace package** — when a workspace folder contains `packages/clay_cli/bin/clay.dart`, the extension runs `dart run` against that script automatically.
 
-Block shading and marker foreground colors are configurable under `clay.colors.*`. Values accept any CSS color string (hex, `rgb()`, `rgba()`, etc.). Changes apply immediately without reloading the window.
+During monorepo development, open the clay repository (or any workspace that includes `packages/clay_cli`) and preview commands work without extra configuration.
 
-| Setting | Default | Applies to |
-| --- | --- | --- |
-| `clay.colors.remove.markerForeground` | `#F48771` | Remove, drop, and remove-boundary markers |
-| `clay.colors.remove.contentBackground` | `rgba(244, 135, 113, 0.14)` | Content removed at generation time |
-| `clay.colors.replace.boundaryMarkerForeground` | `#E5A84B` | `replace-start` and `replace-end` markers |
-| `clay.colors.replace.withMarkerForeground` | `#4EC9B0` | `with` marker inside replace blocks |
-| `clay.colors.replace.originalBackground` | `rgba(229, 168, 75, 0.14)` | Scaffold content replaced at generation time |
-| `clay.colors.replace.replacementBackground` | `rgba(78, 201, 176, 0.14)` | Replacement content kept after generation |
-| `clay.colors.insert.markerForeground` | `#C586C0` | Insert-block boundary markers |
-| `clay.colors.insert.contentBackground` | `rgba(197, 134, 192, 0.14)` | Content inserted at generation time |
-| `clay.colors.partial.markerForeground` | `#569CD6` | Partial-block boundary markers |
-| `clay.colors.partial.payloadBackground` | `rgba(86, 156, 214, 0.14)` | Partial payload extracted to a `.partial` file |
-| `clay.colors.mustache.tagForeground` | `#C678DD` | Mustache variable tags in annotation comments |
-| `clay.colors.mustache.commentBackground` | `rgba(198, 120, 221, 0.10)` | Mustache tag spans in annotation comments |
-| `clay.colors.mustache.dropFlagForeground` | `#F48771` | `x` whitespace-control flags on Mustache tags |
-| `clay.colors.spacing.markerForeground` | `#A0A1A7` | Spacing-group (`w … w`) markers |
-| `clay.colors.spacing.markerBackground` | `rgba(160, 161, 167, 0.12)` | Spacing-group marker spans |
+After `clay_cli` is published to pub.dev:
 
-Syntax highlighting colors for annotation markers are contributed via TextMate scopes in `package.json` (`configurationDefaults`). Use VS Code's `editor.tokenColorCustomizations` to override those scopes if needed.
+```bash
+dart pub global activate clay_cli
+```
 
----
+Ensure the pub-cache `bin` directory is on your `PATH`, or set `clay.cliPath` to the absolute path of the `clay` executable.
 
-## Capabilities
+Verify the CLI is available:
 
-- Annotation syntax highlighting (all marker types, three comment flavors)
-- Block/range shading for remove, replace, insert, partial, mustache, and spacing markers
-- Code folding for remove, replace, and partial annotation blocks
-- **Clay: Preview template output** — annotations and `brick-gen.json` transforms only
-- **Clay: Preview generated output** — full Mustache resolution with variable prompts
-- Scope discovery via the nearest `brick-gen.json`
-- Configurable annotation colors (`clay.colors.*`)
-
----
-
-## Development
-
-| Command | Purpose |
-| --- | --- |
-| `pnpm run compile` | One-off esbuild bundle to `out/extension.js` |
-| `pnpm run watch` | Rebuild on source changes (used by the VS Code launch task) |
-| `pnpm test` | Compile smoke test and grammar validation |
-| `pnpm run package` | Compile and produce a `.vsix` via `@vscode/vsce` |
-
-Source lives under `src/`. TypeScript is bundled with esbuild; `vscode` is marked external and provided by the host at runtime.
+```bash
+clay preview --help
+# or, during development:
+dart run packages/clay_cli/bin/clay.dart preview --help
+```
 
 ---
 
