@@ -1,0 +1,14 @@
+{
+  "reference": "reference",
+  "target": "target",
+  "replacements": [
+    {
+      "from": "ref_cache",
+      "to": "{{cache_name}}"
+    },
+    {
+      "from": "StatelessWidget",
+      "to": "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
+    }
+  ]
+}

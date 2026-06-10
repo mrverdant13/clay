@@ -1,0 +1,6 @@
+
+class SampleCacheView extends ConsumerWidget {
+    
+    final String key;
+    
+}
