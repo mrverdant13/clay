@@ -17,7 +17,8 @@ Directory e2ePackageRoot() {
     final parent = current.parent;
     if (parent.path == current.path) {
       throw StateError(
-        'Could not locate clay_cli_e2e package root from ${Directory.current.path}',
+        'Could not locate clay_cli_e2e package root from '
+        '${Directory.current.path}',
       );
     }
     current = parent;
@@ -88,7 +89,7 @@ class IntegrationFixture {
   }
 
   static void _copyDirectory(Directory source, Directory destination) {
-    for (final entity in source.listSync(recursive: false)) {
+    for (final entity in source.listSync()) {
       if (entity is File) {
         if (p.basename(entity.path) == 'expected') {
           continue;

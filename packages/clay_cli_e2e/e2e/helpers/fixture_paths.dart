@@ -1,4 +1,5 @@
-/// Suffix for committed reference sources (deployed as `.dart` in working copies).
+/// Suffix for committed reference sources (deployed as `.dart` in working
+/// copies).
 const fixtureReferenceSuffix = '.dart.ref';
 
 /// Suffix for committed golden outputs (compared as `.dart` paths).
