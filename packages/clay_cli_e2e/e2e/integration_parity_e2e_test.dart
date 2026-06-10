@@ -19,8 +19,7 @@ void main() {
       group(scope, () {
         late IntegrationFixture fixture;
 
-        setUp(() => fixture = IntegrationFixture.load(scope));
-        tearDown(() => fixture.dispose());
+        setUp(() => fixture = IntegrationFixture.loadForTest(scope));
 
         test(
           'gen output matches golden tree',
