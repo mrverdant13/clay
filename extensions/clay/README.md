@@ -86,6 +86,81 @@ dart run packages/clay_cli/bin/clay.dart preview --help
 
 ---
 
+## Using the extension
+
+### Open a reference project
+
+Open a folder that contains a `brick-gen.json` config and a reference tree (see the [root README](../../README.md) for a typical layout). The extension discovers scope by walking up from the active file to the nearest `brick-gen.json`, then verifying the file lies under the configured `reference` path.
+
+Preview commands and scope-dependent features require a valid brick scope. If a file is outside every configured reference root, the extension shows a warning and does not run the CLI.
+
+### Supported file types
+
+Annotation highlighting, folding, shading, and preview commands apply to:
+
+| Kind | Extensions / names |
+| --- | --- |
+| Dart | `.dart` |
+| Shell | `.sh` |
+| YAML | `.yaml`, `.yml` |
+| HTML / XML | `.html`, `.htm`, `.xml` |
+| Markdown | `.md`, `.markdown` |
+| Ignore files | `.gitignore`, `.dockerignore` |
+
+Three comment flavors are supported equivalently: C-style (`/* … */`), hash (`# … #`), and HTML (`<!-- … -->`). See [`doc/annotations.md`](../../doc/annotations.md) for marker syntax.
+
+### Preview commands
+
+Both commands are available from the editor context menu (right-click) and the Command Palette under the **Clay** category. The active file must be saved before a preview runs.
+
+| Command | CLI equivalent | Description |
+| --- | --- | --- |
+| **Clay: Preview template output** | `clay preview --template-only --file …` | Applies `brick-gen.json` transforms and annotation resolution. Mustache tags remain in the output. |
+| **Clay: Preview generated output** | `clay preview --vars … --file …` | Full Mason rendering. Prompts for brick variables (from `brick.yaml`) and file-level Mustache variables, then shows a diff against the saved reference file. |
+
+Generated preview remembers variable values per brick scope for the current VS Code session.
+
+### Editor features
+
+- **Syntax highlighting** — annotation markers inside comments via TextMate grammar injection.
+- **Block shading** — tinted ranges for remove, replace, insert, partial, mustache, and spacing markers.
+- **Code folding** — collapsible regions for remove, replace, and partial blocks.
+- **Configurable colors** — override shading and marker colors under `clay.colors.*` (see below).
+
+---
+
+## Settings
+
+| Setting | Description |
+| --- | --- |
+| `clay.cliPath` | Path to the `clay` executable. When empty, the extension searches `PATH`, the Dart install bin directory, the pub-cache bin directory, and the workspace `packages/clay_cli` script. |
+
+### Annotation colors
+
+Block shading and marker foreground colors are configurable under `clay.colors.*`. Values accept any CSS color string (hex, `rgb()`, `rgba()`, etc.). Changes apply immediately without reloading the window.
+
+| Setting | Default | Applies to |
+| --- | --- | --- |
+| `clay.colors.remove.markerForeground` | `#F48771` | Remove, drop, and remove-boundary markers |
+| `clay.colors.remove.contentBackground` | `rgba(244, 135, 113, 0.14)` | Content removed at generation time |
+| `clay.colors.replace.boundaryMarkerForeground` | `#E5A84B` | `replace-start` and `replace-end` markers |
+| `clay.colors.replace.withMarkerForeground` | `#4EC9B0` | `with` marker inside replace blocks |
+| `clay.colors.replace.originalBackground` | `rgba(229, 168, 75, 0.14)` | Scaffold content replaced at generation time |
+| `clay.colors.replace.replacementBackground` | `rgba(78, 201, 176, 0.14)` | Replacement content kept after generation |
+| `clay.colors.insert.markerForeground` | `#C586C0` | Insert-block boundary markers |
+| `clay.colors.insert.contentBackground` | `rgba(197, 134, 192, 0.14)` | Content inserted at generation time |
+| `clay.colors.partial.markerForeground` | `#569CD6` | Partial-block boundary markers |
+| `clay.colors.partial.payloadBackground` | `rgba(86, 156, 214, 0.14)` | Partial payload extracted to a `.partial` file |
+| `clay.colors.mustache.tagForeground` | `#C678DD` | Mustache variable tags in annotation comments |
+| `clay.colors.mustache.commentBackground` | `rgba(198, 120, 221, 0.10)` | Mustache tag spans in annotation comments |
+| `clay.colors.mustache.dropFlagForeground` | `#F48771` | `x` whitespace-control flags on Mustache tags |
+| `clay.colors.spacing.markerForeground` | `#A0A1A7` | Spacing-group (`w … w`) markers |
+| `clay.colors.spacing.markerBackground` | `rgba(160, 161, 167, 0.12)` | Spacing-group marker spans |
+
+Syntax highlighting colors for annotation markers are contributed via TextMate scopes in `package.json` (`configurationDefaults`). Use VS Code's `editor.tokenColorCustomizations` to override those scopes if needed.
+
+---
+
 ## License
 
 MIT — see [`package.json`](./package.json).
