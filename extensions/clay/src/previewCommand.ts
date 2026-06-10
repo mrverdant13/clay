@@ -60,14 +60,8 @@ async function previewGeneratedOutput(
     return;
   }
 
-  if (document.isDirty) {
-    const saved = await document.save();
-    if (!saved) {
-      void vscode.window.showWarningMessage(
-        'Save the file before previewing generated output.',
-      );
-      return;
-    }
+  if (!(await ensureDocumentSaved(document, 'Save the file before previewing generated output.'))) {
+    return;
   }
 
   let brickVariables;
@@ -147,6 +141,10 @@ async function previewTemplateOutput(uri?: vscode.Uri): Promise<void> {
     return;
   }
 
+  if (!(await ensureDocumentSaved(document, 'Save the file before previewing template output.'))) {
+    return;
+  }
+
   let cli;
   try {
     cli = await resolveClayCli();
@@ -192,6 +190,23 @@ async function resolveTargetDocument(
   }
 
   return editor.document;
+}
+
+async function ensureDocumentSaved(
+  document: vscode.TextDocument,
+  cancelMessage: string,
+): Promise<boolean> {
+  if (!document.isDirty) {
+    return true;
+  }
+
+  const saved = await document.save();
+  if (!saved) {
+    void vscode.window.showWarningMessage(cancelMessage);
+    return false;
+  }
+
+  return true;
 }
 
 async function openPreviewDiff(
