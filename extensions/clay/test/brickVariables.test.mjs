@@ -70,6 +70,20 @@ test('loadBrickVariables parses Mason variable definitions', () => {
   }
 });
 
+test('loadBrickVariables treats empty var mappings as implicit string vars', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-vars-'));
+  try {
+    const brickYamlPath = join(tempDir, 'brick.yaml');
+    writeFileSync(brickYamlPath, ['name: demo', 'vars:', '  title:'].join('\n'));
+
+    assert.deepEqual(loadBrickVariables(brickYamlPath), [
+      { name: 'title', type: 'string' },
+    ]);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('formatVarsForCli serializes boolean and string values', () => {
   assert.equal(
     formatVarsForCli({ use_riverpod: true, title: 'Demo' }),

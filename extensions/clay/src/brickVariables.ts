@@ -33,6 +33,10 @@ export function loadBrickVariables(brickYamlPath: string): BrickVariable[] {
   }
 
   return Object.entries(document.vars).map(([name, definition]) => {
+    if (!definition || typeof definition !== 'object') {
+      return { name, type: 'string' as const };
+    }
+
     const type = (definition.type as BrickVarType | undefined) ?? 'string';
     const values = Array.isArray(definition.values)
       ? definition.values.map((value) => normalizeYamlScalar(String(value)))
