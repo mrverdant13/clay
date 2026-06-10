@@ -57,3 +57,30 @@ await esbuild.build({
   platform: 'node',
   external: [],
 });
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/brickVariables.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/brickVariables.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/previewFileVariables.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/previewFileVariables.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/previewVariableState.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/previewVariableState.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: ['vscode'],
+});
