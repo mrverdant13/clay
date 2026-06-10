@@ -345,3 +345,50 @@ line two
 ```
 
 Partial names must be non-empty, must not be `.` or `..`, must not contain path separators, and must not include filename-invalid characters (`<>:"|?*` or newlines). `clay validate` reports name mismatches and unmatched `partial v` / `partial ^` pairs.
+
+---
+
+## Validation
+
+Run `clay validate` from the project root (or any subdirectory — Clay discovers the nearest `brick-gen.json`) to scan the reference tree for structural annotation issues.
+
+Issues are printed to stderr in `filePath:line:column: message` format. The command exits with code `1` when any issue exists.
+
+### Checked rules
+
+| Area | What is validated |
+| --- | --- |
+| Remove blocks | Paired `remove-start` / `remove-end` per comment flavor |
+| Insert blocks | Paired `insert-start` / `insert-end` per comment flavor |
+| Replace blocks | `replace-start` → `with` → `replace-end` sequence; no nesting |
+| Partials | Paired `partial v` / `partial ^` with matching names |
+
+Drop markers, Mustache unwrapping, and spacing groups are not structurally validated — they are single-token or self-contained transforms.
+
+### Common messages
+
+| Message | Likely cause |
+| --- | --- |
+| `Unmatched remove-start marker` | Missing `remove-end` (or mismatched flavor) |
+| `Unmatched remove-end marker` | Stray `remove-end` without a start |
+| `Nested replace-start is not supported` | Replace block inside another replace block |
+| `replace-end without a matching with marker` | `with` section omitted or out of order |
+| `partial ^ name "X" does not match partial v name "Y"` | Opening and closing partial names differ |
+
+Validation does not execute transforms — it only checks marker structure. Use `clay preview` to verify the generated content looks correct.
+
+---
+
+## Quick reference
+
+| Marker | Purpose |
+| --- | --- |
+| `drop` | Remove from marker to end of file |
+| `remove-start` / `remove-end` | Remove a content block |
+| `replace-start` / `with` / `replace-end` | Replace a block with template lines |
+| `insert-start` / `insert-end` | Insert template lines at a position |
+| `{{…}}` in comments | Unwrap Mustache tags for Mason |
+| `w <actions> w` | Expand newlines (`Nv`) and spaces (`N>`) |
+| `partial v <name>` / `partial ^ <name>` | Extract a Mason partial |
+
+See also [`brick-gen.json`](../README.md#brick-genjson) for config-driven transforms (`replacements`, `lineDeletions`, `ignore`) and the [README annotation overview](../README.md#annotation-overview).
