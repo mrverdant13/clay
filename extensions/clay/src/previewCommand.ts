@@ -75,11 +75,19 @@ async function previewGeneratedOutput(
     return;
   }
 
-  const variables = resolvePreviewVariables(
-    brickVariables,
-    document.getText(),
-    config,
-  );
+  let variables;
+  try {
+    variables = resolvePreviewVariables(
+      brickVariables,
+      document.getText(),
+      config,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(`Could not resolve preview variables: ${message}`);
+    return;
+  }
+
   const savedValues = loadSavedPreviewVariables(context, scope.scopeName, variables);
   const selectedValues = await collectPreviewVariableValues(variables, savedValues);
   if (selectedValues === undefined) {
