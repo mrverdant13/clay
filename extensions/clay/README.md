@@ -2,7 +2,7 @@
 
 Editor support for [Clay](https://github.com/mrverdant13/clay) annotation markers in reference projects. The extension complements the [`clay`](../../packages/clay_cli/) CLI by providing in-editor tooling for authoring Mason brick templates from runnable reference code.
 
-> **Status:** Early development. Annotation syntax highlighting is available; preview commands, block shading, and folding land in follow-up work.
+> **Status:** Early development. Annotation syntax highlighting, block shading, and code folding are available; preview commands land in follow-up work.
 
 ---
 
@@ -46,10 +46,16 @@ Additional `clay.colors.*` settings for annotation shading will be added in a la
 
 ---
 
+## Capabilities
+
+- Annotation syntax highlighting (all marker types, three comment flavors)
+- Block/range shading for remove, replace, insert, partial, mustache, and spacing markers
+- Code folding for remove, replace, and partial annotation blocks
+
+---
+
 ## Planned capabilities
 
-- Annotation syntax highlighting (all marker types, three comment flavors) — **available**
-- Block/range shading and code folding
 - **Clay: Preview generated output** — full Mustache resolution with variable prompts
 - **Clay: Preview template output** — annotations and `brick-gen.json` transforms only
 - Scope discovery via the nearest `brick-gen.json`

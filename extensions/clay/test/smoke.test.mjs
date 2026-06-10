@@ -48,6 +48,33 @@ test('grammar covers all marker types in three comment flavors', () => {
   }
 });
 
+const expectedSourceModules = [
+  'annotationBlockPairing.ts',
+  'annotationMarkerSets.ts',
+  'annotationHighlighting.ts',
+  'blockFolding.ts',
+  'rangeUtils.ts',
+];
+
+test('block shading and folding source modules exist', () => {
+  for (const moduleName of expectedSourceModules) {
+    assert.ok(
+      readFileSync(join(extensionRoot, 'src', moduleName), 'utf8').length > 0,
+      `missing source module: ${moduleName}`,
+    );
+  }
+});
+
+test('extension registers block shading and folding', () => {
+  const extensionSource = readFileSync(
+    join(extensionRoot, 'src/extension.ts'),
+    'utf8',
+  );
+
+  assert.match(extensionSource, /registerAnnotationHighlighting/);
+  assert.match(extensionSource, /registerBlockFolding/);
+});
+
 test('extension compiles', () => {
   execSync('node esbuild.mjs', { cwd: extensionRoot, stdio: 'inherit' });
 });
