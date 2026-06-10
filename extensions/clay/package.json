@@ -175,7 +175,7 @@
   "scripts": {
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs",
+    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/brickGen.test.mjs test/brickScope.test.mjs",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
   },

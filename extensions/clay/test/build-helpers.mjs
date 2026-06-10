@@ -21,3 +21,21 @@ await esbuild.build({
   platform: 'node',
   external: [],
 });
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/brickGen.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/brickGen.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/brickScope.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/brickScope.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
