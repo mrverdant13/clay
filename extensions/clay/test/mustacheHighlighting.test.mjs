@@ -8,7 +8,7 @@ const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 test('mustache tag body regex rejects empty tags', () => {
   const source = readFileSync(
-    join(extensionRoot, 'src/mustacheHighlighting.ts'),
+    join(extensionRoot, 'src/mustachePatterns.ts'),
     'utf8',
   );
   const patternMatch = source.match(
