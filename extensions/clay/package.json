@@ -33,7 +33,7 @@
       "editor/context": [
         {
           "command": "clay.previewTemplate",
-          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown",
+          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore",
           "group": "clay@1"
         }
       ]
