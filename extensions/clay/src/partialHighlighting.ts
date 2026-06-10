@@ -81,8 +81,13 @@ function findPartialPayloadInteriors(text: string): Array<{ start: number; end: 
     for (const marker of markers) {
       if (marker.kind === 'start') { stack.push(marker); continue; }
       if (stack.length === 0) continue;
-      const startMarker = stack.pop()!;
-      if (startMarker.name !== marker.name) continue;
+
+      const startMarker = stack.at(-1);
+      if (startMarker === undefined || startMarker.name !== marker.name) {
+        continue;
+      }
+
+      stack.pop();
       const interiorStart = startMarker.offset + startMarker.length;
       const interiorEnd = marker.offset;
       if (interiorEnd > interiorStart) {
