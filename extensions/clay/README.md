@@ -40,7 +40,7 @@ To launch the extension in an Extension Development Host, open the **clay** repo
 
 | Setting | Description |
 | --- | --- |
-| `clay.cliPath` | Path to the `clay` executable. When empty, the extension searches `PATH`, the Dart install bin directory, and `~/.pub-cache/bin`. After `clay_cli` is published, install with `dart pub global activate clay_cli`. |
+| `clay.cliPath` | Path to the `clay` executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. After `clay_cli` is published, install with `dart pub global activate clay_cli`. |
 
 Additional `clay.colors.*` settings for annotation shading will be added in a later release.
 

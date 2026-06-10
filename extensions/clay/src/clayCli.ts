@@ -55,10 +55,7 @@ function getCliCandidates(configured?: string): ClayCliInvocation[] {
   candidates.push(
     { executable: 'clay', prefixArgs: [] },
     { executable: getDefaultDartInstallExecutable(), prefixArgs: [] },
-    {
-      executable: path.join(os.homedir(), '.pub-cache/bin/clay'),
-      prefixArgs: [],
-    },
+    { executable: getPubCacheClayExecutable(), prefixArgs: [] },
   );
 
   const workspaceScript = findWorkspaceClayScript();
@@ -83,6 +80,24 @@ export function findWorkspaceClayScript(): string | undefined {
   }
 
   return resolveWorkspaceClayScript(folders.map((folder) => folder.uri.fsPath));
+}
+
+function getPubCacheClayExecutable(): string {
+  const configuredCache = process.env.PUB_CACHE?.trim();
+  if (process.platform === 'win32') {
+    const pubCache =
+      configuredCache ??
+      (process.env.LOCALAPPDATA?.trim()
+        ? path.join(process.env.LOCALAPPDATA.trim(), 'Pub', 'Cache')
+        : undefined);
+    if (pubCache) {
+      return path.join(pubCache, 'bin', 'clay.bat');
+    }
+    return 'clay.bat';
+  }
+
+  const pubCache = configuredCache ?? path.join(os.homedir(), '.pub-cache');
+  return path.join(pubCache, 'bin', 'clay');
 }
 
 function getDefaultDartInstallExecutable(): string {
