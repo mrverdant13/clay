@@ -3,7 +3,11 @@ import * as vscode from 'vscode';
 import { INSERT_BOUNDARY_MARKER_PATTERN, INSERT_MARKER_SETS } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
 import { collectRegexMatches } from './markerScanning';
-import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
+import {
+  clearEditorDecorations,
+  interiorsToRanges,
+  patternToRanges,
+} from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 type MarkerKind = 'start' | 'end';
@@ -85,15 +89,7 @@ export function refreshInsertHighlights(
 
   editor.setDecorations(
     markerDecoration,
-    [...text.matchAll(INSERT_BOUNDARY_MARKER_PATTERN)]
-      .filter((m) => m.index !== undefined)
-      .map((m) => {
-        const index = m.index!;
-        return new vscode.Range(
-          editor.document.positionAt(index),
-          editor.document.positionAt(index + m[0].length),
-        );
-      }),
+    patternToRanges(editor.document, text, INSERT_BOUNDARY_MARKER_PATTERN),
   );
   editor.setDecorations(
     contentDecoration,
