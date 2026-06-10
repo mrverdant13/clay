@@ -7,7 +7,11 @@ import {
 } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
 import { collectRegexMatches, type TextMatch } from './markerScanning';
-import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
+import {
+  clearEditorDecorations,
+  interiorsToRanges,
+  patternToRanges,
+} from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 type ReplaceMarkerKind = 'start' | 'with' | 'end';
@@ -122,25 +126,6 @@ function findReplaceBlockRegions(text: string): ReplaceBlockRegions {
   return { originalInteriors, replacementInteriors };
 }
 
-function findRangesForPattern(
-  document: vscode.TextDocument,
-  text: string,
-  pattern: RegExp,
-): vscode.Range[] {
-  const ranges: vscode.Range[] = [];
-  for (const match of text.matchAll(pattern)) {
-    const index = match.index;
-    if (index === undefined) continue;
-    ranges.push(
-      new vscode.Range(
-        document.positionAt(index),
-        document.positionAt(index + match[0].length),
-      ),
-    );
-  }
-  return ranges;
-}
-
 export function refreshReplaceHighlights(
   editor: vscode.TextEditor | undefined,
   config: AnnotationConfig,
@@ -164,11 +149,11 @@ export function refreshReplaceHighlights(
 
   editor.setDecorations(
     boundaryDecoration,
-    findRangesForPattern(editor.document, text, REPLACE_START_END_MARKER_PATTERN),
+    patternToRanges(editor.document, text, REPLACE_START_END_MARKER_PATTERN),
   );
   editor.setDecorations(
     withDecoration,
-    findRangesForPattern(editor.document, text, WITH_MARKER_PATTERN),
+    patternToRanges(editor.document, text, WITH_MARKER_PATTERN),
   );
   editor.setDecorations(
     originalDecoration,

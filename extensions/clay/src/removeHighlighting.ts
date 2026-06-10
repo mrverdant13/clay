@@ -9,7 +9,11 @@ import {
 } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
 import { collectRegexMatches } from './markerScanning';
-import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
+import {
+  clearEditorDecorations,
+  interiorsToRanges,
+  patternToRanges,
+} from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 let markerDecoration = vscode.window.createTextEditorDecorationType({});
@@ -61,22 +65,11 @@ function findDropBlockInteriors(text: string): Array<{ start: number; end: numbe
 
 function findRemovedBoundaryMarkerRanges(document: vscode.TextDocument): vscode.Range[] {
   const text = document.getText();
-  const ranges: vscode.Range[] = [];
 
-  for (const pattern of [REMOVE_BOUNDARY_MARKER_PATTERN, DROP_MARKER_PATTERN]) {
-    for (const match of text.matchAll(pattern)) {
-      const index = match.index;
-      if (index === undefined) continue;
-      ranges.push(
-        new vscode.Range(
-          document.positionAt(index),
-          document.positionAt(index + match[0].length),
-        ),
-      );
-    }
-  }
-
-  return ranges;
+  return [
+    ...patternToRanges(document, text, REMOVE_BOUNDARY_MARKER_PATTERN),
+    ...patternToRanges(document, text, DROP_MARKER_PATTERN),
+  ];
 }
 
 export function refreshRemoveHighlights(
