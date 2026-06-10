@@ -60,6 +60,7 @@ const expectedSourceModules = [
   'workspaceClayScript.ts',
   'previewRunner.ts',
   'previewCommand.ts',
+  'mustachePatterns.ts',
   'brickVariables.ts',
   'previewFileVariables.ts',
   'previewVariableState.ts',
