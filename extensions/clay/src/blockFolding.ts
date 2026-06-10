@@ -11,7 +11,7 @@ import {
   REPLACE_MARKER_SETS,
 } from './annotationMarkerSets';
 import { spanToFoldingRange } from './rangeUtils';
-import { isSupportedReferenceFile } from './supportedFiles';
+import { isSupportedReferenceFile, SUPPORTED_REFERENCE_FILE_SELECTOR } from './supportedFiles';
 
 function spansToFoldingRanges(
   document: vscode.TextDocument,
@@ -47,6 +47,9 @@ export function registerBlockFolding(context: vscode.ExtensionContext): void {
   };
 
   context.subscriptions.push(
-    vscode.languages.registerFoldingRangeProvider({ scheme: 'file' }, provider),
+    vscode.languages.registerFoldingRangeProvider(
+      SUPPORTED_REFERENCE_FILE_SELECTOR,
+      provider,
+    ),
   );
 }
