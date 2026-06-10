@@ -19,6 +19,30 @@ export function interiorsToRanges(
   );
 }
 
+export function patternToRanges(
+  document: vscode.TextDocument,
+  text: string,
+  pattern: RegExp,
+): vscode.Range[] {
+  const ranges: vscode.Range[] = [];
+  const expression = new RegExp(pattern.source, pattern.flags);
+
+  for (const match of text.matchAll(expression)) {
+    const index = match.index;
+    if (index === undefined) {
+      continue;
+    }
+    ranges.push(
+      new vscode.Range(
+        document.positionAt(index),
+        document.positionAt(index + match[0].length),
+      ),
+    );
+  }
+
+  return ranges;
+}
+
 export function matchToRange(
   document: vscode.TextDocument,
   match: RegExpMatchArray,
