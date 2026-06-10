@@ -1,0 +1,4 @@
+class DroppedTail {
+  /*drop*/
+  unreachable
+}
