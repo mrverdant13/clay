@@ -57,14 +57,10 @@ void main() {
     }
 
     group('preview', () {
-      late IntegrationFixture fixture;
-
-      tearDown(() => fixture.dispose());
-
       test(
         'app widget template output',
         () async {
-          fixture = IntegrationFixture.load('app');
+          final fixture = IntegrationFixture.loadForTest('app');
           final result = await runClay(
             [
               'preview',
@@ -93,7 +89,7 @@ void main() {
       test(
         'entities task template output',
         () async {
-          fixture = IntegrationFixture.load('entities');
+          final fixture = IntegrationFixture.loadForTest('entities');
           final result = await runClay(
             [
               'preview',
@@ -122,7 +118,7 @@ void main() {
       test(
         'dart package main template output',
         () async {
-          fixture = IntegrationFixture.load('dart_package');
+          final fixture = IntegrationFixture.loadForTest('dart_package');
           final result = await runClay(
             [
               'preview',
@@ -151,7 +147,7 @@ void main() {
       test(
         'common util template output',
         () async {
-          fixture = IntegrationFixture.load('common');
+          final fixture = IntegrationFixture.loadForTest('common');
           final result = await runClay(
             [
               'preview',
@@ -180,7 +176,7 @@ void main() {
       test(
         'storage html template output',
         () async {
-          fixture = IntegrationFixture.load('storage');
+          final fixture = IntegrationFixture.loadForTest('storage');
           final result = await runClay(
             [
               'preview',
@@ -209,7 +205,7 @@ void main() {
       test(
         'cache template output',
         () async {
-          fixture = IntegrationFixture.load('cache');
+          final fixture = IntegrationFixture.loadForTest('cache');
           final result = await runClay(
             [
               'preview',
@@ -238,7 +234,7 @@ void main() {
       test(
         'cache rendered output with riverpod',
         () async {
-          fixture = IntegrationFixture.load('cache');
+          final fixture = IntegrationFixture.loadForTest('cache');
           final result = await runClay(
             [
               'preview',
@@ -268,7 +264,7 @@ void main() {
       test(
         'cache rendered output without riverpod',
         () async {
-          fixture = IntegrationFixture.load('cache');
+          final fixture = IntegrationFixture.loadForTest('cache');
           final result = await runClay(
             [
               'preview',
