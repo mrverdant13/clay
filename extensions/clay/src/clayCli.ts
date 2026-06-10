@@ -1,22 +1,20 @@
 // cspell:words LOCALAPPDATA
 
 import { execFile } from 'node:child_process';
-import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
 
 import * as vscode from 'vscode';
 
+import {
+  CLAY_CLI_SCRIPT_RELATIVE_PATH,
+  resolveWorkspaceClayScript,
+} from './workspaceClayScript';
+
 const execFileAsync = promisify(execFile);
 
-/** Relative path to the CLI entrypoint from a Clay workspace root. */
-export const CLAY_CLI_SCRIPT_RELATIVE_PATH = path.join(
-  'packages',
-  'clay_cli',
-  'bin',
-  'clay.dart',
-);
+export { CLAY_CLI_SCRIPT_RELATIVE_PATH, resolveWorkspaceClayScript };
 
 /** How to invoke the Clay CLI. */
 export interface ClayCliInvocation {
@@ -84,17 +82,7 @@ export function findWorkspaceClayScript(): string | undefined {
     return undefined;
   }
 
-  for (const folder of folders) {
-    const scriptPath = path.join(
-      folder.uri.fsPath,
-      CLAY_CLI_SCRIPT_RELATIVE_PATH,
-    );
-    if (fs.existsSync(scriptPath)) {
-      return scriptPath;
-    }
-  }
-
-  return undefined;
+  return resolveWorkspaceClayScript(folders.map((folder) => folder.uri.fsPath));
 }
 
 function getDefaultDartInstallExecutable(): string {
