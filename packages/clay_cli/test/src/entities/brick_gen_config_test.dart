@@ -82,19 +82,19 @@ void main() {
       expect(reference.hashCode, isNot(other.hashCode));
     });
 
-    group('legacy config fixtures', () {
-      final legacyConfigs = <String, String>{
-        'legacy_minimal': p.join(
+    group('minimal config fixtures', () {
+      final configFixtures = <String, String>{
+        'minimal': p.join(
           _fixturesRoot,
-          'legacy_minimal.json',
+          'minimal.json',
         ),
-        'legacy_with_deletions': p.join(
+        'with_deletions': p.join(
           _fixturesRoot,
-          'legacy_with_deletions.json',
+          'with_deletions.json',
         ),
       };
 
-      for (final entry in legacyConfigs.entries) {
+      for (final entry in configFixtures.entries) {
         test('parses ${entry.key} fixture', () {
           final file = File(entry.value);
           expect(
@@ -112,7 +112,7 @@ void main() {
           expect(config.ignore, isEmpty);
           expect(config.replacements, isNotEmpty);
 
-          if (entry.key == 'legacy_with_deletions') {
+          if (entry.key == 'with_deletions') {
             expect(config.lineDeletions, isNotEmpty);
             expect(
               config.lineDeletions.first,
@@ -124,8 +124,8 @@ void main() {
         });
       }
 
-      test('parses dotAll replacement object from legacy_with_deletions', () {
-        final file = File(legacyConfigs['legacy_with_deletions']!);
+      test('parses dotAll replacement object from with_deletions', () {
+        final file = File(configFixtures['with_deletions']!);
         final json =
             jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
         final config = BrickGenConfig.fromJson(json);
@@ -140,8 +140,8 @@ void main() {
         );
       });
 
-      test('parses line deletion ranges from legacy_with_deletions', () {
-        final file = File(legacyConfigs['legacy_with_deletions']!);
+      test('parses line deletion ranges from with_deletions', () {
+        final file = File(configFixtures['with_deletions']!);
         final json =
             jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
         final config = BrickGenConfig.fromJson(json);
