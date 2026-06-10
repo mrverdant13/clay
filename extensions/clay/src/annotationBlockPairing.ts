@@ -177,3 +177,43 @@ export function findNamedPairedBlockSpans(
 
   return spans;
 }
+
+/** Interior spans for named partial blocks (exclusive of the markers). */
+export function findNamedPairedBlockInteriors(
+  text: string,
+  markerSets: NamedStartEndMarkerSet[],
+): TextSpan[] {
+  const interiors: TextSpan[] = [];
+
+  for (const markerSet of markerSets) {
+    const markers = [
+      ...collectNamedMarkers(text, markerSet.start, 'start'),
+      ...collectNamedMarkers(text, markerSet.end, 'end'),
+    ].sort((a, b) => a.offset - b.offset);
+
+    const stack: NamedMarkerMatch[] = [];
+    for (const marker of markers) {
+      if (marker.kind === 'start') {
+        stack.push(marker);
+        continue;
+      }
+      if (stack.length === 0) {
+        continue;
+      }
+
+      const startMarker = stack.at(-1);
+      if (startMarker === undefined || startMarker.name !== marker.name) {
+        continue;
+      }
+
+      stack.pop();
+      const interiorStart = startMarker.offset + startMarker.length;
+      const interiorEnd = marker.offset;
+      if (interiorEnd > interiorStart) {
+        interiors.push({ start: interiorStart, end: interiorEnd });
+      }
+    }
+  }
+
+  return interiors;
+}

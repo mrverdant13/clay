@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { findNamedPairedBlockInteriors } from './annotationBlockPairing';
 import {
   PARTIAL_BOUNDARY_MARKER_PATTERN,
   PARTIAL_MARKER_SETS,
@@ -11,15 +12,6 @@ import {
   patternToRanges,
 } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
-
-type PartialMarkerKind = 'start' | 'end';
-
-interface PartialMarker {
-  kind: PartialMarkerKind;
-  offset: number;
-  length: number;
-  name: string;
-}
 
 let markerDecoration = vscode.window.createTextEditorDecorationType({});
 let payloadDecoration = vscode.window.createTextEditorDecorationType({});
@@ -46,59 +38,6 @@ function ensureDecorations(config: AnnotationConfig): void {
   appliedConfigKey = key;
 }
 
-function collectPartialMarkers(
-  text: string,
-  pattern: RegExp,
-  kind: PartialMarkerKind,
-): PartialMarker[] {
-  const markers: PartialMarker[] = [];
-  const expression = new RegExp(pattern.source, pattern.flags);
-
-  for (const match of text.matchAll(expression)) {
-    const offset = match.index;
-    if (offset === undefined) continue;
-    markers.push({
-      kind,
-      offset,
-      length: match[0].length,
-      name: (match[1] ?? '').trim(),
-    });
-  }
-
-  return markers;
-}
-
-function findPartialPayloadInteriors(text: string): Array<{ start: number; end: number }> {
-  const interiors: Array<{ start: number; end: number }> = [];
-
-  for (const markerSet of PARTIAL_MARKER_SETS) {
-    const markers = [
-      ...collectPartialMarkers(text, markerSet.start, 'start'),
-      ...collectPartialMarkers(text, markerSet.end, 'end'),
-    ].sort((a, b) => a.offset - b.offset);
-
-    const stack: PartialMarker[] = [];
-    for (const marker of markers) {
-      if (marker.kind === 'start') { stack.push(marker); continue; }
-      if (stack.length === 0) continue;
-
-      const startMarker = stack.at(-1);
-      if (startMarker === undefined || startMarker.name !== marker.name) {
-        continue;
-      }
-
-      stack.pop();
-      const interiorStart = startMarker.offset + startMarker.length;
-      const interiorEnd = marker.offset;
-      if (interiorEnd > interiorStart) {
-        interiors.push({ start: interiorStart, end: interiorEnd });
-      }
-    }
-  }
-
-  return interiors;
-}
-
 export function refreshPartialHighlights(
   editor: vscode.TextEditor | undefined,
   config: AnnotationConfig,
@@ -120,7 +59,10 @@ export function refreshPartialHighlights(
   );
   editor.setDecorations(
     payloadDecoration,
-    interiorsToRanges(editor.document, findPartialPayloadInteriors(text)),
+    interiorsToRanges(
+      editor.document,
+      findNamedPairedBlockInteriors(text, PARTIAL_MARKER_SETS),
+    ),
   );
 }
 
