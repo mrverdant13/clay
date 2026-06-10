@@ -60,6 +60,16 @@ async function previewGeneratedOutput(
     return;
   }
 
+  if (document.isDirty) {
+    const saved = await document.save();
+    if (!saved) {
+      void vscode.window.showWarningMessage(
+        'Save the file before previewing generated output.',
+      );
+      return;
+    }
+  }
+
   let brickVariables;
   let config;
   try {
