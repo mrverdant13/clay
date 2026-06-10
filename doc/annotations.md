@@ -391,4 +391,4 @@ Validation does not execute transforms — it only checks marker structure. Use 
 | `w <actions> w` | Expand newlines (`Nv`) and spaces (`N>`) |
 | `partial v <name>` / `partial ^ <name>` | Extract a Mason partial |
 
-See also [`brick-gen.json`](../README.md#brick-genjson) for config-driven transforms (`replacements`, `lineDeletions`, `ignore`) and the [README annotation overview](../README.md#annotation-overview).
+See also [`brick-gen.json`](../README.md#brick-genjson) for config-driven transforms (`replacements`, `lineDeletions`, `ignore`), the [JSON schema](brick-gen.schema.json) for editor validation, and the [README annotation overview](../README.md#annotation-overview).

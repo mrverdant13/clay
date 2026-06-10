@@ -171,7 +171,7 @@ Omitted `reference`, `target`, and `ignore` fields use the defaults above.
 Further reference docs:
 
 - [`doc/annotations.md`](doc/annotations.md) — marker syntax for reference authors
-- [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) — JSON schema *(planned)*
+- [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) — JSON schema for editor validation and tooling
 
 ---
 
