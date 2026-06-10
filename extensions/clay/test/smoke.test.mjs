@@ -54,6 +54,8 @@ const expectedSourceModules = [
   'annotationHighlighting.ts',
   'blockFolding.ts',
   'rangeUtils.ts',
+  'brickGen.ts',
+  'brickScope.ts',
 ];
 
 test('block shading and folding source modules exist', () => {
