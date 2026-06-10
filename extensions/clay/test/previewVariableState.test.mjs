@@ -55,7 +55,7 @@ test('loadSavedPreviewVariables keeps only values matching variable types', () =
   assert.deepEqual(
     loadSavedPreviewVariables(context, '/tmp/demo/brick-gen.json', variables),
     {
-    use_riverpod: true,
+      use_riverpod: true,
       title: 'My App',
     },
   );
