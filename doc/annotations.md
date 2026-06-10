@@ -217,3 +217,131 @@ line3
 ```
 
 Leading and trailing whitespace on each comment line is trimmed before the prefix is removed. Insert blocks cannot be nested; `clay validate` checks start/end pairing.
+
+---
+
+## Mustache unwrapping
+
+Mason template variables use Mustache syntax (`{{variable}}`, `{{#section}}`, etc.). In reference files, wrap a tag in a comment so it is valid source code; Clay unwraps the comment during generation, leaving the Mustache tag in the template.
+
+| Flavor | Example |
+| --- | --- |
+| C-style | `/*{{name}}*/` |
+| Hash | `#{{name}}#` |
+| HTML | `<!--{{name}}-->` |
+
+**Reference:**
+
+```dart
+class /*{{class_name}}*/ MyReferenceClass {}
+```
+
+**Template output:**
+
+```dart
+class {{class_name}} MyReferenceClass {}
+```
+
+### Whitespace control
+
+Optional `x` flags adjacent to the tag control whitespace on that side (similar to remove-block flags):
+
+| Flag | Position | Effect |
+| --- | --- | --- |
+| `x` | Before the tag inside the opener (e.g. `/*x{{tag}}*/`) | Drop leading whitespace before the tag |
+| `x` | After the tag inside the closer (e.g. `#{{tag}}x#`) | Drop trailing whitespace after the tag |
+
+**Example:**
+
+```dart
+text /*x{{some-key}}*/ more
+```
+
+**Template output:**
+
+```dart
+text{{some-key}} more
+```
+
+Use `clay preview --template-only` to leave Mustache tags intact for inspection, or `clay preview --vars key=value` to render them with Mason.
+
+---
+
+## Spacing groups
+
+**Spacing groups** expand a compact action list into literal newlines and spaces. They are useful for controlling blank lines or indentation in generated templates without embedding fragile whitespace in reference comments.
+
+| Flavor | Syntax |
+| --- | --- |
+| C-style | `/*w <actions> w*/` |
+| Hash | `#w <actions> w#` |
+| HTML | `<!--w <actions> w-->` |
+
+### Actions
+
+| Action | Meaning | Example |
+| --- | --- | --- |
+| `Nv` | `N` newline characters | `2v` → two newlines |
+| `N>` | `N` space characters | `4>` → four spaces |
+
+Actions are space-separated. An empty action list (`/*w w*/`) removes the marker and any adjacent whitespace on the marker itself.
+
+**Reference:**
+
+```dart
+text
+/*w 2v 4> w*/
+more text
+```
+
+**Template output:**
+
+```dart
+text
+
+    more text
+```
+
+---
+
+## Partials
+
+**Partials** extract a reusable fragment into a separate Mason partial file. The reference block is replaced with a partial include; the extracted content is written to `{{~ <name>.partial }}` in the target directory.
+
+| Marker | Role |
+| --- | --- |
+| `partial v <name>` | Opens the block and names the partial |
+| `partial ^ <name>` | Closes the block; name must match the opening marker |
+
+| Flavor | Open | Close |
+| --- | --- | --- |
+| C-style | `/*partial v header*/` | `/*partial ^ header*/` |
+| Hash | `#partial v header#` | `#partial ^ header#` |
+| HTML | `<!--partial v header-->` | `<!--partial ^ header-->` |
+
+**Reference:**
+
+```dart
+before
+/*partial v header*/line one
+line two
+/*partial ^ header*/
+after
+```
+
+**Template output (main file):**
+
+```dart
+before
+{{> header.partial }}
+after
+```
+
+**Generated partial file** (`{{~ header.partial }}`):
+
+```
+line one
+line two
+```
+
+Partial names must be non-empty, must not be `.` or `..`, must not contain path separators, and must not include filename-invalid characters (`<>:"|?*` or newlines). `clay validate` reports name mismatches and unmatched `partial v` / `partial ^` pairs.
