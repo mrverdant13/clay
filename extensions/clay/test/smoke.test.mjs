@@ -48,6 +48,42 @@ test('grammar covers all marker types in three comment flavors', () => {
   }
 });
 
+const expectedSourceModules = [
+  'annotationBlockPairing.ts',
+  'annotationMarkerSets.ts',
+  'annotationHighlighting.ts',
+  'blockFolding.ts',
+  'rangeUtils.ts',
+];
+
+test('block shading and folding source modules exist', () => {
+  for (const moduleName of expectedSourceModules) {
+    assert.ok(
+      readFileSync(join(extensionRoot, 'src', moduleName), 'utf8').length > 0,
+      `missing source module: ${moduleName}`,
+    );
+  }
+});
+
+test('extension registers block shading and folding', () => {
+  const extensionSource = readFileSync(
+    join(extensionRoot, 'src/extension.ts'),
+    'utf8',
+  );
+
+  const activateStart = extensionSource.indexOf(
+    'export function activate(context: vscode.ExtensionContext): void {',
+  );
+  assert.ok(activateStart >= 0, 'activate() not found');
+
+  const activateEnd = extensionSource.indexOf('\nexport function deactivate');
+  assert.ok(activateEnd > activateStart, 'deactivate() not found');
+  const activateBody = extensionSource.slice(activateStart, activateEnd);
+
+  assert.match(activateBody, /\bregisterAnnotationHighlighting\s*\(\s*context\s*\)/);
+  assert.match(activateBody, /\bregisterBlockFolding\s*\(\s*context\s*\)/);
+});
+
 test('extension compiles', () => {
   execSync('node esbuild.mjs', { cwd: extensionRoot, stdio: 'inherit' });
 });
