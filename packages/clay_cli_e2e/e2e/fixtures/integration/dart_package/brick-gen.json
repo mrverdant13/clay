@@ -1,0 +1,10 @@
+{
+  "reference": "reference",
+  "target": "target",
+  "replacements": [
+    {
+      "from": "ref_package",
+      "to": "{{project_name}}"
+    }
+  ]
+}
