@@ -46,35 +46,112 @@ export interface AnnotationConfig {
   };
 }
 
-/** Default annotation colors; configurable `clay.colors.*` settings land in a follow-up. */
-export function readAnnotationConfig(): AnnotationConfig {
+type SettingReader = (key: string, defaultValue: string) => string;
+
+const DEFAULTS: AnnotationConfig = {
+  remove: {
+    markerForeground: removedMarkerForeground,
+    contentBackground: removedContentBackground,
+  },
+  replace: {
+    boundaryMarkerForeground: replaceBoundaryMarkerForeground,
+    withMarkerForeground: replaceWithMarkerForeground,
+    originalBackground: replaceOriginalBackground,
+    replacementBackground: replaceReplacementBackground,
+  },
+  insert: {
+    markerForeground: insertedMarkerForeground,
+    contentBackground: insertedContentBackground,
+  },
+  partial: {
+    markerForeground: partialMarkerForeground,
+    payloadBackground: partialPayloadBackground,
+  },
+  mustache: {
+    tagForeground: mustacheTagForeground,
+    commentBackground: mustacheCommentBackground,
+    dropFlagForeground: mustacheDropFlagForeground,
+  },
+  spacing: {
+    markerForeground: spacingMarkerForeground,
+    markerBackground: spacingMarkerBackground,
+  },
+};
+
+/** Resolves annotation colors from `clay.colors.*` settings with built-in defaults. */
+export function resolveAnnotationConfig(readSetting: SettingReader): AnnotationConfig {
   return {
     remove: {
-      markerForeground: removedMarkerForeground,
-      contentBackground: removedContentBackground,
+      markerForeground: readSetting(
+        'colors.remove.markerForeground',
+        DEFAULTS.remove.markerForeground,
+      ),
+      contentBackground: readSetting(
+        'colors.remove.contentBackground',
+        DEFAULTS.remove.contentBackground,
+      ),
     },
     replace: {
-      boundaryMarkerForeground: replaceBoundaryMarkerForeground,
-      withMarkerForeground: replaceWithMarkerForeground,
-      originalBackground: replaceOriginalBackground,
-      replacementBackground: replaceReplacementBackground,
+      boundaryMarkerForeground: readSetting(
+        'colors.replace.boundaryMarkerForeground',
+        DEFAULTS.replace.boundaryMarkerForeground,
+      ),
+      withMarkerForeground: readSetting(
+        'colors.replace.withMarkerForeground',
+        DEFAULTS.replace.withMarkerForeground,
+      ),
+      originalBackground: readSetting(
+        'colors.replace.originalBackground',
+        DEFAULTS.replace.originalBackground,
+      ),
+      replacementBackground: readSetting(
+        'colors.replace.replacementBackground',
+        DEFAULTS.replace.replacementBackground,
+      ),
     },
     insert: {
-      markerForeground: insertedMarkerForeground,
-      contentBackground: insertedContentBackground,
+      markerForeground: readSetting(
+        'colors.insert.markerForeground',
+        DEFAULTS.insert.markerForeground,
+      ),
+      contentBackground: readSetting(
+        'colors.insert.contentBackground',
+        DEFAULTS.insert.contentBackground,
+      ),
     },
     partial: {
-      markerForeground: partialMarkerForeground,
-      payloadBackground: partialPayloadBackground,
+      markerForeground: readSetting(
+        'colors.partial.markerForeground',
+        DEFAULTS.partial.markerForeground,
+      ),
+      payloadBackground: readSetting(
+        'colors.partial.payloadBackground',
+        DEFAULTS.partial.payloadBackground,
+      ),
     },
     mustache: {
-      tagForeground: mustacheTagForeground,
-      commentBackground: mustacheCommentBackground,
-      dropFlagForeground: mustacheDropFlagForeground,
+      tagForeground: readSetting(
+        'colors.mustache.tagForeground',
+        DEFAULTS.mustache.tagForeground,
+      ),
+      commentBackground: readSetting(
+        'colors.mustache.commentBackground',
+        DEFAULTS.mustache.commentBackground,
+      ),
+      dropFlagForeground: readSetting(
+        'colors.mustache.dropFlagForeground',
+        DEFAULTS.mustache.dropFlagForeground,
+      ),
     },
     spacing: {
-      markerForeground: spacingMarkerForeground,
-      markerBackground: spacingMarkerBackground,
+      markerForeground: readSetting(
+        'colors.spacing.markerForeground',
+        DEFAULTS.spacing.markerForeground,
+      ),
+      markerBackground: readSetting(
+        'colors.spacing.markerBackground',
+        DEFAULTS.spacing.markerBackground,
+      ),
     },
   };
 }
