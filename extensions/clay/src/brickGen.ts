@@ -103,6 +103,15 @@ export function applyBrickGenReplacements(
 
 function applyReplacement(input: string, replacement: BrickGenReplacement): string {
   const groupNumbers = [...uniqueCaptureGroups(replacement.to)];
+  const captureCount = countCapturingGroups(replacement.from);
+
+  for (const group of groupNumbers) {
+    if (group < 1 || group > captureCount) {
+      throw new Error(
+        `Replacement references capture group \${${group}} but the "from" pattern has ${captureCount} capture group(s).`,
+      );
+    }
+  }
 
   return input.replace(replacement.from, (...matchArgs) => {
     let resolvedTo = replacement.to;
@@ -112,6 +121,11 @@ function applyReplacement(input: string, replacement: BrickGenReplacement): stri
     }
     return resolvedTo;
   });
+}
+
+function countCapturingGroups(regex: RegExp): number {
+  const match = new RegExp(`${regex.source}|`, regex.flags).exec('');
+  return match ? match.length - 1 : 0;
 }
 
 function uniqueCaptureGroups(to: string): number[] {

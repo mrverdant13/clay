@@ -137,6 +137,19 @@ test('applyBrickGenReplacements applies config replacements in order', () => {
   assert.match(output, /use_riverpod/);
 });
 
+test('applyBrickGenReplacements rejects out-of-range capture group references', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      replacements: [{ from: '(Widget)', to: 'Prefix${2}Suffix' }],
+    }),
+  );
+
+  assert.throws(
+    () => applyBrickGenReplacements('class App extends Widget {}', config.replacements),
+    /capture group \$\{2\}/,
+  );
+});
+
 test('resolveBrickYamlPath resolves adjacent to the target directory', () => {
   const projectRoot = join(tmpdir(), 'project');
   const config = parseBrickGenConfig(
