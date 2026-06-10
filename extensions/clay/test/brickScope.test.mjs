@@ -76,6 +76,8 @@ test('findBrickScopeForFile discovers config in the project root', () => {
     assert.equal(scope.configPath, join(fixture.tempDir, 'brick-gen.json'));
     assert.equal(scope.referenceDir, fixture.referenceDir);
     assert.equal(scope.targetDir, join(fixture.tempDir, 'brick', '__brick__'));
+    assert.equal(scope.scopeName, join(fixture.tempDir, 'brick-gen.json'));
+    assert.equal(scope.brickYamlPath, join(fixture.tempDir, 'brick', 'brick.yaml'));
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
@@ -145,6 +147,41 @@ test('findBrickScopeForFile returns undefined when file is outside reference', (
     assert.equal(findBrickScopeForFile(outsideFile), undefined);
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
+});
+
+test('findBrickScopeForFile uses config path as a unique scope key', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-scope-'));
+  try {
+    const firstScopeDir = join(tempDir, 'scopes', 'example');
+    const secondScopeDir = join(tempDir, 'other', 'example');
+    const firstReference = join(firstScopeDir, 'reference');
+    const secondReference = join(secondScopeDir, 'reference');
+    const firstFile = join(firstReference, 'app.dart');
+    const secondFile = join(secondReference, 'app.dart');
+
+    for (const [scopeDir, referenceDir, filePath] of [
+      [firstScopeDir, firstReference, firstFile],
+      [secondScopeDir, secondReference, secondFile],
+    ]) {
+      mkdirSync(referenceDir, { recursive: true });
+      writeFileSync(filePath, 'void main() {}\n');
+      writeFileSync(
+        join(scopeDir, 'brick-gen.json'),
+        JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+      );
+    }
+
+    const firstScope = findBrickScopeForFile(firstFile);
+    const secondScope = findBrickScopeForFile(secondFile);
+
+    assert.ok(firstScope);
+    assert.ok(secondScope);
+    assert.notEqual(firstScope.scopeName, secondScope.scopeName);
+    assert.equal(firstScope.scopeName, join(firstScopeDir, 'brick-gen.json'));
+    assert.equal(secondScope.scopeName, join(secondScopeDir, 'brick-gen.json'));
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
   }
 });
 

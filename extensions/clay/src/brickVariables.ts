@@ -1,0 +1,101 @@
+import * as fs from 'node:fs';
+
+import { parse as parseYaml } from 'yaml';
+
+import type { PreviewVarValue } from './previewVariableState';
+
+export type BrickVarType = 'string' | 'boolean' | 'enum';
+
+/** Mason variable definition from `brick.yaml`. */
+export interface BrickVariable {
+  name: string;
+  type: BrickVarType;
+  description?: string;
+  prompt?: string;
+  default?: string | boolean;
+  values?: string[];
+}
+
+interface BrickYamlDocument {
+  vars?: Record<string, Record<string, unknown>>;
+}
+
+/** Loads Mason variable definitions from a brick's `brick.yaml`. */
+export function loadBrickVariables(brickYamlPath: string): BrickVariable[] {
+  if (!fs.existsSync(brickYamlPath)) {
+    return [];
+  }
+
+  const content = fs.readFileSync(brickYamlPath, 'utf8');
+  const document = parseYaml(content) as BrickYamlDocument | null;
+  if (!document?.vars) {
+    return [];
+  }
+
+  return Object.entries(document.vars).map(([name, definition]) => {
+    if (!definition || typeof definition !== 'object') {
+      return { name, type: 'string' as const };
+    }
+
+    const type = (definition.type as BrickVarType | undefined) ?? 'string';
+    const values = Array.isArray(definition.values)
+      ? definition.values.map((value) => normalizeYamlScalar(String(value)))
+      : undefined;
+
+    let defaultValue = definition.default;
+    if (typeof defaultValue === 'string') {
+      defaultValue = normalizeYamlScalar(defaultValue);
+    }
+
+    return {
+      name,
+      type,
+      description:
+        typeof definition.description === 'string' ? definition.description : undefined,
+      prompt: typeof definition.prompt === 'string' ? definition.prompt : undefined,
+      default: defaultValue as string | boolean | undefined,
+      values,
+    };
+  });
+}
+
+/** Formats a variable map for the preview CLI `--vars` flag. */
+export function formatVarsForCli(vars: Record<string, PreviewVarValue>): string {
+  for (const [key, value] of Object.entries(vars)) {
+    if (typeof value === 'string' && value.includes(',')) {
+      throw new Error(`Variable "${key}" cannot contain commas in preview mode.`);
+    }
+  }
+
+  return Object.entries(vars)
+    .map(([key, value]) => {
+      if (typeof value === 'boolean') {
+        return `${key}=${value}`;
+      }
+      return `${key}=${quoteCliStringValue(value)}`;
+    })
+    .join(',');
+}
+
+function quoteCliStringValue(value: string): string {
+  if (!value.includes('"')) {
+    return `"${value}"`;
+  }
+  if (!value.includes("'")) {
+    return `'${value}'`;
+  }
+  throw new Error(
+    'Variable value cannot contain both single and double quotes in preview mode.',
+  );
+}
+
+function normalizeYamlScalar(value: string): string {
+  if (
+    (value.startsWith('`') && value.endsWith('`')) ||
+    (value.startsWith("'") && value.endsWith("'")) ||
+    (value.startsWith('"') && value.endsWith('"'))
+  ) {
+    return value.slice(1, -1);
+  }
+  return value;
+}

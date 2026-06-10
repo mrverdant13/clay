@@ -1,21 +1,54 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { formatVarsForCli } from './brickVariables';
 import type { ClayCliInvocation } from './clayCli';
 import type { BrickScopeInfo } from './brickScope';
+import type { PreviewVarValue } from './previewVariableState';
 
 const execFileAsync = promisify(execFile);
 
-/** Options for a template-only preview run. */
-export interface RunTemplatePreviewOptions {
+/** Shared options for preview CLI invocations. */
+export interface RunPreviewOptions {
   scope: BrickScopeInfo;
   filePath: string;
   cli: ClayCliInvocation;
 }
 
+/** Options for a template-only preview run. */
+export type RunTemplatePreviewOptions = RunPreviewOptions;
+
+/** Options for a full generated preview run. */
+export interface RunGeneratedPreviewOptions extends RunPreviewOptions {
+  vars: Record<string, PreviewVarValue>;
+}
+
 /** Runs `clay preview --template-only` and returns stdout content. */
 export async function runTemplatePreview(
   options: RunTemplatePreviewOptions,
+): Promise<string> {
+  return runPreview({
+    ...options,
+    templateOnly: true,
+  });
+}
+
+/** Runs `clay preview --vars` and returns stdout content. */
+export async function runGeneratedPreview(
+  options: RunGeneratedPreviewOptions,
+): Promise<string> {
+  return runPreview({
+    ...options,
+    templateOnly: false,
+    vars: options.vars,
+  });
+}
+
+async function runPreview(
+  options: RunPreviewOptions & {
+    templateOnly: boolean;
+    vars?: Record<string, PreviewVarValue>;
+  },
 ): Promise<string> {
   const args = [
     ...options.cli.prefixArgs,
@@ -26,8 +59,16 @@ export async function runTemplatePreview(
     options.scope.configPath,
     '--cwd',
     options.scope.projectRoot,
-    '--template-only',
   ];
+
+  if (options.templateOnly) {
+    args.push('--template-only');
+  } else {
+    const varsArg = formatVarsForCli(options.vars ?? {});
+    if (varsArg.length > 0) {
+      args.push('--vars', varsArg);
+    }
+  }
 
   try {
     const { stdout } = await execFileAsync(options.cli.executable, args, {

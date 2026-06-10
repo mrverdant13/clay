@@ -10,9 +10,11 @@ const require = createRequire(import.meta.url);
 const {
   DEFAULT_REFERENCE_PATH,
   DEFAULT_TARGET_PATH,
+  applyBrickGenReplacements,
   parseBrickGenConfig,
   loadBrickGenConfig,
   resolvePathFromProjectRoot,
+  resolveBrickYamlPath,
   resolveReferencePath,
   resolveTargetPath,
 } = require('./out/brickGen.cjs');
@@ -23,6 +25,7 @@ test('parseBrickGenConfig applies defaults for omitted path fields', () => {
   assert.equal(config.reference, DEFAULT_REFERENCE_PATH);
   assert.equal(config.target, DEFAULT_TARGET_PATH);
   assert.deepEqual(config.ignore, []);
+  assert.deepEqual(config.replacements, []);
 });
 
 test('parseBrickGenConfig reads explicit path fields', () => {
@@ -100,4 +103,61 @@ test('resolveReferencePath and resolveTargetPath use config fields', () => {
 
   assert.equal(resolveReferencePath(projectRoot, config), join(projectRoot, 'refs/main'));
   assert.equal(resolveTargetPath(projectRoot, config), join(projectRoot, 'dist/brick'));
+});
+
+test('parseBrickGenConfig reads replacement entries', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      replacements: [
+        { from: 'Widget', to: '{{name}}' },
+        {
+          from: { pattern: 'App', dotAll: true },
+          to: 'My${1}',
+        },
+      ],
+    }),
+  );
+
+  assert.equal(config.replacements.length, 2);
+  assert.equal(config.replacements[0].to, '{{name}}');
+  assert.match(config.replacements[0].from.source, /Widget/);
+  assert.equal(config.replacements[1].from.flags.includes('s'), true);
+});
+
+test('applyBrickGenReplacements applies config replacements in order', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      replacements: [
+        { from: 'Widget', to: '{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}' },
+      ],
+    }),
+  );
+
+  const output = applyBrickGenReplacements('class App extends Widget {}', config.replacements);
+  assert.match(output, /use_riverpod/);
+});
+
+test('applyBrickGenReplacements rejects out-of-range capture group references', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      replacements: [{ from: '(Widget)', to: 'Prefix${2}Suffix' }],
+    }),
+  );
+
+  assert.throws(
+    () => applyBrickGenReplacements('class App extends Widget {}', config.replacements),
+    /capture group \$\{2\}/,
+  );
+});
+
+test('resolveBrickYamlPath resolves adjacent to the target directory', () => {
+  const projectRoot = join(tmpdir(), 'project');
+  const config = parseBrickGenConfig(
+    JSON.stringify({ target: 'brick/__brick__' }),
+  );
+
+  assert.equal(
+    resolveBrickYamlPath(projectRoot, config),
+    join(projectRoot, 'brick', 'brick.yaml'),
+  );
 });

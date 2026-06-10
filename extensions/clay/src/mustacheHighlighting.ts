@@ -1,17 +1,11 @@
 import * as vscode from 'vscode';
 
 import { type AnnotationConfig } from './annotationConfig';
+import { MUSTACHE_TAG_PATTERN } from './mustachePatterns';
 import { captureToRange, clearEditorDecorations, matchToRange } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
-/** Full Mustache tag, including `{{` / `}}` delimiters (e.g. `{{#use_foo}}`, `{{{name}}}`). */
-export const MUSTACHE_TAG_PATTERN = String.raw`\{\{\{?[^}]+?\}\}?\}`;
-
-/** Same as [MUSTACHE_TAG_PATTERN] with a capture group for the tag body. */
-export const MUSTACHE_TAG_BODY_REGEX = new RegExp(
-  MUSTACHE_TAG_PATTERN.replace('[^}]+?', '([^}]+?)'),
-  'g',
-);
+export { MUSTACHE_TAG_BODY_REGEX, MUSTACHE_TAG_PATTERN } from './mustachePatterns';
 
 const MUSTACHE_COMMENT_SOURCES = [
   String.raw`/\*(x)?(${MUSTACHE_TAG_PATTERN})(x)?\*/`,

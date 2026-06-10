@@ -7,7 +7,7 @@ import { registerMustacheHighlighting } from './mustacheHighlighting';
 import { registerPartialHighlighting } from './partialHighlighting';
 import { registerRemoveHighlighting } from './removeHighlighting';
 import { registerReplaceHighlighting } from './replaceHighlighting';
-import { registerPreviewTemplateCommand } from './previewCommand';
+import { registerPreviewCommands } from './previewCommand';
 import { registerSpacingHighlighting } from './spacingHighlighting';
 
 /**
@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerMustacheHighlighting(context);
   registerSpacingHighlighting(context);
   registerAnnotationHighlighting(context);
-  registerPreviewTemplateCommand(context);
+  registerPreviewCommands(context);
 }
 
 export function deactivate(): void {
