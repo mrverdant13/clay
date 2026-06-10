@@ -2,6 +2,9 @@
 
 **Clay** is a toolchain for authoring [Mason](https://pub.dev/packages/mason) brick templates from real, runnable **reference projects**. You maintain a reference codebase, mark up files with comment-based **annotations**, and declare transforms in a **`brick-gen.json`** config file. The **`clay`** CLI turns that reference into a template directory ready for Mason code generation.
 
+> [!WARNING]
+> **Under development.** Clay is pre-release and has not published to pub.dev yet. The CLI, library API, VS Code extension, and `brick-gen.json` schema are still evolving — **breaking changes may be introduced** before the first stable release.
+
 | Item              | Value                                                                                         |
 | ----------------- | --------------------------------------------------------------------------------------------- |
 | Repository        | Standalone monorepo (Melos workspace) |
@@ -9,8 +12,6 @@
 | Executable        | `clay`                                                                                        |
 | VS Code extension | **Clay** — [`extensions/clay/`](extensions/clay/)                                             |
 | License           | MIT                                                                                           |
-
-> **Status:** Early-stage repository. The CLI, library, and VS Code extension packages are being scaffolded.
 
 ---
 
