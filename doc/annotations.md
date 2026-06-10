@@ -130,3 +130,90 @@ next line
 ```
 
 Remove blocks can span multiple lines. Start and end markers must use the same comment flavor and must be properly paired — `clay validate` reports unmatched markers.
+
+---
+
+## Replace blocks
+
+**Replace blocks** substitute a region of reference code with new template content. They use three markers in sequence:
+
+| Marker | Role |
+| --- | --- |
+| `replace-start` | Opens the block; content between start and `with` is discarded |
+| `with` | Separates discarded reference content from replacement lines |
+| `replace-end` | Closes the block |
+
+Replacement lines inside the `with` section must use the **same comment flavor** as the block markers, with a single space after the comment opener:
+
+| Flavor | Replacement line format |
+| --- | --- |
+| C-style | `// <content>` |
+| Hash | `# <content>` |
+| HTML | `<!-- <content>-->` |
+
+**Reference:**
+
+```dart
+line/*replace-start*/
+asdf
+asdf asdf
+/*with i0*/
+// 1
+// line2
+/*replace-end*/
+line3
+```
+
+**Template output:**
+
+```dart
+line1
+line2
+line3
+```
+
+### Indentation
+
+Add `i<N>` to the `with` marker to indent every replacement line by `N` spaces:
+
+```
+/*with i2*/
+// indented line
+```
+
+produces `  indented line` in the template. Omit `i<N>` (or use `i0`) for no extra indentation.
+
+Replace blocks cannot be nested. `clay validate` reports missing `with` markers, duplicate `with` markers, and unmatched start/end pairs.
+
+---
+
+## Insert blocks
+
+**Insert blocks** inject template content at a point in the file. Unlike replace blocks, there is no discarded reference region — only the lines between start and end markers matter.
+
+| Marker | Role |
+| --- | --- |
+| `insert-start` | Opens the block |
+| `insert-end` | Closes the block |
+
+Lines between the markers must use the matching comment prefix (same rules as replace-block replacement lines). The comment prefix is stripped; only the inner content is emitted.
+
+**Reference:**
+
+```dart
+line/*insert-start*/
+// 1
+// line2
+/*insert-end*/
+line3
+```
+
+**Template output:**
+
+```dart
+line1
+line2
+line3
+```
+
+Leading and trailing whitespace on each comment line is trimmed before the prefix is removed. Insert blocks cannot be nested; `clay validate` checks start/end pairing.
