@@ -39,3 +39,21 @@ await esbuild.build({
   platform: 'node',
   external: [],
 });
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/workspaceClayScript.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/workspaceClayScript.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/previewRunner.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/previewRunner.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
