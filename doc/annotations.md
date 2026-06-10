@@ -40,3 +40,93 @@ When Clay processes a reference file, transforms run in this fixed order:
 Binary files (`.png`, `.webp`) are copied without text transforms.
 
 Use `clay preview --file <path>` to inspect the result for a single file, or `clay validate` to check marker pairing across the reference tree.
+
+---
+
+## Drop markers
+
+A **drop** marker removes everything from the marker through the end of the file.
+
+| Flavor | Marker |
+| --- | --- |
+| C-style | `/*drop*/` |
+| Hash | `#drop#` |
+| HTML | `<!--drop-->` |
+
+**Reference (before `clay gen`):**
+
+```dart
+void main() {
+  runApp(const MyApp());
+}
+/*drop*/
+// Everything below is discarded at generation time.
+void debugOnly() {}
+```
+
+**Template output:**
+
+```dart
+void main() {
+  runApp(const MyApp());
+}
+```
+
+Drop markers are useful for trailing development-only code, sample data, or scaffolding that should not appear in the generated brick.
+
+---
+
+## Remove blocks
+
+**Remove blocks** delete a span of content between paired start and end markers. Use them when only a section of a file should be excluded from the template.
+
+| Marker | Role |
+| --- | --- |
+| `remove-start` | Opens the block (content after this marker is removed) |
+| `remove-end` | Closes the block |
+
+**Reference:**
+
+```dart
+import 'package:flutter/material.dart';
+/*remove-start*/
+import 'package:flutter/foundation.dart'; // dev-only import
+/*remove-end*/
+import 'package:my_app/app.dart';
+```
+
+**Template output:**
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:my_app/app.dart';
+```
+
+### Whitespace control
+
+Optional flags on remove markers control whether whitespace adjacent to the block is kept:
+
+| Flag | Position | Effect |
+| --- | --- | --- |
+| `x-` | Prefix on `remove-start` (e.g. `/*x-remove-start*/`) | Drop leading whitespace before the block |
+| `-x` | Suffix on `remove-end` (e.g. `/*remove-end-x*/`) | Drop trailing whitespace after the block |
+
+When flags are absent, leading and trailing whitespace captured around the block is preserved in the output.
+
+**Example with `x-` and `-x`:**
+
+```dart
+line   /*x-remove-start*/
+removed content
+/*remove-end-x*/    0
+next line
+```
+
+**Template output:**
+
+```dart
+line0
+next line
+```
+
+Remove blocks can span multiple lines. Start and end markers must use the same comment flavor and must be properly paired — `clay validate` reports unmatched markers.
