@@ -162,7 +162,7 @@ The config file is the single source of truth for paths, ignore patterns, replac
 | `replacements`  | `array`    | `[]`                | Regex replacements on file paths and contents      |
 | `lineDeletions` | `array`    | `[]`                | Line ranges to drop from specific target files     |
 
-Clay accepts legacy config files that omit `reference`, `target`, and `ignore`; missing path fields fall back to the defaults above.
+Omitted `reference`, `target`, and `ignore` fields use the defaults above.
 
 `replacements` accept a plain string (treated as regex) or `{ "pattern": string, "dotAll"?: boolean }` for the `from` field; `to` supports `${n}` capture-group interpolation. They are applied sequentially to file paths and contents. `lineDeletions` use zero-based, inclusive line ranges relative to the target directory root and run before content replacements and annotation transforms.
 
