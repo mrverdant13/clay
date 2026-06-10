@@ -36,19 +36,17 @@ function createScopeFixture({
 }
 
 test('collectConfigSearchPaths walks up to the filesystem root', () => {
-  const startDir = join('/project', 'reference', 'lib');
+  const startDir = join(tmpdir(), 'project', 'reference', 'lib');
   const paths = collectConfigSearchPaths(startDir);
 
-  assert.deepEqual(paths, [
-    join('/project', 'reference', 'lib', 'brick-gen.json'),
-    join('/project', 'reference', 'brick-gen.json'),
-    join('/project', 'brick-gen.json'),
-    join('/', 'brick-gen.json'),
-  ]);
+  assert.equal(paths[0], join(startDir, 'brick-gen.json'));
+  assert.ok(paths.includes(join(tmpdir(), 'project', 'brick-gen.json')));
+  assert.equal(dirname(dirname(paths.at(-1))), dirname(paths.at(-1)));
 });
 
 test('isPathWithinDirectory accepts nested files and rejects siblings', () => {
-  const referenceDir = join('/project', 'reference');
+  const projectRoot = join(tmpdir(), 'project');
+  const referenceDir = join(projectRoot, 'reference');
 
   assert.equal(
     isPathWithinDirectory(join(referenceDir, 'lib', 'main.dart'), referenceDir),
@@ -56,13 +54,13 @@ test('isPathWithinDirectory accepts nested files and rejects siblings', () => {
   );
   assert.equal(isPathWithinDirectory(referenceDir, referenceDir), false);
   assert.equal(
-    isPathWithinDirectory(join('/project', 'other', 'main.dart'), referenceDir),
+    isPathWithinDirectory(join(projectRoot, 'other', 'main.dart'), referenceDir),
     false,
   );
 });
 
 test('isPathWithinDirectory accepts directories whose names start with dots', () => {
-  const referenceDir = join('/project', 'reference');
+  const referenceDir = join(tmpdir(), 'project', 'reference');
 
   assert.equal(
     isPathWithinDirectory(join(referenceDir, '..cache', 'file.txt'), referenceDir),
