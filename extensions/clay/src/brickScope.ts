@@ -44,7 +44,10 @@ export function collectConfigSearchPaths(startDir: string): string[] {
 /** Returns whether [targetPath] is inside [directoryPath] (not equal to it). */
 export function isPathWithinDirectory(targetPath: string, directoryPath: string): boolean {
   const relative = path.relative(directoryPath, targetPath);
-  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+  if (relative === '' || path.isAbsolute(relative)) {
+    return false;
+  }
+  return relative !== '..' && !relative.startsWith(`..${path.sep}`);
 }
 
 /**

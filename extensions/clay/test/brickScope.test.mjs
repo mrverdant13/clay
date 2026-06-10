@@ -61,6 +61,15 @@ test('isPathWithinDirectory accepts nested files and rejects siblings', () => {
   );
 });
 
+test('isPathWithinDirectory accepts directories whose names start with dots', () => {
+  const referenceDir = join('/project', 'reference');
+
+  assert.equal(
+    isPathWithinDirectory(join(referenceDir, '..cache', 'file.txt'), referenceDir),
+    true,
+  );
+});
+
 test('findBrickScopeForFile discovers config in the project root', () => {
   const fixture = createScopeFixture();
   try {
