@@ -73,8 +73,17 @@ test('loadBrickVariables parses Mason variable definitions', () => {
 test('formatVarsForCli serializes boolean and string values', () => {
   assert.equal(
     formatVarsForCli({ use_riverpod: true, title: 'Demo' }),
-    'use_riverpod=true,title=Demo',
+    'use_riverpod=true,title="Demo"',
   );
+});
+
+test('formatVarsForCli quotes strings that resemble booleans or integers', () => {
+  assert.equal(formatVarsForCli({ flag: 'true' }), 'flag="true"');
+  assert.equal(formatVarsForCli({ count: '3' }), 'count="3"');
+});
+
+test('formatVarsForCli uses single quotes when a string value contains double quotes', () => {
+  assert.equal(formatVarsForCli({ title: 'Say "hello"' }), "title='Say \"hello\"'");
 });
 
 test('formatVarsForCli rejects comma-containing string values', () => {

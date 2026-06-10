@@ -64,8 +64,25 @@ export function formatVarsForCli(vars: Record<string, PreviewVarValue>): string 
   }
 
   return Object.entries(vars)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => {
+      if (typeof value === 'boolean') {
+        return `${key}=${value}`;
+      }
+      return `${key}=${quoteCliStringValue(value)}`;
+    })
     .join(',');
+}
+
+function quoteCliStringValue(value: string): string {
+  if (!value.includes('"')) {
+    return `"${value}"`;
+  }
+  if (!value.includes("'")) {
+    return `'${value}'`;
+  }
+  throw new Error(
+    'Variable value cannot contain both single and double quotes in preview mode.',
+  );
 }
 
 function normalizeYamlScalar(value: string): string {
