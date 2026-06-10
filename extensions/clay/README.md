@@ -161,6 +161,38 @@ Syntax highlighting colors for annotation markers are contributed via TextMate s
 
 ---
 
+## Troubleshooting
+
+| Symptom | Likely cause | What to try |
+| --- | --- | --- |
+| "The clay CLI was not found" | No executable on `PATH` and no workspace script | Install or activate `clay_cli`, set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`. |
+| "Could not find a brick scope" | No `brick-gen.json` above the file, or file is outside `reference` | Add or fix `brick-gen.json`; ensure the open file is under the configured reference directory. |
+| "Clay preview is only available for supported reference files" | Unsupported language or extension | Open a file listed in [Supported file types](#supported-file-types). |
+| Preview shows stale output | Unsaved editor buffer | Save the file before running preview; the CLI reads from disk. |
+| Generated preview missing variables | No `brick.yaml` next to the target directory | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `brick-gen.json`. |
+| Colors do not update | Settings cached by VS Code | Change any `clay.colors.*` value; the extension listens for configuration changes and refreshes decorations immediately. |
+
+For CLI behavior, flags, and `brick-gen.json` fields, see the [root README](../../README.md) and [`doc/annotations.md`](../../doc/annotations.md).
+
+---
+
+## Development
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm run compile` | One-off esbuild bundle to `out/extension.js` |
+| `pnpm run watch` | Rebuild on source changes (used by the VS Code launch task) |
+| `pnpm test` | Compile smoke test, grammar validation, and unit tests |
+| `pnpm run package` | Compile and produce a `.vsix` via `@vscode/vsce` |
+
+Source lives under `src/`. TypeScript is bundled with esbuild; `vscode` is marked external and provided by the host at runtime.
+
+Use `pnpm install --frozen-lockfile` in CI or when reproducing locked dependency trees. The **Extension CI** workflow runs `pnpm test` on every pull request.
+
+Contributor setup for the full monorepo (Dart CLI, Melos, extension) is documented in [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
+
+---
+
 ## License
 
 MIT — see [`package.json`](./package.json).
