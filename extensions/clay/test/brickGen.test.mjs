@@ -39,6 +39,30 @@ test('parseBrickGenConfig reads explicit path fields', () => {
   assert.deepEqual(config.ignore, ['*.png']);
 });
 
+test('parseBrickGenConfig falls back to defaults for unexpected field types', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      reference: 42,
+      target: ['out/template'],
+      ignore: '*.png',
+    }),
+  );
+
+  assert.equal(config.reference, DEFAULT_REFERENCE_PATH);
+  assert.equal(config.target, DEFAULT_TARGET_PATH);
+  assert.deepEqual(config.ignore, []);
+});
+
+test('parseBrickGenConfig keeps only string entries in ignore arrays', () => {
+  const config = parseBrickGenConfig(
+    JSON.stringify({
+      ignore: ['*.png', 7, null, '*.jpg'],
+    }),
+  );
+
+  assert.deepEqual(config.ignore, ['*.png', '*.jpg']);
+});
+
 test('loadBrickGenConfig reads from disk', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-gen-'));
   try {

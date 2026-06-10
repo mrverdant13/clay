@@ -23,14 +23,31 @@ interface BrickGenJson {
   ignore?: string[];
 }
 
+function readStringField(
+  document: BrickGenJson,
+  field: 'reference' | 'target',
+  defaultValue: string,
+): string {
+  const value = document[field];
+  return typeof value === 'string' ? value : defaultValue;
+}
+
+function readIgnoreField(document: BrickGenJson): string[] {
+  if (!Array.isArray(document.ignore)) {
+    return [];
+  }
+
+  return document.ignore.filter((pattern): pattern is string => typeof pattern === 'string');
+}
+
 /** Parses `brick-gen.json` contents. */
 export function parseBrickGenConfig(raw: string): BrickGenConfig {
   const document = JSON.parse(raw) as BrickGenJson;
 
   return {
-    reference: document.reference ?? DEFAULT_REFERENCE_PATH,
-    target: document.target ?? DEFAULT_TARGET_PATH,
-    ignore: document.ignore ?? [],
+    reference: readStringField(document, 'reference', DEFAULT_REFERENCE_PATH),
+    target: readStringField(document, 'target', DEFAULT_TARGET_PATH),
+    ignore: readIgnoreField(document),
   };
 }
 
