@@ -60,6 +60,10 @@ const expectedSourceModules = [
   'workspaceClayScript.ts',
   'previewRunner.ts',
   'previewCommand.ts',
+  'brickVariables.ts',
+  'previewFileVariables.ts',
+  'previewVariableState.ts',
+  'variableQuickPick.ts',
 ];
 
 test('block shading and folding source modules exist', () => {
@@ -88,10 +92,10 @@ test('extension registers block shading and folding', () => {
 
   assert.match(activateBody, /\bregisterAnnotationHighlighting\s*\(\s*context\s*\)/);
   assert.match(activateBody, /\bregisterBlockFolding\s*\(\s*context\s*\)/);
-  assert.match(activateBody, /\bregisterPreviewTemplateCommand\s*\(\s*context\s*\)/);
+  assert.match(activateBody, /\bregisterPreviewCommands\s*\(\s*context\s*\)/);
 });
 
-test('package.json contributes preview template command', () => {
+test('package.json contributes preview commands', () => {
   const manifest = JSON.parse(
     readFileSync(join(extensionRoot, 'package.json'), 'utf8'),
   );
@@ -102,6 +106,10 @@ test('package.json contributes preview template command', () => {
   assert.ok(
     commands.some((entry) => entry.command === 'clay.previewTemplate'),
     'missing clay.previewTemplate command',
+  );
+  assert.ok(
+    commands.some((entry) => entry.command === 'clay.previewGenerated'),
+    'missing clay.previewGenerated command',
   );
 });
 
