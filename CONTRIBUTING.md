@@ -195,8 +195,8 @@ docs: document brick-gen.json fields in README
 | --- | --- | --- |
 | [`README.md`](README.md) | Users — install, quick start, CLI reference | This repo |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributors — this guide | This repo |
-| `doc/annotations.md` | Reference authors — marker syntax | Planned |
-| `doc/brick-gen.schema.json` | Tooling — JSON schema | Planned |
+| [`doc/annotations.md`](doc/annotations.md) | Reference authors — marker syntax | Available |
+| [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) | Tooling — JSON schema | Available |
 | `extensions/clay/README.md` | Extension users — setup and settings | Planned |
 | `CHANGELOG.md` | Release notes | Planned |
 

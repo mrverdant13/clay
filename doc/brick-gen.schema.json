@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mrverdant13/clay/blob/main/doc/brick-gen.schema.json",
+  "title": "Clay brick-gen.json",
+  "description": "Configuration for Clay template generation from a reference project.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "reference": {
+      "type": "string",
+      "default": "reference",
+      "description": "Path to the reference project root, relative to the project root (the directory containing this file) or absolute."
+    },
+    "target": {
+      "type": "string",
+      "default": "brick/__brick__",
+      "description": "Path to the template output root, relative to the project root or absolute."
+    },
+    "ignore": {
+      "type": "array",
+      "default": [],
+      "description": "Gitignore-style glob patterns. Matching files under the reference directory are excluded from template output. Patterns use POSIX forward slashes; a leading / anchors to the reference or target root.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "replacements": {
+      "type": "array",
+      "default": [],
+      "description": "Regex replacements applied sequentially to file paths and contents.",
+      "items": {
+        "$ref": "#/$defs/replacement"
+      }
+    },
+    "lineDeletions": {
+      "type": "array",
+      "default": [],
+      "description": "Line ranges removed from specific target files before content replacements and annotation transforms.",
+      "items": {
+        "$ref": "#/$defs/lineDeletion"
+      }
+    }
+  },
+  "$defs": {
+    "replacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {
+          "description": "Pattern to match. A plain string is treated as a regular expression.",
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "$ref": "#/$defs/regexPattern"
+            }
+          ]
+        },
+        "to": {
+          "type": "string",
+          "description": "Replacement string. Supports ${n} capture-group interpolation (for example ${1})."
+        }
+      }
+    },
+    "regexPattern": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pattern"],
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Regular expression pattern."
+        },
+        "dotAll": {
+          "type": "boolean",
+          "description": "When true, . matches newlines (RegExp dotAll flag)."
+        },
+        "multiLine": {
+          "type": "boolean",
+          "description": "When true, ^ and $ match line boundaries (RegExp multiLine flag)."
+        },
+        "unicode": {
+          "type": "boolean",
+          "description": "When true, enable Unicode-aware matching (RegExp unicode flag)."
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "description": "When false, matching is case-insensitive (RegExp caseSensitive flag)."
+        }
+      }
+    },
+    "lineDeletion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["filePath", "ranges"],
+      "properties": {
+        "filePath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path to the target file, relative to the target directory root (after path replacements)."
+        },
+        "ranges": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Zero-based, inclusive line ranges to remove from filePath.",
+          "items": {
+            "$ref": "#/$defs/lineRange"
+          }
+        }
+      }
+    },
+    "lineRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start", "end"],
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Beginning of the range (inclusive, zero-based)."
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "End of the range (inclusive, zero-based)."
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "reference": "reference",
+      "target": "brick/__brick__",
+      "ignore": [".dart_tool/", "build/", "coverage/", "**/*.iml", ".DS_Store"],
+      "replacements": [],
+      "lineDeletions": []
+    },
+    {
+      "replacements": [
+        {
+          "from": "sample_common",
+          "to": "common"
+        },
+        {
+          "from": {
+            "pattern": "@Dependencies\\(\\[(.*?)\\]\\)",
+            "dotAll": true
+          },
+          "to": "{{#use_riverpod}}@Dependencies([${1}]){{/use_riverpod}}"
+        }
+      ],
+      "lineDeletions": [
+        {
+          "filePath": "./lib/app.dart",
+          "ranges": [{ "start": 51, "end": 158 }]
+        }
+      ]
+    }
+  ]
+}
