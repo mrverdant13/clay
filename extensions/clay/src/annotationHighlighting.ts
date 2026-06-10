@@ -8,6 +8,8 @@ import { refreshRemoveHighlights } from './removeHighlighting';
 import { refreshReplaceHighlights } from './replaceHighlighting';
 import { refreshSpacingHighlights } from './spacingHighlighting';
 
+const DOCUMENT_CHANGE_DEBOUNCE_MS = 150;
+
 function refreshAnnotationHighlights(editor: vscode.TextEditor | undefined): void {
   const config = readAnnotationConfig();
   refreshRemoveHighlights(editor, config);
@@ -33,15 +35,41 @@ function refreshEditorsForDocument(document: vscode.TextDocument): void {
 }
 
 export function registerAnnotationHighlighting(context: vscode.ExtensionContext): void {
+  const pendingDocumentRefreshes = new Map<string, ReturnType<typeof setTimeout>>();
+
+  function scheduleRefreshEditorsForDocument(document: vscode.TextDocument): void {
+    const key = document.uri.toString();
+    const pending = pendingDocumentRefreshes.get(key);
+    if (pending !== undefined) {
+      clearTimeout(pending);
+    }
+
+    pendingDocumentRefreshes.set(
+      key,
+      setTimeout(() => {
+        pendingDocumentRefreshes.delete(key);
+        refreshEditorsForDocument(document);
+      }, DOCUMENT_CHANGE_DEBOUNCE_MS),
+    );
+  }
+
   refreshAllVisibleEditors();
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(refreshAnnotationHighlights),
     vscode.workspace.onDidChangeTextDocument((event) => {
-      refreshEditorsForDocument(event.document);
+      scheduleRefreshEditorsForDocument(event.document);
     }),
     vscode.workspace.onDidOpenTextDocument((document) => {
       refreshEditorsForDocument(document);
     }),
+    {
+      dispose() {
+        for (const timer of pendingDocumentRefreshes.values()) {
+          clearTimeout(timer);
+        }
+        pendingDocumentRefreshes.clear();
+      },
+    },
   );
 }
