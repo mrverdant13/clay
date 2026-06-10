@@ -59,20 +59,23 @@ test('loadBrickGenConfig reads from disk', () => {
 });
 
 test('resolvePathFromProjectRoot joins relative paths', () => {
-  const resolved = resolvePathFromProjectRoot('/project', 'reference');
-  assert.equal(resolved, join('/project', 'reference'));
+  const projectRoot = join(tmpdir(), 'project');
+  const resolved = resolvePathFromProjectRoot(projectRoot, 'reference');
+  assert.equal(resolved, join(projectRoot, 'reference'));
 });
 
 test('resolvePathFromProjectRoot normalizes absolute paths', () => {
-  const resolved = resolvePathFromProjectRoot('/project', '/abs/reference');
-  assert.equal(resolved, '/abs/reference');
+  const absoluteReference = join(tmpdir(), 'abs-reference');
+  const resolved = resolvePathFromProjectRoot(join(tmpdir(), 'project'), absoluteReference);
+  assert.equal(resolved, absoluteReference);
 });
 
 test('resolveReferencePath and resolveTargetPath use config fields', () => {
+  const projectRoot = join(tmpdir(), 'project');
   const config = parseBrickGenConfig(
     JSON.stringify({ reference: 'refs/main', target: 'dist/brick' }),
   );
 
-  assert.equal(resolveReferencePath('/project', config), join('/project', 'refs/main'));
-  assert.equal(resolveTargetPath('/project', config), join('/project', 'dist/brick'));
+  assert.equal(resolveReferencePath(projectRoot, config), join(projectRoot, 'refs/main'));
+  assert.equal(resolveTargetPath(projectRoot, config), join(projectRoot, 'dist/brick'));
 });
