@@ -31,25 +31,8 @@ Directory e2ePackageRoot() {
 /// Reference files ending in `.ref` are copied into the working directory
 /// under their logical names (see [referenceTargetFileName]).
 class IntegrationFixture {
-  IntegrationFixture._({
-    required this.name,
-    required this.packageRoot,
-    required this.root,
-    required this.workingRoot,
-  });
-
-  /// Loads fixture [name] and registers [dispose] for the current test.
-  ///
-  /// Cleanup runs only after a successful load, so failures during load do
-  /// not trigger [LateInitializationError] or leave temp dirs undisposed.
-  static IntegrationFixture loadForTest(String name) {
-    final fixture = IntegrationFixture.load(name);
-    addTearDown(fixture.dispose);
-    return fixture;
-  }
-
   /// Loads fixture [name] into a temporary working directory.
-  factory IntegrationFixture.load(String name) {
+  factory IntegrationFixture._load(String name) {
     final packageRoot = e2ePackageRoot();
     final fixtureRoot = Directory(
       p.join(packageRoot.path, 'e2e', 'fixtures', 'integration', name),
@@ -68,6 +51,22 @@ class IntegrationFixture {
       root: fixtureRoot,
       workingRoot: workingRoot,
     );
+  }
+  IntegrationFixture._({
+    required this.name,
+    required this.packageRoot,
+    required this.root,
+    required this.workingRoot,
+  });
+
+  /// Loads fixture [name] and registers [dispose] for the current test.
+  ///
+  /// Cleanup runs only after a successful load, so failures during load do
+  /// not trigger `LateInitializationError` or leave temp dirs undisposed.
+  factory IntegrationFixture.loadForTest(String name) {
+    final fixture = IntegrationFixture._load(name);
+    addTearDown(fixture.dispose);
+    return fixture;
   }
 
   /// Fixture identifier (directory name).
