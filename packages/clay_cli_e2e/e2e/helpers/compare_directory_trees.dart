@@ -46,6 +46,9 @@ List<String> listGoldenLogicalPaths(Directory root) {
 }
 
 /// Asserts [actual] matches [expected] file-for-file.
+///
+/// Golden files ending in `.golden` are mapped to logical output paths before
+/// comparison (see [goldenLogicalPath] and [goldenDiskRelativePath]).
 void expectDirectoryTreesMatch({
   required Directory expected,
   required Directory actual,

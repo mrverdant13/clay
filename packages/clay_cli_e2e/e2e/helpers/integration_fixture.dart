@@ -26,6 +26,9 @@ Directory e2ePackageRoot() {
 }
 
 /// A self-contained integration fixture under `e2e/fixtures/integration/`.
+///
+/// Reference files ending in `.ref` are copied into the working directory
+/// under their logical names (see [referenceTargetFileName]).
 class IntegrationFixture {
   IntegrationFixture._({
     required this.name,

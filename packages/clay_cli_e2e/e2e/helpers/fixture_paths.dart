@@ -1,3 +1,19 @@
+/// Path suffix conventions for integration fixture files.
+///
+/// Reference and golden fixtures that contain clay template syntax (mustache
+/// tags, annotation markers, and similar) must **not** use normal `.dart` or
+/// `.yaml` extensions on disk. Those files would be parsed by `dart format`
+/// and `dart analyze` and cause tooling failures.
+///
+/// Instead, committed files use extra suffixes:
+///
+/// - `.ref` — reference source; stripped when copied to a working directory
+///   (e.g. `widget.dart.ref` → `widget.dart`).
+/// - `.golden` — expected output; compared under the logical path after
+///   generation (e.g. `widget.dart.golden` ↔ `widget.dart`).
+///
+/// See `packages/clay_cli_e2e/README.md` for the full contributor guide.
+
 /// Suffix appended to committed reference sources (stripped in working copies).
 const fixtureReferenceSuffix = '.ref';
 
