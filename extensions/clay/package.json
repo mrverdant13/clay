@@ -22,6 +22,22 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "clay.previewTemplate",
+        "title": "Preview template output",
+        "category": "Clay"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "clay.previewTemplate",
+          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown",
+          "group": "clay@1"
+        }
+      ]
+    },
     "configurationDefaults": {
       "editor.tokenColorCustomizations": {
         "textMateRules": [
