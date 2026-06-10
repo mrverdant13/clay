@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:test/test.dart';
 
 import 'fixture_paths.dart';
 
@@ -36,6 +37,16 @@ class IntegrationFixture {
     required this.root,
     required this.workingRoot,
   });
+
+  /// Loads fixture [name] and registers [dispose] for the current test.
+  ///
+  /// Cleanup runs only after a successful load, so failures during load do
+  /// not trigger [LateInitializationError] or leave temp dirs undisposed.
+  static IntegrationFixture loadForTest(String name) {
+    final fixture = IntegrationFixture.load(name);
+    addTearDown(fixture.dispose);
+    return fixture;
+  }
 
   /// Loads fixture [name] into a temporary working directory.
   factory IntegrationFixture.load(String name) {
