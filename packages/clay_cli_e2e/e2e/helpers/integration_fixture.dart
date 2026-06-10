@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'fixture_paths.dart';
+
 /// Locates `packages/clay_cli_e2e` from the current working directory.
 Directory e2ePackageRoot() {
   var current = Directory.current;
@@ -87,17 +89,20 @@ class IntegrationFixture {
 
   static void _copyDirectory(Directory source, Directory destination) {
     for (final entity in source.listSync(recursive: false)) {
-      final targetPath = p.join(destination.path, p.basename(entity.path));
       if (entity is File) {
         if (p.basename(entity.path) == 'expected') {
           continue;
         }
+        final fileName = referenceTargetFileName(p.basename(entity.path));
+        final targetPath = p.join(destination.path, fileName);
         entity.copySync(targetPath);
       } else if (entity is Directory) {
         if (p.basename(entity.path) == 'expected') {
           continue;
         }
-        final targetDir = Directory(targetPath)..createSync(recursive: true);
+        final targetDir = Directory(
+          p.join(destination.path, p.basename(entity.path)),
+        )..createSync(recursive: true);
         _copyDirectory(entity, targetDir);
       }
     }
