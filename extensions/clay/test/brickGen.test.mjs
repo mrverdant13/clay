@@ -19,7 +19,7 @@ const {
   resolveTargetPath,
 } = require('./out/brickGen.cjs');
 
-test('parseBrickGenConfig applies defaults for legacy configs', () => {
+test('parseBrickGenConfig applies defaults for omitted path fields', () => {
   const config = parseBrickGenConfig('{}');
 
   assert.equal(config.reference, DEFAULT_REFERENCE_PATH);
