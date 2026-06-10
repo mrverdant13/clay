@@ -14,7 +14,7 @@ export interface BrickScopeInfo {
   /** Directory containing `brick-gen.json`. */
   projectRoot: string;
 
-  /** Stable scope name for persisted preview variable state. */
+  /** Stable scope key for persisted preview variable state. */
   scopeName: string;
 
   /** Absolute path to `brick-gen.json`. */
@@ -82,7 +82,7 @@ export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefi
 
       return {
         projectRoot,
-        scopeName: path.basename(projectRoot),
+        scopeName: path.normalize(configPath),
         configPath,
         referenceDir,
         targetDir: resolveTargetPath(projectRoot, config),

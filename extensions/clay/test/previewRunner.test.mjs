@@ -18,8 +18,8 @@ const clayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
 function createScope(tempDir) {
   return {
     projectRoot: tempDir,
-    scopeName: tempDir.split('/').at(-1),
     configPath: join(tempDir, 'brick-gen.json'),
+    scopeName: join(tempDir, 'brick-gen.json'),
     referenceDir: join(tempDir, 'reference'),
     targetDir: join(tempDir, 'brick', '__brick__'),
     brickYamlPath: join(tempDir, 'brick', 'brick.yaml'),

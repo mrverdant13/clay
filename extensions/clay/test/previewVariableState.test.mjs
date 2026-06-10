@@ -39,7 +39,7 @@ test('resolvePreviewDefault prefers saved values over brick defaults', () => {
 
 test('loadSavedPreviewVariables keeps only values matching variable types', () => {
   const context = createMockContext({
-    'clay.previewVariables.demo': {
+    'clay.previewVariables./tmp/demo/brick-gen.json': {
       use_riverpod: true,
       platform: 'invalid',
       title: 'My App',
@@ -52,20 +52,23 @@ test('loadSavedPreviewVariables keeps only values matching variable types', () =
     { name: 'title', type: 'string' },
   ];
 
-  assert.deepEqual(loadSavedPreviewVariables(context, 'demo', variables), {
+  assert.deepEqual(
+    loadSavedPreviewVariables(context, '/tmp/demo/brick-gen.json', variables),
+    {
     use_riverpod: true,
-    title: 'My App',
-  });
+      title: 'My App',
+    },
+  );
 });
 
 test('savePreviewVariables merges values into extension global state', async () => {
   const context = createMockContext({
-    'clay.previewVariables.demo': { title: 'Old' },
+    'clay.previewVariables./tmp/demo/brick-gen.json': { title: 'Old' },
   });
 
-  await savePreviewVariables(context, 'demo', { use_riverpod: true });
+  await savePreviewVariables(context, '/tmp/demo/brick-gen.json', { use_riverpod: true });
 
-  assert.deepEqual(context._state.get('clay.previewVariables.demo'), {
+  assert.deepEqual(context._state.get('clay.previewVariables./tmp/demo/brick-gen.json'), {
     title: 'Old',
     use_riverpod: true,
   });
