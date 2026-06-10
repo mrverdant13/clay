@@ -17,7 +17,7 @@ Thank you for helping build Clay. This guide covers local development, testing e
 
 For VS Code extension work under `extensions/clay/`:
 
-- **Node.js** 20.x (align with CI once workflows are added)
+- **Node.js** 20.x (matches the Extension CI workflow)
 - **pnpm** 9.x — [pnpm installation](https://pnpm.io/installation), or:
   ```bash
   corepack enable
@@ -39,14 +39,15 @@ melos bootstrap
 
 `melos bootstrap` links workspace packages and runs `pub get` across `packages/` and any Dart tooling packages.
 
-For the VS Code extension (once scaffolded):
+For the VS Code extension:
 
 ```bash
 cd extensions/clay
 pnpm install
+pnpm test
 ```
 
-Use `pnpm install --frozen-lockfile` in CI or when reproducing locked dependency trees.
+Use `pnpm install --frozen-lockfile` in CI or when reproducing locked dependency trees. The **Extension CI** workflow (`.github/workflows/extension.yaml`) runs `pnpm test` on every pull request.
 
 ### Repository layout
 
@@ -182,6 +183,7 @@ docs: document brick-gen.json fields in README
 - [ ] Formatting verified (`melos run format.ci`)
 - [ ] Analysis verified (`melos run analyze.ci`)
 - [ ] Tests verified (`melos run test.ci`)
+- [ ] Extension tests verified (`cd extensions/clay && pnpm test`) when `extensions/clay/` changes
 - [ ] No imports from external monorepo-internal packages in `clay_cli`
 - [ ] Public API changes reflected in `README.md` or `doc/` when user-facing
 
