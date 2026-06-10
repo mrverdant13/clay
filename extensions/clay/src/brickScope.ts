@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import {
   BRICK_GEN_CONFIG_FILE_NAME,
   loadBrickGenConfig,
+  resolveBrickYamlPath,
   resolveReferencePath,
   resolveTargetPath,
 } from './brickGen';
@@ -13,6 +14,9 @@ export interface BrickScopeInfo {
   /** Directory containing `brick-gen.json`. */
   projectRoot: string;
 
+  /** Stable scope name for persisted preview variable state. */
+  scopeName: string;
+
   /** Absolute path to `brick-gen.json`. */
   configPath: string;
 
@@ -21,6 +25,9 @@ export interface BrickScopeInfo {
 
   /** Resolved template output root. */
   targetDir: string;
+
+  /** Resolved Mason `brick.yaml` path adjacent to the target directory. */
+  brickYamlPath: string;
 }
 
 /** Collects candidate `brick-gen.json` paths when walking up from [startDir]. */
@@ -75,9 +82,11 @@ export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefi
 
       return {
         projectRoot,
+        scopeName: path.basename(projectRoot),
         configPath,
         referenceDir,
         targetDir: resolveTargetPath(projectRoot, config),
+        brickYamlPath: resolveBrickYamlPath(projectRoot, config),
       };
     } catch {
       continue;

@@ -76,6 +76,8 @@ test('findBrickScopeForFile discovers config in the project root', () => {
     assert.equal(scope.configPath, join(fixture.tempDir, 'brick-gen.json'));
     assert.equal(scope.referenceDir, fixture.referenceDir);
     assert.equal(scope.targetDir, join(fixture.tempDir, 'brick', '__brick__'));
+    assert.equal(scope.scopeName, fixture.tempDir.split('/').at(-1));
+    assert.equal(scope.brickYamlPath, join(fixture.tempDir, 'brick', 'brick.yaml'));
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
