@@ -38,10 +38,7 @@ test('resolveWorkspaceClayScript checks folders in order', () => {
   const tempDir = mkdtempSync(join(tmpdir(), 'clay-cli-resolve-'));
   try {
     const nestedRoot = join(tempDir, 'workspace');
-    const scriptDir = join(
-      nestedRoot,
-      ...CLAY_CLI_SCRIPT_RELATIVE_PATH.split('/').slice(0, -1),
-    );
+    const scriptDir = join(nestedRoot, dirname(CLAY_CLI_SCRIPT_RELATIVE_PATH));
     mkdirSync(scriptDir, { recursive: true });
     writeFileSync(join(nestedRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH), '');
 
