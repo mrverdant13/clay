@@ -7,7 +7,7 @@ import {
 } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
 import { collectRegexMatches, type TextMatch } from './markerScanning';
-import { interiorsToRanges } from './rangeUtils';
+import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 type ReplaceMarkerKind = 'start' | 'with' | 'end';
@@ -147,7 +147,17 @@ export function refreshReplaceHighlights(
 ): void {
   ensureDecorations(config);
 
-  if (editor === undefined || !isSupportedReferenceFile(editor.document)) return;
+  if (editor === undefined) return;
+
+  if (!isSupportedReferenceFile(editor.document)) {
+    clearEditorDecorations(editor, [
+      boundaryDecoration,
+      withDecoration,
+      originalDecoration,
+      replacementDecoration,
+    ]);
+    return;
+  }
 
   const text = editor.document.getText();
   const { originalInteriors, replacementInteriors } = findReplaceBlockRegions(text);

@@ -5,7 +5,7 @@ import {
   PARTIAL_MARKER_SETS,
 } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
-import { interiorsToRanges } from './rangeUtils';
+import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 type PartialMarkerKind = 'start' | 'end';
@@ -91,7 +91,12 @@ export function refreshPartialHighlights(
 ): void {
   ensureDecorations(config);
 
-  if (editor === undefined || !isSupportedReferenceFile(editor.document)) return;
+  if (editor === undefined) return;
+
+  if (!isSupportedReferenceFile(editor.document)) {
+    clearEditorDecorations(editor, [markerDecoration, payloadDecoration]);
+    return;
+  }
 
   const text = editor.document.getText();
 

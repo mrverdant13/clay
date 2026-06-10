@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { type AnnotationConfig } from './annotationConfig';
-import { matchToRange } from './rangeUtils';
+import { clearEditorDecorations, matchToRange } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 const SPACING_MARKER_PATTERNS = [
@@ -47,7 +47,12 @@ export function refreshSpacingHighlights(
 ): void {
   ensureDecorations(config);
 
-  if (editor === undefined || !isSupportedReferenceFile(editor.document)) return;
+  if (editor === undefined) return;
+
+  if (!isSupportedReferenceFile(editor.document)) {
+    clearEditorDecorations(editor, [spacingDecoration]);
+    return;
+  }
 
   editor.setDecorations(spacingDecoration, findSpacingMarkerRanges(editor.document));
 }

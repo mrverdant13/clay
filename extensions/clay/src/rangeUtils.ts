@@ -1,5 +1,14 @@
 import * as vscode from 'vscode';
 
+export function clearEditorDecorations(
+  editor: vscode.TextEditor,
+  decorationTypes: readonly vscode.TextEditorDecorationType[],
+): void {
+  for (const decorationType of decorationTypes) {
+    editor.setDecorations(decorationType, []);
+  }
+}
+
 export function interiorsToRanges(
   document: vscode.TextDocument,
   interiors: Array<{ start: number; end: number }>,

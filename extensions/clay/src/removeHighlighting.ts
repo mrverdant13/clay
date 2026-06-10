@@ -9,7 +9,7 @@ import {
 } from './annotationMarkerSets';
 import { type AnnotationConfig } from './annotationConfig';
 import { collectRegexMatches } from './markerScanning';
-import { interiorsToRanges } from './rangeUtils';
+import { clearEditorDecorations, interiorsToRanges } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 let markerDecoration = vscode.window.createTextEditorDecorationType({});
@@ -85,7 +85,12 @@ export function refreshRemoveHighlights(
 ): void {
   ensureDecorations(config);
 
-  if (editor === undefined || !isSupportedReferenceFile(editor.document)) return;
+  if (editor === undefined) return;
+
+  if (!isSupportedReferenceFile(editor.document)) {
+    clearEditorDecorations(editor, [markerDecoration, contentDecoration]);
+    return;
+  }
 
   const text = editor.document.getText();
   editor.setDecorations(markerDecoration, findRemovedBoundaryMarkerRanges(editor.document));

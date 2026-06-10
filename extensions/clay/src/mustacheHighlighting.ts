@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { type AnnotationConfig } from './annotationConfig';
-import { captureToRange, matchToRange } from './rangeUtils';
+import { captureToRange, clearEditorDecorations, matchToRange } from './rangeUtils';
 import { isSupportedReferenceFile } from './supportedFiles';
 
 /** Full Mustache tag, including `{{` / `}}` delimiters (e.g. `{{#use_foo}}`, `{{{name}}}`). */
@@ -94,7 +94,16 @@ export function refreshMustacheHighlights(
 ): void {
   ensureDecorations(config);
 
-  if (editor === undefined || !isSupportedReferenceFile(editor.document)) return;
+  if (editor === undefined) return;
+
+  if (!isSupportedReferenceFile(editor.document)) {
+    clearEditorDecorations(editor, [
+      commentDecoration,
+      tagDecoration,
+      dropFlagDecoration,
+    ]);
+    return;
+  }
 
   const { comments, tags, dropFlags } = findMustacheHighlightRanges(editor.document);
 
