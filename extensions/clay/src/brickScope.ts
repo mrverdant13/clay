@@ -64,20 +64,24 @@ export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefi
       continue;
     }
 
-    const projectRoot = path.dirname(configPath);
-    const config = loadBrickGenConfig(configPath);
-    const referenceDir = resolveReferencePath(projectRoot, config);
+    try {
+      const projectRoot = path.dirname(configPath);
+      const config = loadBrickGenConfig(configPath);
+      const referenceDir = resolveReferencePath(projectRoot, config);
 
-    if (!isPathWithinDirectory(resolvedFile, referenceDir)) {
+      if (!isPathWithinDirectory(resolvedFile, referenceDir)) {
+        continue;
+      }
+
+      return {
+        projectRoot,
+        configPath,
+        referenceDir,
+        targetDir: resolveTargetPath(projectRoot, config),
+      };
+    } catch {
       continue;
     }
-
-    return {
-      projectRoot,
-      configPath,
-      referenceDir,
-      targetDir: resolveTargetPath(projectRoot, config),
-    };
   }
 
   return undefined;

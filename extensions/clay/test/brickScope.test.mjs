@@ -159,3 +159,30 @@ test('findBrickScopeForFile returns undefined when no config exists', () => {
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test('findBrickScopeForFile skips invalid configs and continues walk-up', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-scope-'));
+  try {
+    const referenceDir = join(tempDir, 'reference');
+    const nestedDir = join(referenceDir, 'lib');
+    const filePath = join(nestedDir, 'main.dart');
+    mkdirSync(nestedDir, { recursive: true });
+    writeFileSync(filePath, 'void main() {}\n');
+
+    writeFileSync(join(nestedDir, 'brick-gen.json'), '{ invalid json');
+    writeFileSync(
+      join(tempDir, 'brick-gen.json'),
+      JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+    );
+
+    const scope = findBrickScopeForFile(filePath);
+
+    assert.ok(scope);
+    assert.equal(scope.projectRoot, tempDir);
+    assert.equal(scope.configPath, join(tempDir, 'brick-gen.json'));
+    assert.equal(scope.referenceDir, referenceDir);
+    assert.equal(scope.targetDir, join(tempDir, 'brick', '__brick__'));
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
