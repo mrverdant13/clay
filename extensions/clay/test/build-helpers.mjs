@@ -5,6 +5,24 @@ import { fileURLToPath } from 'node:url';
 const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/annotationColors.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/annotationColors.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
+  entryPoints: [join(extensionRoot, 'src/annotationConfig.ts')],
+  bundle: true,
+  outfile: join(extensionRoot, 'test/out/annotationConfig.cjs'),
+  format: 'cjs',
+  platform: 'node',
+  external: [],
+});
+
+await esbuild.build({
   entryPoints: [join(extensionRoot, 'src/annotationBlockPairing.ts')],
   bundle: true,
   outfile: join(extensionRoot, 'test/out/annotationBlockPairing.cjs'),

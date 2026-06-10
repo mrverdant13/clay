@@ -194,6 +194,81 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. Install with `dart pub global activate clay_cli` after release, or use `dart run` against the workspace package during development."
+        },
+        "clay.colors.remove.markerForeground": {
+          "type": "string",
+          "default": "#F48771",
+          "markdownDescription": "Foreground color for remove, drop, and remove-boundary annotation markers."
+        },
+        "clay.colors.remove.contentBackground": {
+          "type": "string",
+          "default": "rgba(244, 135, 113, 0.14)",
+          "markdownDescription": "Background tint for content removed at generation time (remove blocks and drop tails)."
+        },
+        "clay.colors.replace.boundaryMarkerForeground": {
+          "type": "string",
+          "default": "#E5A84B",
+          "markdownDescription": "Foreground color for `replace-start` and `replace-end` markers."
+        },
+        "clay.colors.replace.withMarkerForeground": {
+          "type": "string",
+          "default": "#4EC9B0",
+          "markdownDescription": "Foreground color for the `with` marker inside replace blocks."
+        },
+        "clay.colors.replace.originalBackground": {
+          "type": "string",
+          "default": "rgba(229, 168, 75, 0.14)",
+          "markdownDescription": "Background tint for scaffold content replaced at generation time."
+        },
+        "clay.colors.replace.replacementBackground": {
+          "type": "string",
+          "default": "rgba(78, 201, 176, 0.14)",
+          "markdownDescription": "Background tint for replacement content kept after generation."
+        },
+        "clay.colors.insert.markerForeground": {
+          "type": "string",
+          "default": "#C586C0",
+          "markdownDescription": "Foreground color for insert-block boundary markers."
+        },
+        "clay.colors.insert.contentBackground": {
+          "type": "string",
+          "default": "rgba(197, 134, 192, 0.14)",
+          "markdownDescription": "Background tint for content inserted at generation time."
+        },
+        "clay.colors.partial.markerForeground": {
+          "type": "string",
+          "default": "#569CD6",
+          "markdownDescription": "Foreground color for partial-block boundary markers."
+        },
+        "clay.colors.partial.payloadBackground": {
+          "type": "string",
+          "default": "rgba(86, 156, 214, 0.14)",
+          "markdownDescription": "Background tint for partial payload extracted to a `.partial` file."
+        },
+        "clay.colors.mustache.tagForeground": {
+          "type": "string",
+          "default": "#C678DD",
+          "markdownDescription": "Foreground color for Mustache variable tags inside annotation comments."
+        },
+        "clay.colors.mustache.commentBackground": {
+          "type": "string",
+          "default": "rgba(198, 120, 221, 0.10)",
+          "markdownDescription": "Background tint for Mustache tag spans in annotation comments."
+        },
+        "clay.colors.mustache.dropFlagForeground": {
+          "type": "string",
+          "default": "#F48771",
+          "markdownDescription": "Foreground color for `x` whitespace-control flags on Mustache tags."
+        },
+        "clay.colors.spacing.markerForeground": {
+          "type": "string",
+          "default": "#A0A1A7",
+          "markdownDescription": "Foreground color for spacing-group (`w … w`) markers."
+        },
+        "clay.colors.spacing.markerBackground": {
+          "type": "string",
+          "default": "rgba(160, 161, 167, 0.12)",
+          "markdownDescription": "Background tint for spacing-group marker spans."
         }
       }
     }
@@ -201,7 +276,7 @@
   "scripts": {
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/brickGen.test.mjs test/brickScope.test.mjs test/clayCli.test.mjs test/previewRunner.test.mjs test/brickVariables.test.mjs test/previewFileVariables.test.mjs test/previewVariableState.test.mjs",
+    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationConfig.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/brickGen.test.mjs test/brickScope.test.mjs test/clayCli.test.mjs test/previewRunner.test.mjs test/brickVariables.test.mjs test/previewFileVariables.test.mjs test/previewVariableState.test.mjs",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
   },

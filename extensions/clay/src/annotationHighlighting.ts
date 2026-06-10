@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import { readAnnotationConfig } from './annotationConfig';
+import { readAnnotationConfig } from './annotationConfigReader';
 import { refreshInsertHighlights } from './insertHighlighting';
 import { refreshMustacheHighlights } from './mustacheHighlighting';
 import { refreshPartialHighlights } from './partialHighlighting';
@@ -57,6 +57,11 @@ export function registerAnnotationHighlighting(context: vscode.ExtensionContext)
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(refreshAnnotationHighlights),
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('clay.colors')) {
+        refreshAllVisibleEditors();
+      }
+    }),
     vscode.workspace.onDidChangeTextDocument((event) => {
       scheduleRefreshEditorsForDocument(event.document);
     }),
