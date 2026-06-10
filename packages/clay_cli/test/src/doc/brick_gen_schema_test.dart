@@ -16,7 +16,8 @@ void main() {
         isTrue,
         reason: 'Expected schema at $_schemaPath',
       );
-      schema = jsonDecode(schemaFile.readAsStringSync()) as Map<String, dynamic>;
+      schema =
+          jsonDecode(schemaFile.readAsStringSync()) as Map<String, dynamic>;
     });
 
     test('is valid JSON with expected top-level shape', () {
@@ -28,19 +29,30 @@ void main() {
       final properties = schema['properties'] as Map<String, dynamic>;
       expect(
         properties.keys,
-        containsAll(['reference', 'target', 'ignore', 'replacements', 'lineDeletions']),
+        containsAll([
+          'reference',
+          'target',
+          'ignore',
+          'replacements',
+          'lineDeletions',
+        ]),
       );
     });
 
     test('declares replacement from as string or regex object', () {
       final defs = schema[r'$defs'] as Map<String, dynamic>;
       final replacement = defs['replacement'] as Map<String, dynamic>;
-      final from = replacement['properties']['from'] as Map<String, dynamic>;
+      final replacementProperties =
+          replacement['properties'] as Map<String, dynamic>;
+      final from = replacementProperties['from'] as Map<String, dynamic>;
       final oneOf = from['oneOf'] as List<dynamic>;
 
       expect(oneOf, hasLength(2));
-      expect((oneOf.first as Map)['type'], 'string');
-      expect((oneOf.last as Map<String, dynamic>)['\$ref'], '#/\$defs/regexPattern');
+      expect((oneOf.first as Map<String, dynamic>)['type'], 'string');
+      expect(
+        (oneOf.last as Map<String, dynamic>)[r'$ref'],
+        r'#/$defs/regexPattern',
+      );
     });
 
     group('example configs validate against entity parsing', () {
@@ -86,16 +98,20 @@ void main() {
         p.join(Directory.current.path, 'test', 'fixtures', 'brick_gen'),
       );
 
-      for (final entry in Directory(fixturesRoot).listSync().whereType<File>()) {
+      for (final entry
+          in Directory(fixturesRoot).listSync().whereType<File>()) {
         if (!entry.path.endsWith('.json')) {
           continue;
         }
 
-        test('${p.basename(entry.path)} parses via BrickGenConfig.fromJson', () {
-          final json =
-              jsonDecode(entry.readAsStringSync()) as Map<String, dynamic>;
-          expect(() => BrickGenConfig.fromJson(json), returnsNormally);
-        });
+        test(
+          '${p.basename(entry.path)} parses via BrickGenConfig.fromJson',
+          () {
+            final json =
+                jsonDecode(entry.readAsStringSync()) as Map<String, dynamic>;
+            expect(() => BrickGenConfig.fromJson(json), returnsNormally);
+          },
+        );
       }
     });
   });
