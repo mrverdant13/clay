@@ -13,6 +13,7 @@
 ///   generation (e.g. `widget.dart.golden` ↔ `widget.dart`).
 ///
 /// See `packages/clay_cli_e2e/README.md` for the full contributor guide.
+library;
 
 /// Suffix appended to committed reference sources (stripped in working copies).
 const fixtureReferenceSuffix = '.ref';
