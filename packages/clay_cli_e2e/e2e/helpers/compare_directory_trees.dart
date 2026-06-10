@@ -57,8 +57,14 @@ void expectDirectoryTreesMatch({
     actualFiles,
     expectedFiles,
     reason: 'Directory trees differ.\n'
-        'Expected only: ${expectedFiles.where((path) => !actualFiles.contains(path)).join(', ')}\n'
-        'Unexpected: ${actualFiles.where((path) => !expectedFiles.contains(path)).join(', ')}',
+        'Expected only: '
+        '${expectedFiles.where(
+              (path) => !actualFiles.contains(path),
+            ).join(', ')}\n'
+        'Unexpected: '
+        '${actualFiles.where(
+              (path) => !expectedFiles.contains(path),
+            ).join(', ')}',
   );
 
   for (final relativePath in expectedFiles) {
