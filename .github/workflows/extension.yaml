@@ -1,0 +1,39 @@
+# Extension CI workflow
+name: Extension CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  extension:
+    name: Build and test Clay extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/clay
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Bootstrap clay_cli dependencies
+        run: dart pub get
+        working-directory: packages/clay_cli
+      - name: Install extension dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run extension tests
+        run: pnpm test
