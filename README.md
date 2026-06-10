@@ -168,10 +168,10 @@ Omitted `reference`, `target`, and `ignore` fields use the defaults above.
 
 `ignore` uses gitignore-compatible syntax (`*`, `**`, leading `/`, `!` negation). During `clay gen`, matching files are excluded from the copied output. Patterns must use POSIX-style forward slashes (`/`) and are interpreted relative to the reference or target root — a leading `/` anchors to that root (for example `/build/` matches only `build/` at the top level), not to the OS filesystem root. Windows-absolute paths such as `C:/...` are rejected when the config is loaded; POSIX-style root anchors such as `/Users/app/build/` are allowed because they match relative to the reference or target root. Backslash separators (`\`) are not supported in ignore patterns.
 
-Further reference docs (planned):
+Further reference docs:
 
 - [`doc/annotations.md`](doc/annotations.md) — marker syntax for reference authors
-- [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) — JSON schema
+- [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) — JSON schema *(planned)*
 
 ---
 
@@ -185,7 +185,7 @@ Clay supports three comment flavors equivalently:
 | Hash           | `#remove-start#` … `#remove-end#`           |
 | HTML           | `<!--remove-start-->` … `<!--remove-end-->` |
 
-Common marker types include `drop`, `remove-start`/`remove-end`, `replace-start`/`with`/`replace-end`, `insert-start`/`insert-end`, Mustache unwrapping in comments, spacing groups (`w <actions> w`), and partials (`partial v <name>` / `partial ^ <name>`).
+Common marker types include `drop`, `remove-start`/`remove-end`, `replace-start`/`with`/`replace-end`, `insert-start`/`insert-end`, Mustache unwrapping in comments, spacing groups (`w <actions> w`), and partials (`partial v <name>` / `partial ^ <name>`). See [`doc/annotations.md`](doc/annotations.md) for full syntax and examples.
 
 Content transforms run in this order: line deletions → content replacements → remotions → replace blocks → insert blocks → Mustache tag unwrapping → spacing groups → partials. Binary files (`.png`, `.webp`) are copied but not text-transformed.
 
@@ -218,7 +218,7 @@ clay/
 │   └── clay_cli_e2e/            # CLI integration tests
 ├── extensions/
 │   └── clay/                    # VS Code extension
-├── doc/                         # User-facing reference docs (planned)
+├── doc/                         # User-facing reference docs
 └── analysis_options.yaml
 ```
 
