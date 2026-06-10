@@ -22,6 +22,22 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "clay.previewTemplate",
+        "title": "Preview template output",
+        "category": "Clay"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "clay.previewTemplate",
+          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore",
+          "group": "clay@1"
+        }
+      ]
+    },
     "configurationDefaults": {
       "editor.tokenColorCustomizations": {
         "textMateRules": [
@@ -167,7 +183,7 @@
         "clay.cliPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and `~/.pub-cache/bin`. Install with `dart pub global activate clay_cli` after release, or use `dart run` against the workspace package during development."
+          "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. Install with `dart pub global activate clay_cli` after release, or use `dart run` against the workspace package during development."
         }
       }
     }
@@ -175,7 +191,7 @@
   "scripts": {
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/brickGen.test.mjs test/brickScope.test.mjs",
+    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/brickGen.test.mjs test/brickScope.test.mjs test/clayCli.test.mjs test/previewRunner.test.mjs",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
   },
