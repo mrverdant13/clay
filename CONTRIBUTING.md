@@ -197,7 +197,7 @@ docs: document brick-gen.json fields in README
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributors — this guide | This repo |
 | [`doc/annotations.md`](doc/annotations.md) | Reference authors — marker syntax | Available |
 | [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) | Tooling — JSON schema | Available |
-| `extensions/clay/README.md` | Extension users — setup and settings | Planned |
+| `extensions/clay/README.md` | Extension users — setup and settings | Available |
 | `CHANGELOG.md` | Release notes | Planned |
 
 When adding user-facing behavior, update `README.md` and plan corresponding entries in `doc/` or package changelogs.

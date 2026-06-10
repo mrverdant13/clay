@@ -202,7 +202,7 @@ The **Clay** extension lives in [`extensions/clay/`](extensions/clay/). It provi
 - Scope discovery via nearest `brick-gen.json`
 - Configurable annotation colors via `clay.colors.*` settings
 
-The extension invokes the `clay` CLI (installed globally after pub.dev release, or `dart run` during development). Extension-specific setup will be documented in `extensions/clay/README.md` once scaffolded.
+The extension invokes the `clay` CLI (installed globally after pub.dev release, or `dart run` during development). See [`extensions/clay/README.md`](extensions/clay/README.md) for installation, settings, preview commands, and troubleshooting.
 
 ---
 
