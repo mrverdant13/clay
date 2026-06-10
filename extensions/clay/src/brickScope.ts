@@ -66,7 +66,7 @@ export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefi
     const referenceDir = resolveReferencePath(projectRoot, config);
 
     if (!isPathWithinDirectory(resolvedFile, referenceDir)) {
-      return undefined;
+      continue;
     }
 
     return {

@@ -100,6 +100,37 @@ test('findBrickScopeForFile discovers nested config directories', () => {
   }
 });
 
+test('findBrickScopeForFile skips nested config when file is outside its reference', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-scope-'));
+  try {
+    const parentReference = join(tempDir, 'reference');
+    const nestedScopeDir = join(tempDir, 'scopes', 'demo');
+    const nestedReference = join(nestedScopeDir, 'refs');
+    const filePath = join(parentReference, 'lib', 'main.dart');
+    mkdirSync(join(parentReference, 'lib'), { recursive: true });
+    mkdirSync(nestedReference, { recursive: true });
+    writeFileSync(filePath, 'void main() {}\n');
+
+    writeFileSync(
+      join(tempDir, 'brick-gen.json'),
+      JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+    );
+    writeFileSync(
+      join(nestedScopeDir, 'brick-gen.json'),
+      JSON.stringify({ reference: 'refs', target: 'out/template' }),
+    );
+
+    const scope = findBrickScopeForFile(filePath);
+
+    assert.ok(scope);
+    assert.equal(scope.projectRoot, tempDir);
+    assert.equal(scope.referenceDir, parentReference);
+    assert.equal(scope.targetDir, join(tempDir, 'brick', '__brick__'));
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('findBrickScopeForFile returns undefined when file is outside reference', () => {
   const fixture = createScopeFixture();
   try {
