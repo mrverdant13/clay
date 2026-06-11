@@ -84,7 +84,7 @@ void main() {
       test('expose parsed global and shared flags', () async {
         await runner.run(const [
           '--config',
-          'brick-gen.json',
+          'clay.yaml',
           '--cwd',
           '/tmp/project',
           'recording-command',
@@ -94,7 +94,7 @@ void main() {
           'custom-target',
         ]);
 
-        expect(recordingCommand.capturedConfigPath, 'brick-gen.json');
+        expect(recordingCommand.capturedConfigPath, 'clay.yaml');
         expect(recordingCommand.capturedCwd, '/tmp/project');
         expect(recordingCommand.capturedReferenceOverride, 'custom-reference');
         expect(recordingCommand.capturedTargetOverride, 'custom-target');
