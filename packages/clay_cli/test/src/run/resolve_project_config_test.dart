@@ -21,12 +21,12 @@ void main() {
 
     test('uses a neutral not-found message for explicit config paths', () {
       final expectedPath = p.normalize(
-        p.join(tempDir.path, 'missing-config.json'),
+        p.join(tempDir.path, 'missing-config.yaml'),
       );
 
       expect(
         () => discoverProjectConfig(
-          configPath: 'missing-config.json',
+          configPath: 'missing-config.yaml',
           cwd: tempDir.path,
         ),
         throwsA(
