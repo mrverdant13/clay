@@ -90,7 +90,7 @@ dart run packages/clay_cli/bin/clay.dart preview --help
 
 ### Open a reference project
 
-Open a folder that contains a `brick-gen.json` config and a reference tree (see the [root README](../../README.md) for a typical layout). The extension discovers scope by walking up from the active file to the nearest `brick-gen.json`, then verifying the file lies under the configured `reference` path.
+Open a folder that contains a `clay.yaml` config and a reference tree (see the [root README](../../README.md) for a typical layout). The extension discovers scope by walking up from the active file to the nearest `clay.yaml`, then verifying the file lies under the configured `reference` path.
 
 Preview commands and scope-dependent features require a valid brick scope. If a file is outside every configured reference root, the extension shows a warning and does not run the CLI.
 
@@ -115,7 +115,7 @@ Both commands are available from the editor context menu (right-click) and the C
 
 | Command | CLI equivalent | Description |
 | --- | --- | --- |
-| **Clay: Preview template output** | `clay preview --template-only --file …` | Applies `brick-gen.json` transforms and annotation resolution. Mustache tags remain in the output. |
+| **Clay: Preview template output** | `clay preview --template-only --file …` | Applies `clay.yaml` transforms and annotation resolution. Mustache tags remain in the output. |
 | **Clay: Preview generated output** | `clay preview --vars … --file …` | Full Mason rendering. Prompts for brick variables (from `brick.yaml`) and file-level Mustache variables, then shows a diff against the saved reference file. |
 
 Generated preview remembers variable values per brick scope for the current VS Code session.
@@ -166,13 +166,13 @@ Syntax highlighting colors for annotation markers are contributed via TextMate s
 | Symptom | Likely cause | What to try |
 | --- | --- | --- |
 | "The clay CLI was not found" | No executable on `PATH` and no workspace script | Install or activate `clay_cli`, set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`. |
-| "Could not find a brick scope" | No `brick-gen.json` above the file, or file is outside `reference` | Add or fix `brick-gen.json`; ensure the open file is under the configured reference directory. |
+| "Could not find a brick scope" | No `clay.yaml` above the file, or file is outside `reference` | Add or fix `clay.yaml`; ensure the open file is under the configured reference directory. |
 | "Clay preview is only available for supported reference files" | Unsupported language or extension | Open a file listed in [Supported file types](#supported-file-types). |
 | Preview shows stale output | Unsaved editor buffer | Save the file before running preview; the CLI reads from disk. |
-| Generated preview missing variables | No `brick.yaml` next to the target directory | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `brick-gen.json`. |
+| Generated preview missing variables | No `brick.yaml` next to the target directory | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `clay.yaml`. |
 | Colors do not update | Settings cached by VS Code | Change any `clay.colors.*` value; the extension listens for configuration changes and refreshes decorations immediately. |
 
-For CLI behavior, flags, and `brick-gen.json` fields, see the [root README](../../README.md) and [`doc/annotations.md`](../../doc/annotations.md).
+For CLI behavior, flags, and `clay.yaml` fields, see the [root README](../../README.md) and [`doc/annotations.md`](../../doc/annotations.md).
 
 ---
 

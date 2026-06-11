@@ -54,7 +54,8 @@ Use `pnpm install --frozen-lockfile` in CI or when reproducing locked dependency
 ```
 clay/
 ├── packages/
-│   ├── clay_cli/           # Publishable CLI + library
+│   ├── clay/               # Core library (config, transforms, generation)
+│   ├── clay_cli/           # Publishable CLI
 │   └── clay_cli_e2e/       # End-to-end CLI tests
 ├── extensions/
 │   └── clay/               # VS Code extension (TypeScript)
@@ -66,8 +67,8 @@ clay/
 **Dependency direction** (do not invert):
 
 ```
-bin/clay.dart → ClayCommandRunner → commands → features → entities + utils
-extensions/clay → clay CLI (spawn) + brick-gen.json discovery (TypeScript)
+bin/clay.dart → ClayCommandRunner → commands → clay (features → entities + utils)
+extensions/clay → clay CLI (spawn) + clay.yaml discovery (TypeScript)
 ```
 
 `clay_cli` must not depend on monorepo-specific packages or git subprocesses.
@@ -91,7 +92,7 @@ All behavior changes should include or update tests.
 
 | Layer | Location | Notes |
 | --- | --- | --- |
-| Unit tests | `packages/clay_cli/test/` | Annotation transforms, config parsing, `ignore` matching |
+| Unit tests | `packages/clay/test/` | Annotation transforms, config parsing, `ignore` matching |
 | Command tests | `packages/clay_cli/test/` | Args parsing, exit codes, stderr formatting |
 | Fixture tests | `packages/clay_cli/test/` or dedicated fixture dir | Golden `clay gen` output for representative reference projects |
 | E2E | `packages/clay_cli_e2e/` | Full CLI invocations |
@@ -162,7 +163,7 @@ fix(clay_cli): resolve relative paths from project root
 test(clay_cli): add annotation validator unit tests
 feat(clay_vsc_extension): add annotation syntax highlighting
 feat(clay_cli,clay_vsc_extension): expose preview CLI and invoke from extension
-docs: document brick-gen.json fields in README
+docs: document clay.yaml fields in README
 ```
 
 ---
@@ -184,7 +185,7 @@ docs: document brick-gen.json fields in README
 - [ ] Analysis verified (`melos run analyze.ci`)
 - [ ] Tests verified (`melos run test.ci`)
 - [ ] Extension tests verified (`cd extensions/clay && pnpm test`) when `extensions/clay/` changes
-- [ ] No imports from external monorepo-internal packages in `clay_cli`
+- [ ] No imports from external monorepo-internal packages in `clay` or `clay_cli`
 - [ ] Public API changes reflected in `README.md` or `doc/` when user-facing
 
 ---
@@ -196,7 +197,7 @@ docs: document brick-gen.json fields in README
 | [`README.md`](README.md) | Users — install, quick start, CLI reference | This repo |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributors — this guide | This repo |
 | [`doc/annotations.md`](doc/annotations.md) | Reference authors — marker syntax | Available |
-| [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) | Tooling — JSON schema | Available |
+| [`doc/clay.schema.json`](doc/clay.schema.json) | Tooling — JSON schema for `clay.yaml` | Available |
 | `extensions/clay/README.md` | Extension users — setup and settings | Available |
 | `CHANGELOG.md` | Release notes | Planned |
 

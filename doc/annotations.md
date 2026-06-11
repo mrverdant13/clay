@@ -28,8 +28,8 @@ Marker names are identical across flavors — only the comment delimiters change
 
 When Clay processes a reference file, transforms run in this fixed order:
 
-1. **Line deletions** — ranges declared in `brick-gen.json` → `lineDeletions`
-2. **Content replacements** — regex rules from `brick-gen.json` → `replacements`
+1. **Line deletions** — ranges declared in `clay.yaml` → `lineDeletions`
+2. **Content replacements** — regex rules from `clay.yaml` → `replacements`
 3. **Remotions** — `drop` markers and `remove-start` / `remove-end` blocks
 4. **Replace blocks** — `replace-start` / `with` / `replace-end`
 5. **Insert blocks** — `insert-start` / `insert-end`
@@ -350,7 +350,7 @@ Partial names must be non-empty, must not be `.` or `..`, must not contain path 
 
 ## Validation
 
-Run `clay validate` from the project root (or any subdirectory — Clay discovers the nearest `brick-gen.json`) to scan the reference tree for structural annotation issues.
+Run `clay validate` from the project root (or any subdirectory — Clay discovers the nearest `clay.yaml`) to scan the reference tree for structural annotation issues.
 
 Issues are printed to stderr in `filePath:line:column: message` format. The command exits with code `1` when any issue exists.
 
@@ -391,4 +391,4 @@ Validation does not execute transforms — it only checks marker structure. Use 
 | `w <actions> w` | Expand newlines (`Nv`) and spaces (`N>`) |
 | `partial v <name>` / `partial ^ <name>` | Extract a Mason partial |
 
-See also [`brick-gen.json`](../README.md#brick-genjson) for config-driven transforms (`replacements`, `lineDeletions`, `ignore`), the [JSON schema](brick-gen.schema.json) for editor validation, and the [README annotation overview](../README.md#annotation-overview).
+See also [`clay.yaml`](../README.md#clayyaml) for config-driven transforms (`replacements`, `lineDeletions`, `ignore`), the [JSON schema](clay.schema.json) for editor validation, and the [README annotation overview](../README.md#annotation-overview).

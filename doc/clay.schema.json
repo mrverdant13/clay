@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/mrverdant13/clay/blob/main/doc/brick-gen.schema.json",
-  "title": "Clay brick-gen.json",
-  "description": "Configuration for Clay template generation from a reference project.",
+  "$id": "https://github.com/mrverdant13/clay/blob/main/doc/clay.schema.json",
+  "title": "Clay clay.yaml",
+  "description": "Configuration for Clay template generation from a reference project. The clay.yaml file uses YAML syntax; this JSON Schema describes the parsed object shape for editor validation and tooling.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "reference": {
       "type": "string",
       "default": "reference",
-      "description": "Path to the reference project root, relative to the project root (the directory containing this file) or absolute."
+      "description": "Path to the reference project root, relative to the project root (the directory containing clay.yaml) or absolute."
     },
     "target": {
       "type": "string",
