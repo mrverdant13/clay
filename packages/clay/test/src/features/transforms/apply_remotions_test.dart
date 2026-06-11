@@ -90,7 +90,7 @@ line 2
           'removes entire block when ${markerCase.drop} is nested '
           '(${markerCase.flavor})',
           () {
-          final input = '''
+            final input = '''
 line 0
 ${markerCase.start}
 before drop
@@ -100,18 +100,18 @@ ${markerCase.end}
 line 1
 ''';
 
-          const expected = '''
+            const expected = '''
 line 0
 
 line 1
 ''';
 
-          final result = applyRemotions(content: input);
+            final result = applyRemotions(content: input);
 
-          expect(result, expected);
-          expect(result, isNot(contains('remove-start')));
-          expect(result, isNot(contains('remove-end')));
-          expect(result, isNot(contains(markerCase.drop)));
+            expect(result, expected);
+            expect(result, isNot(contains('remove-start')));
+            expect(result, isNot(contains('remove-end')));
+            expect(result, isNot(contains(markerCase.drop)));
           },
         );
       }
