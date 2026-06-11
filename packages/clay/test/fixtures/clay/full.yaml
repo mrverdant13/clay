@@ -1,0 +1,20 @@
+reference: src/reference
+target: out/template
+ignore:
+  - .dart_tool/
+  - build/
+  - coverage/
+  - "**/*.iml"
+  - .DS_Store
+replacements:
+  - from: literal-string
+    to: replacement-string
+  - from:
+      pattern: regex-pattern
+      dotAll: true
+    to: replacement-with-${1}-groups
+lineDeletions:
+  - filePath: ./relative/to/target/root
+    ranges:
+      - start: 0
+        end: 10
