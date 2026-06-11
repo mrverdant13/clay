@@ -6,19 +6,17 @@ import 'package:path/path.dart' as p;
 class E2eFixtureProject {
   E2eFixtureProject._(this.root);
 
-  /// Creates a fixture with [configJson] and [referenceFiles].
+  /// Creates a fixture with [configYaml] and [referenceFiles].
   factory E2eFixtureProject.withFiles({
-    String? configJson,
+    String? configYaml,
     Map<String, String> referenceFiles = const {},
   }) {
     final root = Directory.systemTemp.createTempSync('clay_e2e_');
-    File(p.join(root.path, 'brick-gen.json')).writeAsStringSync(
-      configJson ??
+    File(p.join(root.path, 'clay.yaml')).writeAsStringSync(
+      configYaml ??
           '''
-{
-  "reference": "reference",
-  "target": "target"
-}
+reference: reference
+target: target
 ''',
     );
 
@@ -34,7 +32,7 @@ class E2eFixtureProject {
     return E2eFixtureProject._(root);
   }
 
-  /// Project root containing `brick-gen.json`.
+  /// Project root containing `clay.yaml`.
   final Directory root;
 
   /// Reference directory under [root].

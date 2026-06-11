@@ -1,0 +1,7 @@
+reference: reference
+target: target
+replacements:
+  - from: ref_models
+    to: "{{package_name}}"
+  - from: SampleRecord
+    to: Record

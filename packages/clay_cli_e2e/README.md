@@ -18,7 +18,7 @@ melos run test.e2e
 
 Each integration scope contains:
 
-- `brick-gen.json` — config committed with the fixture
+- `clay.yaml` — config committed with the fixture
 - `reference/` — source tree passed to `clay gen`
 - `expected/` — golden output tree after generation
 - `preview/` — committed preview expectations (`.txt`)
