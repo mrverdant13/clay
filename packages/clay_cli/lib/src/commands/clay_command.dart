@@ -11,11 +11,11 @@ abstract class ClayCommand extends Command<int> {
     argParser
       ..addOption(
         referenceOptionName,
-        help: 'Overrides clay.yaml → reference.',
+        help: 'Overrides config → reference.',
       )
       ..addOption(
         targetOptionName,
-        help: 'Overrides clay.yaml → target.',
+        help: 'Overrides config → target.',
       );
   }
 
