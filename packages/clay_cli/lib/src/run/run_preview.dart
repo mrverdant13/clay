@@ -1,5 +1,6 @@
-import 'package:clay/config.dart';
+import 'package:clay/config.dart' show resolveReferencePath, resolveTargetPath;
 import 'package:clay/preview.dart';
+import 'package:clay_cli/src/run/resolve_project_config.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful preview run.
@@ -14,7 +15,7 @@ class PreviewRunResult {
     required this.content,
   });
 
-  /// Absolute path to the resolved `brick-gen.json` file.
+  /// Absolute path to the resolved config file.
   final String configPath;
 
   /// Absolute path to the project root.
@@ -43,28 +44,25 @@ Future<PreviewRunResult> runPreview({
   String? referenceOverride,
   String? targetOverride,
 }) async {
-  final discovered = discoverBrickGenConfig(
+  final resolved = await resolveProjectConfig(
     configPath: configPath,
     cwd: cwd,
   );
-  final config = await loadBrickGenConfig(
-    configPath: discovered.configPath,
-  );
   final referencePath = resolveReferencePath(
-    projectRoot: discovered.projectRoot,
-    config: config,
+    projectRoot: resolved.projectRoot,
+    config: resolved.config,
     cliOverride: referenceOverride,
   );
   final targetPath = resolveTargetPath(
-    projectRoot: discovered.projectRoot,
-    config: config,
+    projectRoot: resolved.projectRoot,
+    config: resolved.config,
     cliOverride: targetOverride,
   );
 
   final content = await previewReferenceFile(
     filePath: filePath,
     referencePath: referencePath,
-    config: config,
+    config: resolved.config,
     templateOnly: templateOnly,
     vars: vars,
   );
@@ -75,8 +73,8 @@ Future<PreviewRunResult> runPreview({
       : p.normalize(p.join(normalizedReference, filePath));
 
   return PreviewRunResult(
-    configPath: discovered.configPath,
-    projectRoot: discovered.projectRoot,
+    configPath: resolved.configPath,
+    projectRoot: resolved.projectRoot,
     referencePath: normalizedReference,
     targetPath: p.normalize(p.absolute(targetPath)),
     filePath: resolvedFilePath,

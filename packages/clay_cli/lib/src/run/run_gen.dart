@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:clay/config.dart';
+import 'package:clay/config.dart' show resolveReferencePath, resolveTargetPath;
 import 'package:clay/generation.dart';
+import 'package:clay_cli/src/run/resolve_project_config.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
@@ -17,7 +18,7 @@ class GenRunResult {
     required this.excludedFiles,
   });
 
-  /// Absolute path to the resolved `brick-gen.json` file.
+  /// Absolute path to the resolved config file.
   final String configPath;
 
   /// Absolute path to the project root.
@@ -44,27 +45,24 @@ Future<GenRunResult> runGen({
   String? targetOverride,
   void Function(String relativePath)? onIgnoredFile,
 }) async {
-  final discovered = discoverBrickGenConfig(
+  final resolved = await resolveProjectConfig(
     configPath: configPath,
     cwd: cwd,
   );
-  final config = await loadBrickGenConfig(
-    configPath: discovered.configPath,
-  );
   final referencePath = resolveReferencePath(
-    projectRoot: discovered.projectRoot,
-    config: config,
+    projectRoot: resolved.projectRoot,
+    config: resolved.config,
     cliOverride: referenceOverride,
   );
   final targetPath = resolveTargetPath(
-    projectRoot: discovered.projectRoot,
-    config: config,
+    projectRoot: resolved.projectRoot,
+    config: resolved.config,
     cliOverride: targetOverride,
   );
 
   final excludedFiles = <String>[];
   await generateTemplate(
-    config: config,
+    config: resolved.config,
     referencePath: referencePath,
     targetPath: targetPath,
     onIgnoredFile: (relativePath) {
@@ -74,8 +72,8 @@ Future<GenRunResult> runGen({
   );
 
   return GenRunResult(
-    configPath: discovered.configPath,
-    projectRoot: discovered.projectRoot,
+    configPath: resolved.configPath,
+    projectRoot: resolved.projectRoot,
     referencePath: p.normalize(p.absolute(referencePath)),
     targetPath: p.normalize(p.absolute(targetPath)),
     fileCount: countTargetFiles(targetPath),
