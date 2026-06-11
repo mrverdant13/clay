@@ -2,22 +2,22 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 import {
-  BRICK_GEN_CONFIG_FILE_NAME,
-  loadBrickGenConfig,
+  CLAY_CONFIG_FILE_NAME,
+  loadClayConfig,
   resolveBrickYamlPath,
   resolveReferencePath,
   resolveTargetPath,
-} from './brickGen';
+} from './clayConfig';
 
 /** Resolved brick scope for a reference file. */
 export interface BrickScopeInfo {
-  /** Directory containing `brick-gen.json`. */
+  /** Directory containing `clay.yaml`. */
   projectRoot: string;
 
   /** Stable scope key for persisted preview variable state. */
   scopeName: string;
 
-  /** Absolute path to `brick-gen.json`. */
+  /** Absolute path to `clay.yaml`. */
   configPath: string;
 
   /** Resolved reference project root. */
@@ -30,14 +30,14 @@ export interface BrickScopeInfo {
   brickYamlPath: string;
 }
 
-/** Collects candidate `brick-gen.json` paths when walking up from [startDir]. */
+/** Collects candidate `clay.yaml` paths when walking up from [startDir]. */
 export function collectConfigSearchPaths(startDir: string): string[] {
   const normalized = path.normalize(path.resolve(startDir));
   const candidates: string[] = [];
   let current = normalized;
 
   while (true) {
-    candidates.push(path.join(current, BRICK_GEN_CONFIG_FILE_NAME));
+    candidates.push(path.join(current, CLAY_CONFIG_FILE_NAME));
     const parent = path.dirname(current);
     if (parent === current) {
       break;
@@ -59,7 +59,7 @@ export function isPathWithinDirectory(targetPath: string, directoryPath: string)
 
 /**
  * Finds the brick scope for [filePath] by walking up to the nearest
- * `brick-gen.json` and verifying the file lies under the configured reference
+ * `clay.yaml` and verifying the file lies under the configured reference
  * root.
  */
 export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefined {
@@ -73,7 +73,7 @@ export function findBrickScopeForFile(filePath: string): BrickScopeInfo | undefi
 
     try {
       const projectRoot = path.dirname(configPath);
-      const config = loadBrickGenConfig(configPath);
+      const config = loadClayConfig(configPath);
       const referenceDir = resolveReferencePath(projectRoot, config);
 
       if (!isPathWithinDirectory(resolvedFile, referenceDir)) {
