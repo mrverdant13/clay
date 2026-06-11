@@ -18,8 +18,8 @@ const clayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
 function createScope(tempDir) {
   return {
     projectRoot: tempDir,
-    configPath: join(tempDir, 'brick-gen.json'),
-    scopeName: join(tempDir, 'brick-gen.json'),
+    configPath: join(tempDir, 'clay.yaml'),
+    scopeName: join(tempDir, 'clay.yaml'),
     referenceDir: join(tempDir, 'reference'),
     targetDir: join(tempDir, 'brick', '__brick__'),
     brickYamlPath: join(tempDir, 'brick', 'brick.yaml'),
@@ -42,13 +42,21 @@ function createPreviewFixture({
   const nestedDir = join(referenceDir, 'lib');
   mkdirSync(nestedDir, { recursive: true });
 
+  const replacementsYaml =
+    replacements.length === 0
+      ? ''
+      : `replacements:\n${replacements
+          .map(
+            (entry) =>
+              `  - from: ${entry.from}\n    to: ${JSON.stringify(entry.to)}`,
+          )
+          .join('\n')}\n`;
+
   writeFileSync(
-    join(tempDir, 'brick-gen.json'),
-    JSON.stringify({
-      reference: 'reference',
-      target: 'brick/__brick__',
-      replacements,
-    }),
+    join(tempDir, 'clay.yaml'),
+    `reference: reference
+target: brick/__brick__
+${replacementsYaml}`,
   );
 
   const filePath = join(nestedDir, 'main.dart');

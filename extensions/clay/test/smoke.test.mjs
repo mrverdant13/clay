@@ -54,7 +54,7 @@ const expectedSourceModules = [
   'annotationHighlighting.ts',
   'blockFolding.ts',
   'rangeUtils.ts',
-  'brickGen.ts',
+  'clayConfig.ts',
   'brickScope.ts',
   'clayCli.ts',
   'workspaceClayScript.ts',

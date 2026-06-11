@@ -5,25 +5,20 @@ import { test } from 'node:test';
 const require = createRequire(import.meta.url);
 
 const { resolvePreviewVariables } = require('./out/previewFileVariables.cjs');
-const { parseBrickGenConfig } = require('./out/brickGen.cjs');
+const { parseClayConfig } = require('./out/clayConfig.cjs');
 
 test('resolvePreviewVariables returns an empty list when no Mustache tags remain', () => {
-  const config = parseBrickGenConfig('{}');
+  const config = parseClayConfig('');
   const variables = resolvePreviewVariables([], 'void main() {}', config);
   assert.deepEqual(variables, []);
 });
 
 test('resolvePreviewVariables prefers brick.yaml definitions and infers unknown names', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      replacements: [
-        {
-          from: 'Widget',
-          to: '{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}',
-        },
-      ],
-    }),
-  );
+  const config = parseClayConfig(`
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
+`);
 
   const brickVariables = [
     {
@@ -53,7 +48,7 @@ test('resolvePreviewVariables prefers brick.yaml definitions and infers unknown 
 });
 
 test('resolvePreviewVariables infers string variables from value tags', () => {
-  const config = parseBrickGenConfig('{}');
+  const config = parseClayConfig('');
   const variables = resolvePreviewVariables(
     [],
     'const title = /*{{app_name}}*/;',
@@ -64,7 +59,7 @@ test('resolvePreviewVariables infers string variables from value tags', () => {
 });
 
 test('resolvePreviewVariables infers boolean variables from section tags', () => {
-  const config = parseBrickGenConfig('{}');
+  const config = parseClayConfig('');
   const variables = resolvePreviewVariables(
     [],
     '/*{{#feature}}*/enabled/*{{/feature}}*/',

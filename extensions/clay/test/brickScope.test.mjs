@@ -23,8 +23,10 @@ function createScopeFixture({
   mkdirSync(nestedDir, { recursive: true });
 
   writeFileSync(
-    join(tempDir, 'brick-gen.json'),
-    JSON.stringify({ reference, target }),
+    join(tempDir, 'clay.yaml'),
+    `reference: ${reference}
+target: ${target}
+`,
   );
 
   const filePath = join(nestedDir, 'main.dart');
@@ -37,8 +39,8 @@ test('collectConfigSearchPaths walks up to the filesystem root', () => {
   const startDir = join(tmpdir(), 'project', 'reference', 'lib');
   const paths = collectConfigSearchPaths(startDir);
 
-  assert.equal(paths[0], join(startDir, 'brick-gen.json'));
-  assert.ok(paths.includes(join(tmpdir(), 'project', 'brick-gen.json')));
+  assert.equal(paths[0], join(startDir, 'clay.yaml'));
+  assert.ok(paths.includes(join(tmpdir(), 'project', 'clay.yaml')));
   assert.equal(dirname(dirname(paths.at(-1))), dirname(paths.at(-1)));
 });
 
@@ -73,10 +75,10 @@ test('findBrickScopeForFile discovers config in the project root', () => {
 
     assert.ok(scope);
     assert.equal(scope.projectRoot, fixture.tempDir);
-    assert.equal(scope.configPath, join(fixture.tempDir, 'brick-gen.json'));
+    assert.equal(scope.configPath, join(fixture.tempDir, 'clay.yaml'));
     assert.equal(scope.referenceDir, fixture.referenceDir);
     assert.equal(scope.targetDir, join(fixture.tempDir, 'brick', '__brick__'));
-    assert.equal(scope.scopeName, join(fixture.tempDir, 'brick-gen.json'));
+    assert.equal(scope.scopeName, join(fixture.tempDir, 'clay.yaml'));
     assert.equal(scope.brickYamlPath, join(fixture.tempDir, 'brick', 'brick.yaml'));
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
@@ -92,8 +94,10 @@ test('findBrickScopeForFile discovers nested config directories', () => {
     mkdirSync(referenceDir, { recursive: true });
     writeFileSync(filePath, 'void main() {}\n');
     writeFileSync(
-      join(scopeDir, 'brick-gen.json'),
-      JSON.stringify({ reference: 'refs', target: 'out/template' }),
+      join(scopeDir, 'clay.yaml'),
+      `reference: refs
+target: out/template
+`,
     );
 
     const scope = findBrickScopeForFile(filePath);
@@ -119,12 +123,16 @@ test('findBrickScopeForFile skips nested config when file is outside its referen
     writeFileSync(filePath, 'void main() {}\n');
 
     writeFileSync(
-      join(tempDir, 'brick-gen.json'),
-      JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+      join(tempDir, 'clay.yaml'),
+      `reference: reference
+target: brick/__brick__
+`,
     );
     writeFileSync(
-      join(nestedScopeDir, 'brick-gen.json'),
-      JSON.stringify({ reference: 'refs', target: 'out/template' }),
+      join(nestedScopeDir, 'clay.yaml'),
+      `reference: refs
+target: out/template
+`,
     );
 
     const scope = findBrickScopeForFile(filePath);
@@ -167,8 +175,10 @@ test('findBrickScopeForFile uses config path as a unique scope key', () => {
       mkdirSync(referenceDir, { recursive: true });
       writeFileSync(filePath, 'void main() {}\n');
       writeFileSync(
-        join(scopeDir, 'brick-gen.json'),
-        JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+        join(scopeDir, 'clay.yaml'),
+        `reference: reference
+target: brick/__brick__
+`,
       );
     }
 
@@ -178,8 +188,8 @@ test('findBrickScopeForFile uses config path as a unique scope key', () => {
     assert.ok(firstScope);
     assert.ok(secondScope);
     assert.notEqual(firstScope.scopeName, secondScope.scopeName);
-    assert.equal(firstScope.scopeName, join(firstScopeDir, 'brick-gen.json'));
-    assert.equal(secondScope.scopeName, join(secondScopeDir, 'brick-gen.json'));
+    assert.equal(firstScope.scopeName, join(firstScopeDir, 'clay.yaml'));
+    assert.equal(secondScope.scopeName, join(secondScopeDir, 'clay.yaml'));
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
@@ -206,17 +216,19 @@ test('findBrickScopeForFile skips invalid configs and continues walk-up', () => 
     mkdirSync(nestedDir, { recursive: true });
     writeFileSync(filePath, 'void main() {}\n');
 
-    writeFileSync(join(nestedDir, 'brick-gen.json'), '{ invalid json');
+    writeFileSync(join(nestedDir, 'clay.yaml'), 'reference: [unclosed');
     writeFileSync(
-      join(tempDir, 'brick-gen.json'),
-      JSON.stringify({ reference: 'reference', target: 'brick/__brick__' }),
+      join(tempDir, 'clay.yaml'),
+      `reference: reference
+target: brick/__brick__
+`,
     );
 
     const scope = findBrickScopeForFile(filePath);
 
     assert.ok(scope);
     assert.equal(scope.projectRoot, tempDir);
-    assert.equal(scope.configPath, join(tempDir, 'brick-gen.json'));
+    assert.equal(scope.configPath, join(tempDir, 'clay.yaml'));
     assert.equal(scope.referenceDir, referenceDir);
     assert.equal(scope.targetDir, join(tempDir, 'brick', '__brick__'));
   } finally {
