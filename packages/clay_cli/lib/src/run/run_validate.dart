@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:clay/clay.dart' show AnnotationIssue;
-import 'package:clay/config.dart';
+import 'package:clay/config.dart' show resolveReferencePath;
 import 'package:clay/validation.dart';
+import 'package:clay_cli/src/run/resolve_project_config.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful annotation validation run.
@@ -15,7 +16,7 @@ class ValidateRunResult {
     required this.issues,
   });
 
-  /// Absolute path to the resolved `brick-gen.json` file.
+  /// Absolute path to the resolved config file.
   final String configPath;
 
   /// Absolute path to the project root.
@@ -37,16 +38,13 @@ Future<ValidateRunResult> runValidate({
   String? cwd,
   String? referenceOverride,
 }) async {
-  final discovered = discoverBrickGenConfig(
+  final resolved = await resolveProjectConfig(
     configPath: configPath,
     cwd: cwd,
   );
-  final config = await loadBrickGenConfig(
-    configPath: discovered.configPath,
-  );
   final referencePath = resolveReferencePath(
-    projectRoot: discovered.projectRoot,
-    config: config,
+    projectRoot: resolved.projectRoot,
+    config: resolved.config,
     cliOverride: referenceOverride,
   );
   final referenceDir = Directory(referencePath);
@@ -59,8 +57,8 @@ Future<ValidateRunResult> runValidate({
   final issues = validateAnnotations(referenceDir: referenceDir);
 
   return ValidateRunResult(
-    configPath: discovered.configPath,
-    projectRoot: discovered.projectRoot,
+    configPath: resolved.configPath,
+    projectRoot: resolved.projectRoot,
     referencePath: p.normalize(p.absolute(referencePath)),
     issues: List.unmodifiable(issues),
   );

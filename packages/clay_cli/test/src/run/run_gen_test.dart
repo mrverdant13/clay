@@ -16,11 +16,9 @@ void main() {
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
       targetDir = Directory(p.join(tempDir.path, 'target'));
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
 ''');
     });
 
@@ -45,12 +43,11 @@ void main() {
     });
 
     test('tracks excluded files', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target",
-  "ignore": ["build/"]
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+ignore:
+  - build/
 ''');
       File(p.join(referenceDir.path, 'lib', 'main.dart'))
         ..createSync(recursive: true)
@@ -72,7 +69,7 @@ void main() {
       try {
         await expectLater(
           runGen(cwd: emptyDir.path),
-          throwsA(isA<BrickGenConfigNotFoundException>()),
+          throwsA(isA<ClayConfigNotFoundException>()),
         );
       } finally {
         emptyDir.deleteSync(recursive: true);
@@ -84,7 +81,7 @@ void main() {
     test('includes resolved paths and file count', () {
       final lines = formatGenRunSummary(
         const GenRunResult(
-          configPath: '/project/brick-gen.json',
+          configPath: '/project/clay.yaml',
           projectRoot: '/project',
           referencePath: '/project/reference',
           targetPath: '/project/target',

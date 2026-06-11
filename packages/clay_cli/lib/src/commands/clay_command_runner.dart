@@ -27,7 +27,7 @@ class ClayCommandRunner extends CommandRunner<int> {
       )
       ..addOption(
         configOptionName,
-        help: 'Path to brick-gen.json (skips discovery).',
+        help: 'Path to clay.yaml or other config file (skips discovery).',
       )
       ..addOption(
         cwdOptionName,

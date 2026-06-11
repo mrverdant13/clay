@@ -82,10 +82,10 @@ class PreviewCommand extends ClayCommand {
     } on FormatException catch (error) {
       logger.err(error.message);
       return ExitCode.usage.code;
-    } on BrickGenConfigNotFoundException catch (error) {
+    } on ClayConfigNotFoundException catch (error) {
       logger.err(error.toString());
       return ExitCode.software.code;
-    } on BrickGenConfigException catch (error) {
+    } on ClayConfigException catch (error) {
       logger.err(error.message);
       return ExitCode.software.code;
     } on PreviewException catch (error) {

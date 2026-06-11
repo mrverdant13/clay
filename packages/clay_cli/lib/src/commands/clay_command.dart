@@ -11,11 +11,11 @@ abstract class ClayCommand extends Command<int> {
     argParser
       ..addOption(
         referenceOptionName,
-        help: 'Overrides brick-gen.json → reference.',
+        help: 'Overrides config → reference.',
       )
       ..addOption(
         targetOptionName,
-        help: 'Overrides brick-gen.json → target.',
+        help: 'Overrides config → target.',
       );
   }
 
