@@ -20,6 +20,10 @@ void main() {
     });
 
     test('uses a neutral not-found message for explicit config paths', () {
+      final expectedPath = p.normalize(
+        p.join(tempDir.path, 'missing-config.json'),
+      );
+
       expect(
         () => discoverProjectConfig(
           configPath: 'missing-config.json',
@@ -30,7 +34,7 @@ void main() {
               .having(
                 (error) => error.message,
                 'message',
-                'Config file not found at ${p.normalize(p.join(tempDir.path, 'missing-config.json'))}',
+                'Config file not found at $expectedPath',
               )
               .having(
                 (error) => error.message,

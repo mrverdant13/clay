@@ -132,7 +132,9 @@ ignore:
     test(
       'returns a non-zero exit code when explicit JSON config is invalid',
       () async {
-        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('{invalid');
+        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
+          '{invalid',
+        );
 
         final exitCode = await clay(
           args: [
