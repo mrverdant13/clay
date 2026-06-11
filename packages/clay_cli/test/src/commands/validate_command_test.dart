@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/clay_cli.dart';
-import 'package:clay_cli/src/features/validation/run_validate.dart';
+import 'package:clay_cli/src/run/run_validate.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as p;

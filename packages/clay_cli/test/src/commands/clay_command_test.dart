@@ -1,5 +1,5 @@
 import 'package:clay_cli/clay_cli.dart';
-import 'package:mason/mason.dart';
+import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
