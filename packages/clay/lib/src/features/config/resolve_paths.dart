@@ -1,4 +1,4 @@
-import 'package:clay/src/entities/brick_gen_config.dart';
+import 'package:clay/src/entities/clay_config.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
@@ -17,11 +17,11 @@ String resolvePathFromProjectRoot({
 
 /// Resolves the reference directory path.
 ///
-/// Priority: [cliOverride] → [config] ([BrickGenConfig.reference]) → built-in
+/// Priority: [cliOverride] → [config] ([ClayConfig.reference]) → built-in
 /// default.
 String resolveReferencePath({
   required String projectRoot,
-  required BrickGenConfig config,
+  required ClayConfig config,
   String? cliOverride,
 }) {
   final path = cliOverride ?? config.reference;
@@ -30,11 +30,11 @@ String resolveReferencePath({
 
 /// Resolves the target directory path.
 ///
-/// Priority: [cliOverride] → [config] ([BrickGenConfig.target]) → built-in
+/// Priority: [cliOverride] → [config] ([ClayConfig.target]) → built-in
 /// default.
 String resolveTargetPath({
   required String projectRoot,
-  required BrickGenConfig config,
+  required ClayConfig config,
   String? cliOverride,
 }) {
   final path = cliOverride ?? config.target;

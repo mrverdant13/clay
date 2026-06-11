@@ -9,7 +9,7 @@ void registerResolvedPath({
   required Map<String, String> resolvedPaths,
   required String entityPath,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedEntityPath = p.normalize(p.absolute(entityPath));
@@ -42,7 +42,7 @@ void registerResolvedPath({
 void assertUniqueResolvedPaths({
   required Iterable<String> entityPaths,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) {
   final resolvedPaths = <String, String>{};
   for (final entityPath in entityPaths) {

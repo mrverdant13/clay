@@ -11,11 +11,11 @@ import 'package:path/path.dart' as p;
 /// Copies [referencePath] to [targetPath] and applies [config] transforms.
 ///
 /// Existing content under [targetPath] is removed before copying. Files
-/// matching [BrickGenConfig.ignore] are deleted from the target tree; empty
+/// matching [ClayConfig.ignore] are deleted from the target tree; empty
 /// parent directories are pruned. Remaining files receive path renames and
 /// content transforms.
 Future<void> generateTemplate({
-  required BrickGenConfig config,
+  required ClayConfig config,
   required String referencePath,
   required String targetPath,
   void Function(String relativePath)? onIgnoredFile,
