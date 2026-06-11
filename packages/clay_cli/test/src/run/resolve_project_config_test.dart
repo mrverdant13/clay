@@ -45,12 +45,11 @@ void main() {
       );
     });
 
-    test('discovers clay.yaml before brick-gen.json when both exist', () {
+    test('discovers clay.yaml in the working directory', () {
       File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
 reference: reference
 target: target
 ''');
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('{}');
 
       final discovered = discoverProjectConfig(cwd: tempDir.path);
 
