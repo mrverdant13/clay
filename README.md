@@ -1,9 +1,9 @@
 # Clay
 
-**Clay** is a toolchain for authoring [Mason](https://pub.dev/packages/mason) brick templates from real, runnable **reference projects**. You maintain a reference codebase, mark up files with comment-based **annotations**, and declare transforms in a **`brick-gen.json`** config file. The **`clay`** CLI turns that reference into a template directory ready for Mason code generation.
+**Clay** is a toolchain for authoring [Mason](https://pub.dev/packages/mason) brick templates from real, runnable **reference projects**. You maintain a reference codebase, mark up files with comment-based **annotations**, and declare transforms in a **`clay.yaml`** config file. The **`clay`** CLI turns that reference into a template directory ready for Mason code generation.
 
 > [!WARNING]
-> **Under development.** Clay is pre-release and has not published to pub.dev yet. The CLI, library API, VS Code extension, and `brick-gen.json` schema are still evolving — **breaking changes may be introduced** before the first stable release.
+> **Under development.** Clay is pre-release and has not published to pub.dev yet. The CLI, library API, VS Code extension, and `clay.yaml` schema are still evolving — **breaking changes may be introduced** before the first stable release.
 
 | Item              | Value                                                                                         |
 | ----------------- | --------------------------------------------------------------------------------------------- |
@@ -21,10 +21,10 @@ Traditional Mason bricks are authored directly as template files. Clay inverts t
 
 1. **Write real code** in a reference project (runnable app, package, or snippet tree).
 2. **Annotate** files with comment markers (`/*remove-start*/`, `#replace-start#`, etc.) to express what should change at generation time.
-3. **Configure** path renames, regex replacements, line deletions, and ignore patterns in `brick-gen.json`.
+3. **Configure** path renames, regex replacements, line deletions, and ignore patterns in `clay.yaml`.
 4. **Generate** the Mason `__brick__` output with `clay gen`.
 
-Clay is **brick-agnostic** — no hardcoded project names or monorepo conventions. All project-specific behavior lives in `brick-gen.json`, the reference files, and optional CLI overrides.
+Clay is **brick-agnostic** — no hardcoded project names or monorepo conventions. All project-specific behavior lives in `clay.yaml`, the reference files, and optional CLI overrides.
 
 ---
 
@@ -32,11 +32,11 @@ Clay is **brick-agnostic** — no hardcoded project names or monorepo convention
 
 ### Typical project layout
 
-Clay does not mandate a directory layout. Reference and target paths are declared in `brick-gen.json` and may be overridden via CLI flags. A common convention:
+Clay does not mandate a directory layout. Reference and target paths are declared in `clay.yaml` and may be overridden via CLI flags. A common convention:
 
 ```
 my-brick/
-├── brick-gen.json          # declares "reference" and "target" paths
+├── clay.yaml               # declares "reference" and "target" paths
 ├── reference/              # runnable reference project
 │   └── …
 └── brick/
@@ -44,22 +44,19 @@ my-brick/
         └── …
 ```
 
-Example `brick-gen.json`:
+Example `clay.yaml`:
 
-```json
-{
-  "reference": "reference",
-  "target": "brick/__brick__",
-  "ignore": [
-    ".dart_tool/",
-    "build/",
-    "coverage/",
-    "**/*.iml",
-    ".DS_Store"
-  ],
-  "replacements": [],
-  "lineDeletions": []
-}
+```yaml
+reference: reference
+target: brick/__brick__
+ignore:
+  - .dart_tool/
+  - build/
+  - coverage/
+  - "**/*.iml"
+  - .DS_Store
+replacements: []
+lineDeletions: []
 ```
 
 ### Install the CLI
@@ -74,7 +71,7 @@ During local development in this repository, run the CLI via Melos or `dart run`
 
 ### Generate a template
 
-From the directory that contains `brick-gen.json` (or any child directory — Clay walks up to discover the config):
+From the directory that contains `clay.yaml` (or any child directory — Clay walks up parent directories to discover the config):
 
 ```bash
 clay gen
@@ -82,7 +79,7 @@ clay gen
 
 Clay will:
 
-1. Load `brick-gen.json` and resolve reference/target paths.
+1. Load `clay.yaml` and resolve reference/target paths.
 2. Copy the reference tree to the target directory.
 3. Apply ignore patterns, path renames, and content transforms (annotations, replacements, line deletions).
 4. Print resolved paths and file count to stdout.
@@ -98,7 +95,7 @@ Recursively scans the reference directory and reports `filePath:line:column: mes
 ### Preview a single file
 
 ```bash
-# Annotations + brick-gen.json transforms only (Mustache tags left intact)
+# Annotations + clay.yaml transforms only (Mustache tags left intact)
 clay preview --file lib/main.dart --template-only
 
 # Full preview with Mason variables
@@ -121,17 +118,17 @@ clay [--config <path>] [--cwd <path>] [--verbose] [--version] <command> [options
 | ----------------- | ------------------------------------------------------------------- |
 | `--version`       | Print package version                                               |
 | `--verbose`       | Verbose logging (resolved paths, excluded files)                    |
-| `--config <path>` | Path to `brick-gen.json` (skips discovery)                          |
+| `--config <path>` | Path to `clay.yaml` (skips discovery; any filename is accepted)     |
 | `--cwd <path>`    | Working directory for config discovery (default: current directory) |
 
 ### Shared command flags
 
-| Flag                 | Default         | Description                              |
-| -------------------- | --------------- | ---------------------------------------- |
-| `--reference <path>` | *(from config)* | Overrides `brick-gen.json` → `reference` |
-| `--target <path>`    | *(from config)* | Overrides `brick-gen.json` → `target`    |
+| Flag                 | Default         | Description                           |
+| -------------------- | --------------- | ------------------------------------- |
+| `--reference <path>` | *(from config)* | Overrides `clay.yaml` → `reference`   |
+| `--target <path>`    | *(from config)* | Overrides `clay.yaml` → `target`      |
 
-Path resolution order: CLI flag → `brick-gen.json` field → built-in default (`reference` / `brick/__brick__`). Relative paths resolve from the **project root** (the directory containing `brick-gen.json`).
+Path resolution order: CLI flag → `clay.yaml` field → built-in default (`reference` / `brick/__brick__`). Relative paths resolve from the **project root** (the directory containing `clay.yaml`).
 
 ### Commands
 
@@ -151,9 +148,9 @@ Path resolution order: CLI flag → `brick-gen.json` field → built-in default 
 
 ---
 
-## `brick-gen.json`
+## `clay.yaml`
 
-The config file is the single source of truth for paths, ignore patterns, replacements, and line deletions.
+The config file is the single source of truth for paths, ignore patterns, replacements, and line deletions. Clay discovers `clay.yaml` by walking up from `--cwd` (or the current directory) until a config file is found. Use `--config <path>` to load an explicit file instead.
 
 | Field           | Type       | Default             | Description                                        |
 | --------------- | ---------- | ------------------- | -------------------------------------------------- |
@@ -165,14 +162,14 @@ The config file is the single source of truth for paths, ignore patterns, replac
 
 Omitted `reference`, `target`, and `ignore` fields use the defaults above.
 
-`replacements` accept a plain string (treated as regex) or `{ "pattern": string, "dotAll"?: boolean }` for the `from` field; `to` supports `${n}` capture-group interpolation. They are applied sequentially to file paths and contents. `lineDeletions` use zero-based, inclusive line ranges relative to the target directory root and run before content replacements and annotation transforms.
+`replacements` accept a plain string (treated as regex) or `{ pattern: string, dotAll?: boolean }` for the `from` field; `to` supports `${n}` capture-group interpolation. They are applied sequentially to file paths and contents. `lineDeletions` use zero-based, inclusive line ranges relative to the target directory root and run before content replacements and annotation transforms.
 
 `ignore` uses gitignore-compatible syntax (`*`, `**`, leading `/`, `!` negation). During `clay gen`, matching files are excluded from the copied output. Patterns must use POSIX-style forward slashes (`/`) and are interpreted relative to the reference or target root — a leading `/` anchors to that root (for example `/build/` matches only `build/` at the top level), not to the OS filesystem root. Windows-absolute paths such as `C:/...` are rejected when the config is loaded; POSIX-style root anchors such as `/Users/app/build/` are allowed because they match relative to the reference or target root. Backslash separators (`\`) are not supported in ignore patterns.
 
 Further reference docs:
 
 - [`doc/annotations.md`](doc/annotations.md) — marker syntax for reference authors
-- [`doc/brick-gen.schema.json`](doc/brick-gen.schema.json) — JSON schema for editor validation and tooling
+- [`doc/clay.schema.json`](doc/clay.schema.json) — JSON schema for editor validation and tooling
 
 ---
 
@@ -199,8 +196,8 @@ The **Clay** extension lives in [`extensions/clay/`](extensions/clay/). It provi
 - Annotation syntax highlighting (all marker types, three comment flavors)
 - Block/range shading and code folding
 - **Clay: Preview generated output** — full Mustache resolution with variable prompts
-- **Clay: Preview template output** — annotations + `brick-gen.json` transforms only
-- Scope discovery via nearest `brick-gen.json`
+- **Clay: Preview template output** — annotations + `clay.yaml` transforms only
+- Scope discovery via nearest `clay.yaml`
 - Configurable annotation colors via `clay.colors.*` settings
 
 The extension invokes the `clay` CLI (installed globally after pub.dev release, or `dart run` during development). See [`extensions/clay/README.md`](extensions/clay/README.md) for installation, settings, preview commands, and troubleshooting.
@@ -215,7 +212,8 @@ clay/
 ├── CONTRIBUTING.md              # Contributor guide
 ├── pubspec.yaml                 # Melos workspace root
 ├── packages/
-│   ├── clay_cli/                # Publishable Dart package
+│   ├── clay/                    # Core library (config, transforms, generation)
+│   ├── clay_cli/                # Publishable CLI package
 │   └── clay_cli_e2e/            # CLI integration tests
 ├── extensions/
 │   └── clay/                    # VS Code extension
@@ -227,19 +225,21 @@ clay/
 
 ## Programmatic API
 
-Core logic is exposed as a Dart library, not only as a CLI executable:
+Core logic lives in the [`clay`](packages/clay/) library package, exposed for programmatic use:
 
 ```dart
-Future<BrickGenConfig> loadBrickGenConfig({required String configPath});
+import 'package:clay/clay.dart';
+
+Future<ClayConfig> loadClayConfig({required String configPath});
 
 String resolveReferenceContent({
   required String content,
   required String targetRelativePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 });
 
 Future<void> generateTemplate({
-  required BrickGenConfig config,
+  required ClayConfig config,
   required String referencePath,
   required String targetPath,
 });
@@ -247,7 +247,7 @@ Future<void> generateTemplate({
 List<AnnotationIssue> validateAnnotations({required Directory referenceDir});
 ```
 
-Downstream tools (e.g. monorepo wrappers) should call these APIs rather than duplicating transform logic. Wrappers resolve project-specific paths, then delegate to `clay_cli` with the appropriate `--config`, `reference`, and `target` values.
+Downstream tools should call these APIs rather than duplicating transform logic. Wrappers resolve project-specific paths, then delegate to `clay` with the appropriate config and path values.
 
 ---
 
