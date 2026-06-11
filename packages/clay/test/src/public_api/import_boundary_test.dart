@@ -3,12 +3,14 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
+final _clayPackageNamePattern = RegExp(r'^name:\s+clay\s*$', multiLine: true);
+
 Directory _packageRoot() {
   var current = Directory.current;
   while (true) {
     final pubspec = File(p.join(current.path, 'pubspec.yaml'));
     if (pubspec.existsSync() &&
-        pubspec.readAsStringSync().contains('name: clay\n')) {
+        _clayPackageNamePattern.hasMatch(pubspec.readAsStringSync())) {
       return current;
     }
 
