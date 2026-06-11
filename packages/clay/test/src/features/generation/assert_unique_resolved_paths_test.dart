@@ -1,5 +1,6 @@
 import 'package:clay/clay.dart';
 import 'package:clay/src/features/generation/assert_unique_resolved_paths.dart';
+import 'package:clay/src/features/generation/generation_exception.dart';
 import 'package:test/test.dart';
 
 void main() {
