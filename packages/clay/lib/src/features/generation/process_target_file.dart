@@ -6,7 +6,6 @@ import 'package:clay/src/features/config/matches_ignore_pattern.dart'
 import 'package:clay/src/features/generation/assert_unique_resolved_paths.dart';
 import 'package:clay/src/features/generation/prune_empty_directories.dart';
 import 'package:clay/src/features/generation/resolve_target_file_path.dart';
-import 'package:clay/src/features/transforms/resolve_reference_content.dart';
 import 'package:clay/src/features/transforms/skip_content_transforms.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;

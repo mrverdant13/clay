@@ -1,6 +1,4 @@
 import 'package:clay/clay.dart';
-import 'package:clay/src/features/config/matches_ignore_pattern.dart';
-import 'package:clay/src/features/generation/generation_exception.dart';
 import 'package:clay/src/features/generation/resolve_target_file_path.dart';
 import 'package:path/path.dart' as p;
 

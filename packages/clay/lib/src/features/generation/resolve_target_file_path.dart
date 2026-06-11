@@ -1,6 +1,5 @@
 import 'package:clay/clay.dart';
 import 'package:clay/src/features/config/matches_ignore_pattern.dart';
-import 'package:clay/src/features/generation/generation_exception.dart';
 import 'package:clay/src/features/transforms/apply_replacements.dart';
 import 'package:path/path.dart' as p;
 
