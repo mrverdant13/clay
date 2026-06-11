@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart';
+import 'package:clay/config.dart';
+import 'package:clay/generation.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 

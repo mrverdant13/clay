@@ -1,4 +1,5 @@
-import 'package:clay/clay.dart';
+import 'package:clay/config.dart';
+import 'package:clay/generation.dart';
 import 'package:clay_cli/src/commands/clay_command.dart';
 import 'package:clay_cli/src/commands/clay_command_runner.dart';
 import 'package:clay_cli/src/run/run_gen.dart';

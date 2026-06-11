@@ -1,6 +1,8 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart';
+import 'package:clay/clay.dart' show AnnotationIssue;
+import 'package:clay/config.dart';
+import 'package:clay/validation.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful annotation validation run.

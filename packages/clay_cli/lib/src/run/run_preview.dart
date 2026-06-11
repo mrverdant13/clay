@@ -1,4 +1,5 @@
-import 'package:clay/clay.dart';
+import 'package:clay/config.dart';
+import 'package:clay/preview.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful preview run.
