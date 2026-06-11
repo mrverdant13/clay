@@ -1,0 +1,13 @@
+name: clay
+description: >-
+  Core library for Clay — config loading, reference transforms, template
+  generation, and annotation validation.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dev_dependencies:
+  very_good_analysis: ^10.0.0
