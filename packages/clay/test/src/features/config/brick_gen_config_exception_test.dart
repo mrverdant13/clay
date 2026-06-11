@@ -1,4 +1,4 @@
-import 'package:clay/config.dart';
+import 'package:clay/clay.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,8 +1,6 @@
 import 'dart:io';
 
 import 'package:clay/clay.dart';
-import 'package:clay/src/features/preview/preview_exception.dart';
-import 'package:clay/src/features/preview/preview_reference.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 

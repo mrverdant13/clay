@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clay/clay.dart' show BrickGenConfig;
-import 'package:clay/config.dart';
+import 'package:clay/clay.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
