@@ -4,23 +4,16 @@
 /// control whether leading or trailing whitespace adjacent to a remove block
 /// is retained.
 String applyRemotions({required String content}) {
-  final blockDropPatterns = [
-    r'\/\*drop\*\/.*',
-    '#drop#.*',
-    '<!--drop-->.*',
-  ];
-  final blockDropPattern =
-      blockDropPatterns.map((pattern) => '(?:$pattern)').join('|');
-  final blockDropRegex = RegExp(blockDropPattern, dotAll: true);
-  final afterDropContent = content.replaceAll(blockDropRegex, '');
-
   const blockRemotionPatterns = [
     r'(?<leading>\s*)\/\*(?<dropLeading>x-)?remove-start\*\/.*?\/\*remove-end(?<dropTrailing>-x)?\*\/(?<trailing>\s*)',
     r'(?<leading>\s*)#(?<dropLeading>x-)?remove-start#.*?#remove-end(?<dropTrailing>-x)?#(?<trailing>\s*)',
     r'(?<leading>\s*)<!--(?<dropLeading>x-)?remove-start-->.*?<!--remove-end(?<dropTrailing>-x)?-->(?<trailing>\s*)',
   ];
 
-  return blockRemotionPatterns.fold(afterDropContent, (resolved, pattern) {
+  final afterRemoveBlocks = blockRemotionPatterns.fold(content, (
+    resolved,
+    pattern,
+  ) {
     final regex = RegExp(pattern, dotAll: true);
     return resolved.replaceAllMapped(regex, (match) {
       match as RegExpMatch;
@@ -31,4 +24,14 @@ String applyRemotions({required String content}) {
       return [if (keepLeading) leading, if (keepTrailing) trailing].join();
     });
   });
+
+  final blockDropPatterns = [
+    r'\/\*drop\*\/.*',
+    '#drop#.*',
+    '<!--drop-->.*',
+  ];
+  final blockDropPattern =
+      blockDropPatterns.map((pattern) => '(?:$pattern)').join('|');
+  final blockDropRegex = RegExp(blockDropPattern, dotAll: true);
+  return afterRemoveBlocks.replaceAll(blockDropRegex, '');
 }
