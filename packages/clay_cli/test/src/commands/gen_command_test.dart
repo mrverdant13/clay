@@ -80,18 +80,17 @@ target: target
       () async {
         when(() => logger.level).thenReturn(Level.verbose);
 
-        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+        final customConfigPath = p.join(tempDir.path, 'custom-clay.yaml');
+        File(customConfigPath).writeAsStringSync('''
+reference: reference
+target: target
 ''');
 
         final exitCode = await clay(
           args: [
             '--verbose',
             '--config',
-            'brick-gen.json',
+            'custom-clay.yaml',
             '--cwd',
             tempDir.path,
           ],
@@ -101,7 +100,7 @@ target: target
         expect(exitCode, ExitCode.success.code);
         verify(
           () => logger.detail(
-            'Config: ${p.normalize(p.join(tempDir.path, 'brick-gen.json'))}',
+            'Config: ${p.normalize(customConfigPath)}',
           ),
         ).called(1);
       },
@@ -130,9 +129,9 @@ ignore:
     });
 
     test(
-      'returns a non-zero exit code when explicit JSON config is invalid',
+      'returns a non-zero exit code when explicit config is invalid',
       () async {
-        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
+        File(p.join(tempDir.path, 'custom-clay.yaml')).writeAsStringSync(
           '{invalid',
         );
 
@@ -140,7 +139,7 @@ ignore:
           args: [
             'gen',
             '--config',
-            'brick-gen.json',
+            'custom-clay.yaml',
             '--cwd',
             tempDir.path,
           ],
@@ -149,7 +148,7 @@ ignore:
 
         expect(exitCode, ExitCode.software.code);
         verify(
-          () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+          () => logger.err(any(that: contains('Invalid clay.yaml'))),
         ).called(1);
       },
     );
@@ -161,7 +160,7 @@ ignore:
           args: [
             'gen',
             '--config',
-            'brick-gen.json',
+            'missing-clay.yaml',
             '--cwd',
             tempDir.path,
           ],
@@ -174,7 +173,7 @@ ignore:
             any(
               that: allOf(
                 contains('Config file not found at'),
-                contains('brick-gen.json'),
+                contains('missing-clay.yaml'),
                 isNot(contains('clay.yaml not found')),
               ),
             ),
