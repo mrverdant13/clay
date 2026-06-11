@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay/clay.dart';
 
 /// Applies a single [replacement] to [input], interpolating `${n}` capture
 /// groups.

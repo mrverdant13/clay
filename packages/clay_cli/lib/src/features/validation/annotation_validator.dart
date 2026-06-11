@@ -1,7 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/annotation_issue.dart';
-import 'package:clay_cli/src/utils/binary_content.dart';
+import 'package:clay/clay.dart';
 import 'package:path/path.dart' as p;
 
 /// Validates annotation markers in reference file contents.

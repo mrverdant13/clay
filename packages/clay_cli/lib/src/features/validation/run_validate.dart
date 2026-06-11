@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/annotation_issue.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/config/discover_brick_gen_config.dart';
 import 'package:clay_cli/src/features/config/load_brick_gen_config.dart';
 import 'package:clay_cli/src/features/config/resolve_paths.dart';

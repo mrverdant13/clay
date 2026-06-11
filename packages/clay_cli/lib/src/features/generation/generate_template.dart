@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/generation/assert_distinct_reference_and_target_paths.dart';
 import 'package:clay_cli/src/features/generation/assert_safe_target_path.dart';
 import 'package:clay_cli/src/features/generation/copy_directory.dart';

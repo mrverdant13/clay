@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay/clay.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
