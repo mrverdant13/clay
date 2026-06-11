@@ -72,7 +72,7 @@ Future<ClayConfig> loadProjectConfig({
 }) async {
   if (p.extension(configPath).toLowerCase() == '.json') {
     try {
-      return loadBrickGenConfig(configPath: configPath);
+      return await loadBrickGenConfig(configPath: configPath);
     } on BrickGenConfigException catch (error) {
       throw ClayConfigException(error.message);
     }

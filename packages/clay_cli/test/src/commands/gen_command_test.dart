@@ -129,6 +129,29 @@ ignore:
       verify(() => logger.detail('Excluded: build/output.txt')).called(1);
     });
 
+    test(
+      'returns a non-zero exit code when explicit JSON config is invalid',
+      () async {
+        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('{invalid');
+
+        final exitCode = await clay(
+          args: [
+            'gen',
+            '--config',
+            'brick-gen.json',
+            '--cwd',
+            tempDir.path,
+          ],
+          logger: logger,
+        );
+
+        expect(exitCode, ExitCode.software.code);
+        verify(
+          () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+        ).called(1);
+      },
+    );
+
     test('returns a non-zero exit code when config is invalid', () async {
       File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('{invalid');
 
