@@ -1,7 +1,6 @@
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/commands/clay_command.dart';
-import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
-import 'package:clay_cli/src/features/validation/run_validate.dart';
-import 'package:clay_cli/src/features/validation/validation_exception.dart';
+import 'package:clay_cli/src/run/run_validate.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// {@template clay_cli.validate_command}
