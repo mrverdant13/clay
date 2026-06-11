@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart';
+import 'package:clay/src/entities/entities.dart';
 import 'package:clay/src/features/config/matches_ignore_pattern.dart'
     show normalizeIgnoreRelativePath, shouldIgnoreAtRoot;
 import 'package:clay/src/features/generation/assert_unique_resolved_paths.dart';

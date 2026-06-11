@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:clay/clay.dart';
-import 'package:clay/generation.dart';
 import 'package:clay/src/features/generation/process_target_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';

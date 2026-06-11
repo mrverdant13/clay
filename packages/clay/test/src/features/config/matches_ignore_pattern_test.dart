@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay/config.dart';
+import 'package:clay/clay.dart';
 import 'package:clay/src/features/config/matches_ignore_pattern.dart'
     show normalizeIgnoreRelativePath;
 import 'package:path/path.dart' as p;
