@@ -9,17 +9,12 @@ void main() {
 
     setUp(() {
       project = E2eFixtureProject.withFiles(
-        configJson: '''
-{
-  "reference": "reference",
-  "target": "target",
-  "replacements": [
-    {
-      "from": "Widget",
-      "to": "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
-    }
-  ]
-}
+        configYaml: '''
+reference: reference
+target: target
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
 ''',
         referenceFiles: {
           'widget.dart': '''

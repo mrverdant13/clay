@@ -72,12 +72,11 @@ void main() {
       () async {
         project.dispose();
         project = E2eFixtureProject.withFiles(
-          configJson: '''
-{
-  "reference": "reference",
-  "target": "target",
-  "ignore": ["build/"]
-}
+          configYaml: '''
+reference: reference
+target: target
+ignore:
+  - build/
 ''',
           referenceFiles: {
             'main.dart': 'main\n',
