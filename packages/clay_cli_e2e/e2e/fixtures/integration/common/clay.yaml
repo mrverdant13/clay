@@ -1,0 +1,7 @@
+reference: reference
+target: target
+ignore:
+  - artifacts/
+replacements:
+  - from: ref_shared
+    to: shared
