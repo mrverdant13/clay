@@ -35,7 +35,7 @@ String applyReplaceBlocks({required String content}) {
         nl,
         ' *#replace-end#',
       ].join(),
-      r'# (?<line>.*)',
+      '# (?<line>.*)',
     ),
     (
       'HTML comment (expected <!-- <content>-->)',
