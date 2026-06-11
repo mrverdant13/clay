@@ -1,0 +1,18 @@
+replacements:
+  - from: packages/app/android
+    to: packages/app/{{#include_android_platform}}android{{/include_android_platform}}
+  - from:
+      pattern: "@Dependencies\\(\\[(.*?)\\]\\)"
+      dotAll: true
+    to: "{{#use_riverpod}}@Dependencies([${1}]){{/use_riverpod}}"
+  - from: ([a-zA-Z0-9_]+)_(bloc|state|event)(_test)?\.dart
+    to: "{{#use_bloc}}${1}_${2}${3}.dart{{/use_bloc}}"
+lineDeletions:
+  - filePath: ./{{#requirements_met}}{{project_name.snakeCase()}}{{/requirements_met}}/packages/app/lib/l10n/arb/app_en.arb
+    ranges:
+      - start: 51
+        end: 158
+  - filePath: ./{{#requirements_met}}{{project_name.snakeCase()}}{{/requirements_met}}/packages/app/lib/l10n/arb/app_es.arb
+    ranges:
+      - start: 51
+        end: 158

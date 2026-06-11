@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:clay/src/entities/brick_gen_config.dart';
 import 'package:clay/src/features/config/brick_gen_config_exception.dart';
-import 'package:clay/src/features/config/matches_ignore_pattern.dart';
+import 'package:clay/src/features/config/parse_config_map.dart';
 
 /// Loads and parses `brick-gen.json` from [configPath].
 Future<BrickGenConfig> loadBrickGenConfig({
@@ -19,9 +19,7 @@ Future<BrickGenConfig> loadBrickGenConfig({
   try {
     final raw = await file.readAsString();
     final json = jsonDecode(raw) as Map<String, dynamic>;
-    final config = BrickGenConfig.fromJson(json);
-    validateIgnorePatterns(config.ignore);
-    return config;
+    return parseConfigMap(json);
   } on FormatException catch (error) {
     if (error.message.startsWith('ignore pattern must')) {
       throw BrickGenConfigException(
