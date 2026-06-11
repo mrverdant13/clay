@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:clay/clay.dart' show ClayConfig;
 import 'package:clay/config.dart';
 import 'package:path/path.dart' as p;
@@ -48,7 +50,7 @@ DiscoveredClayConfig discoverProjectConfig({
   String? cwd,
 }) {
   if (configPath != null) {
-    return discoverClayConfig(configPath: configPath, cwd: cwd);
+    return _discoverExplicitConfig(configPath: configPath, cwd: cwd);
   }
 
   try {
@@ -79,4 +81,26 @@ Future<ClayConfig> loadProjectConfig({
   }
 
   return loadClayConfig(configPath: configPath);
+}
+
+DiscoveredClayConfig _discoverExplicitConfig({
+  required String configPath,
+  String? cwd,
+}) {
+  final workingDir = p.normalize(p.absolute(cwd ?? Directory.current.path));
+  final resolvedConfig = p.isAbsolute(configPath)
+      ? p.normalize(configPath)
+      : p.normalize(p.join(workingDir, configPath));
+
+  if (!File(resolvedConfig).existsSync()) {
+    throw ClayConfigNotFoundException(
+      message: 'Config file not found at $resolvedConfig',
+      searchedPaths: [resolvedConfig],
+    );
+  }
+
+  return DiscoveredClayConfig(
+    configPath: resolvedConfig,
+    projectRoot: p.dirname(resolvedConfig),
+  );
 }

@@ -152,6 +152,35 @@ ignore:
       },
     );
 
+    test(
+      'returns a non-zero exit code when explicit config path is missing',
+      () async {
+        final exitCode = await clay(
+          args: [
+            'gen',
+            '--config',
+            'brick-gen.json',
+            '--cwd',
+            tempDir.path,
+          ],
+          logger: logger,
+        );
+
+        expect(exitCode, ExitCode.software.code);
+        verify(
+          () => logger.err(
+            any(
+              that: allOf(
+                contains('Config file not found at'),
+                contains('brick-gen.json'),
+                isNot(contains('clay.yaml not found')),
+              ),
+            ),
+          ),
+        ).called(1);
+      },
+    );
+
     test('returns a non-zero exit code when config is invalid', () async {
       File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('{invalid');
 
