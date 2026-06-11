@@ -1,11 +1,8 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart';
-import 'package:clay_cli/src/features/config/discover_brick_gen_config.dart';
-import 'package:clay_cli/src/features/config/load_brick_gen_config.dart';
-import 'package:clay_cli/src/features/config/resolve_paths.dart';
-import 'package:clay_cli/src/features/validation/validate_annotations.dart';
-import 'package:clay_cli/src/features/validation/validation_exception.dart';
+import 'package:clay/clay.dart' show AnnotationIssue;
+import 'package:clay/config.dart';
+import 'package:clay/validation.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful annotation validation run.

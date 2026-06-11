@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/clay_cli.dart';
-import 'package:mason/mason.dart';
+import 'package:mason_logger/mason_logger.dart';
 
 Future<void> main(List<String> args) async {
   final logger = Logger();

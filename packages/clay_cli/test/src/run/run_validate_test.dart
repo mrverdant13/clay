@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart';
-import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
-import 'package:clay_cli/src/features/validation/run_validate.dart';
-import 'package:clay_cli/src/features/validation/validation_exception.dart';
+import 'package:clay/clay.dart' show AnnotationIssue;
+import 'package:clay/config.dart';
+import 'package:clay/validation.dart';
+import 'package:clay_cli/src/run/run_validate.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 

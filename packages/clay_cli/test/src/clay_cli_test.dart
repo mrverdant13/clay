@@ -1,5 +1,5 @@
 import 'package:clay_cli/clay_cli.dart';
-import 'package:mason/mason.dart';
+import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
@@ -7,20 +7,14 @@ class _MockLogger extends Mock implements Logger {}
 
 void main() {
   group('public API', () {
-    test('exports documented programmatic APIs', () {
-      expect(loadBrickGenConfig, isA<Function>());
-      expect(resolveReferenceContent, isA<Function>());
-      expect(generateTemplate, isA<Function>());
-      expect(validateAnnotations, isA<Function>());
-    });
-
-    test('exports entity types used by programmatic APIs', () {
-      expect(BrickGenConfig, isA<Type>());
-      expect(AnnotationIssue, isA<Type>());
-    });
-
     test('exports the CLI entrypoint', () {
       expect(clay, isA<Function>());
+    });
+
+    test('exports command types', () {
+      expect(GenCommand, isA<Type>());
+      expect(PreviewCommand, isA<Type>());
+      expect(ValidateCommand, isA<Type>());
     });
   });
 

@@ -1,11 +1,10 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
+import 'package:clay/config.dart';
+import 'package:clay/preview.dart';
 import 'package:clay_cli/src/commands/clay_command.dart';
-import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
-import 'package:clay_cli/src/features/preview/parse_preview_vars.dart';
-import 'package:clay_cli/src/features/preview/preview_exception.dart';
-import 'package:clay_cli/src/features/preview/run_preview.dart';
+import 'package:clay_cli/src/run/run_preview.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// {@template clay_cli.preview_command}

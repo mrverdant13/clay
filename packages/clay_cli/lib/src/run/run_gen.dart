@@ -1,9 +1,7 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/features/config/discover_brick_gen_config.dart';
-import 'package:clay_cli/src/features/config/load_brick_gen_config.dart';
-import 'package:clay_cli/src/features/config/resolve_paths.dart';
-import 'package:clay_cli/src/features/generation/generate_template.dart';
+import 'package:clay/config.dart';
+import 'package:clay/generation.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 

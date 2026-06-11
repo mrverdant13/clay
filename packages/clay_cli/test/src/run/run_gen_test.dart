@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
-import 'package:clay_cli/src/features/generation/run_gen.dart';
+import 'package:clay/config.dart';
+import 'package:clay_cli/src/run/run_gen.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
