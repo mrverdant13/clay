@@ -1,4 +1,4 @@
-import { applyBrickGenReplacements, type BrickGenConfig } from './brickGen';
+import { applyClayReplacements, type ClayConfig } from './clayConfig';
 import type { BrickVariable, BrickVarType } from './brickVariables';
 import { MUSTACHE_TAG_BODY_REGEX } from './mustachePatterns';
 
@@ -12,9 +12,9 @@ type InferredVarType = 'boolean' | 'string';
 export function resolvePreviewVariables(
   brickVariables: BrickVariable[],
   fileContent: string,
-  config: BrickGenConfig,
+  config: ClayConfig,
 ): BrickVariable[] {
-  const transformedContent = applyBrickGenReplacements(fileContent, config.replacements);
+  const transformedContent = applyClayReplacements(fileContent, config.replacements);
   const referenced = extractMustacheVariables(transformedContent);
   if (referenced.size === 0) {
     return [];

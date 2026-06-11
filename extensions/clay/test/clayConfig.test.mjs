@@ -10,17 +10,17 @@ const require = createRequire(import.meta.url);
 const {
   DEFAULT_REFERENCE_PATH,
   DEFAULT_TARGET_PATH,
-  applyBrickGenReplacements,
-  parseBrickGenConfig,
-  loadBrickGenConfig,
+  applyClayReplacements,
+  parseClayConfig,
+  loadClayConfig,
   resolvePathFromProjectRoot,
   resolveBrickYamlPath,
   resolveReferencePath,
   resolveTargetPath,
-} = require('./out/brickGen.cjs');
+} = require('./out/clayConfig.cjs');
 
-test('parseBrickGenConfig applies defaults for omitted path fields', () => {
-  const config = parseBrickGenConfig('{}');
+test('parseClayConfig applies defaults for omitted path fields', () => {
+  const config = parseClayConfig('');
 
   assert.equal(config.reference, DEFAULT_REFERENCE_PATH);
   assert.equal(config.target, DEFAULT_TARGET_PATH);
@@ -28,54 +28,56 @@ test('parseBrickGenConfig applies defaults for omitted path fields', () => {
   assert.deepEqual(config.replacements, []);
 });
 
-test('parseBrickGenConfig reads explicit path fields', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      reference: 'src/ref',
-      target: 'out/template',
-      ignore: ['*.png'],
-    }),
-  );
+test('parseClayConfig reads explicit path fields', () => {
+  const config = parseClayConfig(`
+reference: src/ref
+target: out/template
+ignore:
+  - "*.png"
+`);
 
   assert.equal(config.reference, 'src/ref');
   assert.equal(config.target, 'out/template');
   assert.deepEqual(config.ignore, ['*.png']);
 });
 
-test('parseBrickGenConfig falls back to defaults for unexpected field types', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      reference: 42,
-      target: ['out/template'],
-      ignore: '*.png',
-    }),
-  );
+test('parseClayConfig falls back to defaults for unexpected field types', () => {
+  const config = parseClayConfig(`
+reference: 42
+target:
+  - out/template
+ignore: "*.png"
+`);
 
   assert.equal(config.reference, DEFAULT_REFERENCE_PATH);
   assert.equal(config.target, DEFAULT_TARGET_PATH);
   assert.deepEqual(config.ignore, []);
 });
 
-test('parseBrickGenConfig keeps only string entries in ignore arrays', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      ignore: ['*.png', 7, null, '*.jpg'],
-    }),
-  );
+test('parseClayConfig keeps only string entries in ignore arrays', () => {
+  const config = parseClayConfig(`
+ignore:
+  - "*.png"
+  - 7
+  - null
+  - "*.jpg"
+`);
 
   assert.deepEqual(config.ignore, ['*.png', '*.jpg']);
 });
 
-test('loadBrickGenConfig reads from disk', () => {
-  const tempDir = mkdtempSync(join(tmpdir(), 'clay-brick-gen-'));
+test('loadClayConfig reads from disk', () => {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-config-'));
   try {
-    const configPath = join(tempDir, 'brick-gen.json');
+    const configPath = join(tempDir, 'clay.yaml');
     writeFileSync(
       configPath,
-      JSON.stringify({ reference: 'refs/main', target: 'dist/brick' }),
+      `reference: refs/main
+target: dist/brick
+`,
     );
 
-    const config = loadBrickGenConfig(configPath);
+    const config = loadClayConfig(configPath);
     assert.equal(config.reference, 'refs/main');
     assert.equal(config.target, 'dist/brick');
   } finally {
@@ -97,26 +99,25 @@ test('resolvePathFromProjectRoot normalizes absolute paths', () => {
 
 test('resolveReferencePath and resolveTargetPath use config fields', () => {
   const projectRoot = join(tmpdir(), 'project');
-  const config = parseBrickGenConfig(
-    JSON.stringify({ reference: 'refs/main', target: 'dist/brick' }),
-  );
+  const config = parseClayConfig(`
+reference: refs/main
+target: dist/brick
+`);
 
   assert.equal(resolveReferencePath(projectRoot, config), join(projectRoot, 'refs/main'));
   assert.equal(resolveTargetPath(projectRoot, config), join(projectRoot, 'dist/brick'));
 });
 
-test('parseBrickGenConfig reads replacement entries', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      replacements: [
-        { from: 'Widget', to: '{{name}}' },
-        {
-          from: { pattern: 'App', dotAll: true },
-          to: 'My${1}',
-        },
-      ],
-    }),
-  );
+test('parseClayConfig reads replacement entries', () => {
+  const config = parseClayConfig(`
+replacements:
+  - from: Widget
+    to: "{{name}}"
+  - from:
+      pattern: App
+      dotAll: true
+    to: My\${1}
+`);
 
   assert.equal(config.replacements.length, 2);
   assert.equal(config.replacements[0].to, '{{name}}');
@@ -124,37 +125,33 @@ test('parseBrickGenConfig reads replacement entries', () => {
   assert.equal(config.replacements[1].from.flags.includes('s'), true);
 });
 
-test('applyBrickGenReplacements applies config replacements in order', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      replacements: [
-        { from: 'Widget', to: '{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}' },
-      ],
-    }),
-  );
+test('applyClayReplacements applies config replacements in order', () => {
+  const config = parseClayConfig(`
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}"
+`);
 
-  const output = applyBrickGenReplacements('class App extends Widget {}', config.replacements);
+  const output = applyClayReplacements('class App extends Widget {}', config.replacements);
   assert.match(output, /use_riverpod/);
 });
 
-test('applyBrickGenReplacements rejects out-of-range capture group references', () => {
-  const config = parseBrickGenConfig(
-    JSON.stringify({
-      replacements: [{ from: '(Widget)', to: 'Prefix${2}Suffix' }],
-    }),
-  );
+test('applyClayReplacements rejects out-of-range capture group references', () => {
+  const config = parseClayConfig(`
+replacements:
+  - from: (Widget)
+    to: Prefix\${2}Suffix
+`);
 
   assert.throws(
-    () => applyBrickGenReplacements('class App extends Widget {}', config.replacements),
+    () => applyClayReplacements('class App extends Widget {}', config.replacements),
     /capture group \$\{2\}/,
   );
 });
 
 test('resolveBrickYamlPath resolves adjacent to the target directory', () => {
   const projectRoot = join(tmpdir(), 'project');
-  const config = parseBrickGenConfig(
-    JSON.stringify({ target: 'brick/__brick__' }),
-  );
+  const config = parseClayConfig('target: brick/__brick__');
 
   assert.equal(
     resolveBrickYamlPath(projectRoot, config),

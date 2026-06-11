@@ -1,8 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { parse as parseYaml } from 'yaml';
 
-/** Filename for the brick generation config at the project root. */
-export const BRICK_GEN_CONFIG_FILE_NAME = 'brick-gen.json';
+/** Filename for the Clay config at the project root. */
+export const CLAY_CONFIG_FILE_NAME = 'clay.yaml';
 
 /** Default reference directory when omitted from config. */
 export const DEFAULT_REFERENCE_PATH = 'reference';
@@ -10,21 +11,21 @@ export const DEFAULT_REFERENCE_PATH = 'reference';
 /** Default target directory when omitted from config. */
 export const DEFAULT_TARGET_PATH = path.join('brick', '__brick__');
 
-/** A content replacement from `brick-gen.json`. */
-export interface BrickGenReplacement {
+/** A content replacement from `clay.yaml`. */
+export interface ClayReplacement {
   from: RegExp;
   to: string;
 }
 
-/** Parsed `brick-gen.json` fields used by the extension. */
-export interface BrickGenConfig {
+/** Parsed `clay.yaml` fields used by the extension. */
+export interface ClayConfig {
   reference: string;
   target: string;
   ignore: string[];
-  replacements: BrickGenReplacement[];
+  replacements: ClayReplacement[];
 }
 
-interface BrickGenJson {
+interface ClayConfigDocument {
   reference?: string;
   target?: string;
   ignore?: string[];
@@ -40,7 +41,7 @@ interface RegExpSource {
 }
 
 function readStringField(
-  document: BrickGenJson,
+  document: ClayConfigDocument,
   field: 'reference' | 'target',
   defaultValue: string,
 ): string {
@@ -48,7 +49,7 @@ function readStringField(
   return typeof value === 'string' ? value : defaultValue;
 }
 
-function readIgnoreField(document: BrickGenJson): string[] {
+function readIgnoreField(document: ClayConfigDocument): string[] {
   if (!Array.isArray(document.ignore)) {
     return [];
   }
@@ -56,7 +57,7 @@ function readIgnoreField(document: BrickGenJson): string[] {
   return document.ignore.filter((pattern): pattern is string => typeof pattern === 'string');
 }
 
-function readReplacementsField(document: BrickGenJson): BrickGenReplacement[] {
+function readReplacementsField(document: ClayConfigDocument): ClayReplacement[] {
   if (!Array.isArray(document.replacements)) {
     return [];
   }
@@ -78,9 +79,26 @@ function readReplacementsField(document: BrickGenJson): BrickGenReplacement[] {
     }));
 }
 
-/** Parses `brick-gen.json` contents. */
-export function parseBrickGenConfig(raw: string): BrickGenConfig {
-  const document = JSON.parse(raw) as BrickGenJson;
+function parseYamlDocument(raw: string): ClayConfigDocument {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return {};
+  }
+
+  const parsed = parseYaml(raw);
+  if (parsed === null || parsed === undefined) {
+    return {};
+  }
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Clay config must be a YAML mapping.');
+  }
+
+  return parsed as ClayConfigDocument;
+}
+
+/** Parses `clay.yaml` contents. */
+export function parseClayConfig(raw: string): ClayConfig {
+  const document = parseYamlDocument(raw);
 
   return {
     reference: readStringField(document, 'reference', DEFAULT_REFERENCE_PATH),
@@ -90,10 +108,10 @@ export function parseBrickGenConfig(raw: string): BrickGenConfig {
   };
 }
 
-/** Applies brick-gen content replacements in config order. */
-export function applyBrickGenReplacements(
+/** Applies clay.yaml content replacements in config order. */
+export function applyClayReplacements(
   content: string,
-  replacements: BrickGenReplacement[],
+  replacements: ClayReplacement[],
 ): string {
   return replacements.reduce(
     (resolved, replacement) => applyReplacement(resolved, replacement),
@@ -101,7 +119,7 @@ export function applyBrickGenReplacements(
   );
 }
 
-function applyReplacement(input: string, replacement: BrickGenReplacement): string {
+function applyReplacement(input: string, replacement: ClayReplacement): string {
   const groupNumbers = [...uniqueCaptureGroups(replacement.to)];
   const captureCount = countCapturingGroups(replacement.from);
 
@@ -158,10 +176,10 @@ function parseReplacementFrom(value: string | RegExpSource): RegExp {
   return new RegExp(value.pattern, flags);
 }
 
-/** Loads and parses `brick-gen.json` from [configPath]. */
-export function loadBrickGenConfig(configPath: string): BrickGenConfig {
+/** Loads and parses `clay.yaml` from [configPath]. */
+export function loadClayConfig(configPath: string): ClayConfig {
   const raw = fs.readFileSync(configPath, 'utf8');
-  return parseBrickGenConfig(raw);
+  return parseClayConfig(raw);
 }
 
 /** Resolves [configPath] relative to [projectRoot], or normalizes it when absolute. */
@@ -173,17 +191,17 @@ export function resolvePathFromProjectRoot(projectRoot: string, configPath: stri
 }
 
 /** Resolves the reference directory for [config] under [projectRoot]. */
-export function resolveReferencePath(projectRoot: string, config: BrickGenConfig): string {
+export function resolveReferencePath(projectRoot: string, config: ClayConfig): string {
   return resolvePathFromProjectRoot(projectRoot, config.reference);
 }
 
 /** Resolves the target directory for [config] under [projectRoot]. */
-export function resolveTargetPath(projectRoot: string, config: BrickGenConfig): string {
+export function resolveTargetPath(projectRoot: string, config: ClayConfig): string {
   return resolvePathFromProjectRoot(projectRoot, config.target);
 }
 
 /** Resolves the Mason `brick.yaml` path adjacent to the configured target directory. */
-export function resolveBrickYamlPath(projectRoot: string, config: BrickGenConfig): string {
+export function resolveBrickYamlPath(projectRoot: string, config: ClayConfig): string {
   const targetPath = resolvePathFromProjectRoot(projectRoot, config.target);
   return path.join(path.dirname(targetPath), 'brick.yaml');
 }

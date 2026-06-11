@@ -41,9 +41,9 @@ await esbuild.build({
 });
 
 await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/brickGen.ts')],
+  entryPoints: [join(extensionRoot, 'src/clayConfig.ts')],
   bundle: true,
-  outfile: join(extensionRoot, 'test/out/brickGen.cjs'),
+  outfile: join(extensionRoot, 'test/out/clayConfig.cjs'),
   format: 'cjs',
   platform: 'node',
   external: [],
