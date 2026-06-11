@@ -28,17 +28,12 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('clay_preview_command_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target",
-  "replacements": [
-    {
-      "from": "Widget",
-      "to": "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
-    }
-  ]
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
 ''');
 
       File(p.join(referenceDir.path, 'widget.dart')).writeAsStringSync('''
@@ -92,7 +87,7 @@ class App extends Widget {
       expect(exitCode, ExitCode.success.code);
       verify(
         () => logger.detail(
-          'Config: ${p.normalize(p.join(tempDir.path, 'brick-gen.json'))}',
+          'Config: ${p.normalize(p.join(tempDir.path, 'clay.yaml'))}',
         ),
       ).called(1);
       verify(
@@ -135,9 +130,7 @@ class App extends Widget {
     });
 
     test('returns a non-zero exit code when config is invalid', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
-        '{invalid',
-      );
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('{invalid');
 
       final exitCode = await clay(
         args: [
@@ -152,7 +145,7 @@ class App extends Widget {
 
       expect(exitCode, ExitCode.software.code);
       verify(
-        () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+        () => logger.err(any(that: contains('Invalid clay.yaml'))),
       ).called(1);
     });
 
@@ -174,7 +167,7 @@ class App extends Widget {
 
         expect(exitCode, ExitCode.software.code);
         verify(
-          () => logger.err(any(that: contains('brick-gen.json'))),
+          () => logger.err(any(that: contains('clay.yaml'))),
         ).called(1);
       } finally {
         emptyDir.deleteSync(recursive: true);

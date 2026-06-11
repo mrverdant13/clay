@@ -15,17 +15,12 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('clay_preview_run_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target",
-  "replacements": [
-    {
-      "from": "Widget",
-      "to": "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
-    }
-  ]
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
 ''');
 
       referenceFilePath = p.join(referenceDir.path, 'widget.dart');
@@ -181,17 +176,12 @@ class App extends Widget {
     });
 
     test('wraps path replacement failures as PreviewException', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target",
-  "replacements": [
-    {
-      "from": "widget.dart",
-      "to": "/outside/widget.dart"
-    }
-  ]
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+replacements:
+  - from: widget.dart
+    to: /outside/widget.dart
 ''');
 
       await expectLater(

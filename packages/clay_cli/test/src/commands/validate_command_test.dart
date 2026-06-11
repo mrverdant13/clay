@@ -29,11 +29,9 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('clay_validate_command_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
 ''');
       File(p.join(referenceDir.path, 'main.dart')).writeAsStringSync('main\n');
     });
@@ -88,7 +86,7 @@ void main() {
       expect(exitCode, ExitCode.success.code);
       verify(
         () => logger.detail(
-          'Config: ${p.normalize(p.join(tempDir.path, 'brick-gen.json'))}',
+          'Config: ${p.normalize(p.join(tempDir.path, 'clay.yaml'))}',
         ),
       ).called(1);
       verify(
@@ -99,9 +97,7 @@ void main() {
     });
 
     test('returns a non-zero exit code when config is invalid', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
-        '{invalid',
-      );
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('{invalid');
 
       final exitCode = await clay(
         args: ['validate', '--cwd', tempDir.path],
@@ -110,7 +106,7 @@ void main() {
 
       expect(exitCode, ExitCode.software.code);
       verify(
-        () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+        () => logger.err(any(that: contains('Invalid clay.yaml'))),
       ).called(1);
     });
 
@@ -126,7 +122,7 @@ void main() {
 
         expect(exitCode, ExitCode.software.code);
         verify(
-          () => logger.err(any(that: contains('brick-gen.json'))),
+          () => logger.err(any(that: contains('clay.yaml'))),
         ).called(1);
       } finally {
         emptyDir.deleteSync(recursive: true);

@@ -28,11 +28,9 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('clay_gen_command_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
 ''');
       File(p.join(referenceDir.path, 'main.dart')).writeAsStringSync('main\n');
     });
@@ -82,6 +80,13 @@ void main() {
       () async {
         when(() => logger.level).thenReturn(Level.verbose);
 
+        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
+{
+  "reference": "reference",
+  "target": "target"
+}
+''');
+
         final exitCode = await clay(
           args: [
             '--verbose',
@@ -103,12 +108,11 @@ void main() {
     );
 
     test('logs excluded files when verbose', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target",
-  "ignore": ["build/"]
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+ignore:
+  - build/
 ''');
       File(p.join(referenceDir.path, 'build', 'output.txt'))
         ..createSync(recursive: true)
@@ -126,9 +130,7 @@ void main() {
     });
 
     test('returns a non-zero exit code when config is invalid', () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
-        '{invalid',
-      );
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('{invalid');
 
       final exitCode = await clay(
         args: ['gen', '--cwd', tempDir.path],
@@ -137,14 +139,14 @@ void main() {
 
       expect(exitCode, ExitCode.software.code);
       verify(
-        () => logger.err(any(that: contains('Invalid brick-gen.json'))),
+        () => logger.err(any(that: contains('Invalid clay.yaml'))),
       ).called(1);
     });
 
     test('returns a non-zero exit code when config schema is invalid',
         () async {
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync(
-        '{"replacements": "invalid"}',
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync(
+        'replacements: invalid',
       );
 
       final exitCode = await clay(
@@ -168,7 +170,7 @@ void main() {
 
         expect(exitCode, ExitCode.software.code);
         verify(
-          () => logger.err(any(that: contains('brick-gen.json'))),
+          () => logger.err(any(that: contains('clay.yaml'))),
         ).called(1);
       } finally {
         emptyDir.deleteSync(recursive: true);

@@ -16,11 +16,9 @@ void main() {
       tempDir = Directory.systemTemp.createTempSync('clay_run_validate_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
 ''');
     });
 
@@ -57,7 +55,7 @@ void main() {
       try {
         await expectLater(
           runValidate(cwd: emptyDir.path),
-          throwsA(isA<BrickGenConfigNotFoundException>()),
+          throwsA(isA<ClayConfigNotFoundException>()),
         );
       } finally {
         emptyDir.deleteSync(recursive: true);
