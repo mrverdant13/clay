@@ -81,8 +81,8 @@ class IntegrationFixture {
   /// Temporary copy used during tests (`expected/` is removed).
   final Directory workingRoot;
 
-  /// `brick-gen.json` in the working copy.
-  File get configFile => File(p.join(workingRoot.path, 'brick-gen.json'));
+  /// `clay.yaml` in the working copy.
+  File get configFile => File(p.join(workingRoot.path, 'clay.yaml'));
 
   /// Reference directory in the working copy.
   Directory get referenceDir =>
