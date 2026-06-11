@@ -63,6 +63,60 @@ line 2
       }
     });
 
+    group('drop markers inside remove blocks', () {
+      const cases = [
+        (
+          flavor: '/* */',
+          start: '/*remove-start*/',
+          drop: '/*drop*/',
+          end: '/*remove-end*/',
+        ),
+        (
+          flavor: '# #',
+          start: '#remove-start#',
+          drop: '#drop#',
+          end: '#remove-end#',
+        ),
+        (
+          flavor: '<!-- -->',
+          start: '<!--remove-start-->',
+          drop: '<!--drop-->',
+          end: '<!--remove-end-->',
+        ),
+      ];
+
+      for (final markerCase in cases) {
+        test(
+          'removes entire block when ${markerCase.drop} is nested '
+          '(${markerCase.flavor})',
+          () {
+          final input = '''
+line 0
+${markerCase.start}
+before drop
+${markerCase.drop}
+after drop
+${markerCase.end}
+line 1
+''';
+
+          const expected = '''
+line 0
+
+line 1
+''';
+
+          final result = applyRemotions(content: input);
+
+          expect(result, expected);
+          expect(result, isNot(contains('remove-start')));
+          expect(result, isNot(contains('remove-end')));
+          expect(result, isNot(contains(markerCase.drop)));
+          },
+        );
+      }
+    });
+
     test('returns content unchanged when no remotion markers are present', () {
       const input = '''
 line 0
