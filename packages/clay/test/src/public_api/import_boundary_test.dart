@@ -167,6 +167,7 @@ void main() {
       'mason',
       'meta',
       'path',
+      'yaml',
     };
 
     late Directory libDir;
