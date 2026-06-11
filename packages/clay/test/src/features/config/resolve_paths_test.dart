@@ -41,7 +41,7 @@ void main() {
 
   group('resolveReferencePath', () {
     test('uses config reference when no CLI override is provided', () {
-      final config = BrickGenConfig(reference: p.join('src', 'ref'));
+      final config = ClayConfig(reference: p.join('src', 'ref'));
 
       expect(
         resolveReferencePath(projectRoot: projectRoot, config: config),
@@ -50,7 +50,7 @@ void main() {
     });
 
     test('uses CLI override over config reference', () {
-      final config = BrickGenConfig(reference: p.join('src', 'ref'));
+      final config = ClayConfig(reference: p.join('src', 'ref'));
 
       expect(
         resolveReferencePath(
@@ -63,16 +63,16 @@ void main() {
     });
 
     test('falls back to built-in default when config uses default', () {
-      final config = BrickGenConfig();
+      final config = ClayConfig();
 
       expect(
         resolveReferencePath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, BrickGenConfig.defaultReferencePath),
+        p.join(projectRoot, ClayConfig.defaultReferencePath),
       );
     });
 
     test('resolves absolute CLI override as-is', () {
-      final config = BrickGenConfig();
+      final config = ClayConfig();
       final absoluteOverride = p.absolute(p.join('custom', 'reference'));
 
       expect(
@@ -88,7 +88,7 @@ void main() {
 
   group('resolveTargetPath', () {
     test('uses config target when no CLI override is provided', () {
-      final config = BrickGenConfig(target: p.join('out', 'template'));
+      final config = ClayConfig(target: p.join('out', 'template'));
 
       expect(
         resolveTargetPath(projectRoot: projectRoot, config: config),
@@ -97,7 +97,7 @@ void main() {
     });
 
     test('uses CLI override over config target', () {
-      final config = BrickGenConfig(target: p.join('out', 'template'));
+      final config = ClayConfig(target: p.join('out', 'template'));
 
       expect(
         resolveTargetPath(
@@ -110,11 +110,11 @@ void main() {
     });
 
     test('falls back to built-in default when config uses default', () {
-      final config = BrickGenConfig();
+      final config = ClayConfig();
 
       expect(
         resolveTargetPath(projectRoot: projectRoot, config: config),
-        p.join(projectRoot, BrickGenConfig.defaultTargetPath),
+        p.join(projectRoot, ClayConfig.defaultTargetPath),
       );
     });
   });

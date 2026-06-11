@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay/src/entities/brick_gen_config.dart';
+import 'package:clay/src/entities/clay_config.dart';
 import 'package:clay/src/features/generation/generation_exception.dart';
 import 'package:clay/src/features/generation/resolve_target_file_path.dart';
 import 'package:clay/src/features/preview/preview_exception.dart';
@@ -16,7 +16,7 @@ import 'package:path/path.dart' as p;
 Future<String> previewReferenceFile({
   required String filePath,
   required String referencePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
   required bool templateOnly,
   Map<String, dynamic> vars = const {},
 }) async {

@@ -15,7 +15,7 @@ import 'package:path/path.dart' as p;
 Future<void> processTargetFile({
   required File file,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) async {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedFilePath = p.normalize(p.absolute(file.path));
@@ -59,7 +59,7 @@ Future<void> processTargetFile({
 Future<void> processCopiedTargetEntities({
   required List<FileSystemEntity> targetEntities,
   required String normalizedTargetPath,
-  required BrickGenConfig config,
+  required ClayConfig config,
   void Function(String relativePath)? onIgnoredFile,
 }) async {
   final normalizedTarget = p.normalize(p.absolute(normalizedTargetPath));
@@ -209,7 +209,7 @@ Future<void> _deleteTargetEntityWhenIgnored({
 Future<void> processTargetLink({
   required Link link,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) async {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedLinkPath = p.normalize(p.absolute(link.path));
@@ -339,7 +339,7 @@ FileSystemEntity? entityAtPath(
 Future<void> _resolveTargetFileContents({
   required File file,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) async {
   final normalizedTarget = p.normalize(p.absolute(targetAbsolutePath));
   final normalizedFilePath = p.normalize(p.absolute(file.path));

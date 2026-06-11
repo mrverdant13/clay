@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:clay/clay.dart';
@@ -6,19 +5,19 @@ import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
 void main() {
-  group('BrickGenConfig', () {
+  group('ClayConfig', () {
     test('can be instantiated with defaults', () {
-      final config = BrickGenConfig();
-      expect(config, isA<BrickGenConfig>());
-      expect(config.reference, BrickGenConfig.defaultReferencePath);
-      expect(config.target, BrickGenConfig.defaultTargetPath);
+      final config = ClayConfig();
+      expect(config, isA<ClayConfig>());
+      expect(config.reference, ClayConfig.defaultReferencePath);
+      expect(config.target, ClayConfig.defaultTargetPath);
       expect(config.ignore, isEmpty);
       expect(config.replacements, isEmpty);
       expect(config.lineDeletions, isEmpty);
     });
 
-    test('fromJson with explicit path and ignore fields', () {
-      final config = BrickGenConfig.fromJson(const {
+    test('fromMap with explicit path and ignore fields', () {
+      final config = ClayConfig.fromMap(const {
         'reference': 'src/reference',
         'target': 'out/template',
         'ignore': ['.dart_tool/', 'build/'],
@@ -36,7 +35,7 @@ void main() {
       });
       expect(
         config,
-        isA<BrickGenConfig>()
+        isA<ClayConfig>()
             .having((r) => r.reference, 'reference', 'src/reference')
             .having((r) => r.target, 'target', 'out/template')
             .having((r) => r.ignore, 'ignore', ['.dart_tool/', 'build/'])
@@ -45,22 +44,22 @@ void main() {
       );
     });
 
-    test('fromJson applies defaults for missing path and ignore fields', () {
-      final config = BrickGenConfig.fromJson(const {
+    test('fromMap applies defaults for missing path and ignore fields', () {
+      final config = ClayConfig.fromMap(const {
         'replacements': [
           {'from': r'^from$', 'to': 'to'},
         ],
       });
-      expect(config.reference, BrickGenConfig.defaultReferencePath);
-      expect(config.target, BrickGenConfig.defaultTargetPath);
+      expect(config.reference, ClayConfig.defaultReferencePath);
+      expect(config.target, ClayConfig.defaultTargetPath);
       expect(config.ignore, isEmpty);
       expect(config.lineDeletions, isEmpty);
     });
 
     test('can be compared', () {
-      final reference = BrickGenConfig();
-      final same = BrickGenConfig();
-      final other = BrickGenConfig(
+      final reference = ClayConfig();
+      final same = ClayConfig();
+      final other = ClayConfig(
         replacements: [Replacement(from: RegExp(r'^from$'), to: 'to')],
       );
 
@@ -69,9 +68,9 @@ void main() {
     });
 
     test('has consistent hash code', () {
-      final reference = BrickGenConfig();
-      final same = BrickGenConfig();
-      final other = BrickGenConfig(
+      final reference = ClayConfig();
+      final same = ClayConfig();
+      final other = ClayConfig(
         replacements: [Replacement(from: RegExp(r'^from$'), to: 'to')],
       );
 
@@ -79,20 +78,14 @@ void main() {
       expect(reference.hashCode, isNot(other.hashCode));
     });
 
-    group('minimal config fixtures', () {
+    group('clay config fixtures', () {
       final configFixtures = <String, String>{
-        'minimal': p.join(
-          _fixturesRoot,
-          'minimal.json',
-        ),
-        'with_deletions': p.join(
-          _fixturesRoot,
-          'with_deletions.json',
-        ),
+        'minimal': p.join(_fixturesRoot, 'minimal.yaml'),
+        'with_deletions': p.join(_fixturesRoot, 'with_deletions.yaml'),
       };
 
       for (final entry in configFixtures.entries) {
-        test('parses ${entry.key} fixture', () {
+        test('parses ${entry.key} fixture via fromMap', () async {
           final file = File(entry.value);
           expect(
             file.existsSync(),
@@ -100,12 +93,10 @@ void main() {
             reason: 'Expected fixture at ${entry.value}',
           );
 
-          final json =
-              jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-          final config = BrickGenConfig.fromJson(json);
+          final config = await loadClayConfig(configPath: file.path);
 
-          expect(config.reference, BrickGenConfig.defaultReferencePath);
-          expect(config.target, BrickGenConfig.defaultTargetPath);
+          expect(config.reference, ClayConfig.defaultReferencePath);
+          expect(config.target, ClayConfig.defaultTargetPath);
           expect(config.ignore, isEmpty);
           expect(config.replacements, isNotEmpty);
 
@@ -121,11 +112,9 @@ void main() {
         });
       }
 
-      test('parses dotAll replacement object from with_deletions', () {
+      test('parses dotAll replacement object from with_deletions', () async {
         final file = File(configFixtures['with_deletions']!);
-        final json =
-            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-        final config = BrickGenConfig.fromJson(json);
+        final config = await loadClayConfig(configPath: file.path);
 
         final dotAllReplacement = config.replacements.firstWhere(
           (replacement) => replacement.from.isDotAll,
@@ -137,11 +126,9 @@ void main() {
         );
       });
 
-      test('parses line deletion ranges from with_deletions', () {
+      test('parses line deletion ranges from with_deletions', () async {
         final file = File(configFixtures['with_deletions']!);
-        final json =
-            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-        final config = BrickGenConfig.fromJson(json);
+        final config = await loadClayConfig(configPath: file.path);
 
         expect(
           config.lineDeletions.first.ranges.first,
@@ -153,5 +140,5 @@ void main() {
 }
 
 final String _fixturesRoot = p.normalize(
-  p.join(Directory.current.path, 'test', 'fixtures', 'brick_gen'),
+  p.join(Directory.current.path, 'test', 'fixtures', 'clay'),
 );

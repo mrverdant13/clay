@@ -6,15 +6,15 @@
 // ignore_for_file: unused_element, unnecessary_cast, override_on_non_overriding_member
 // ignore_for_file: strict_raw_type, inference_failure_on_untyped_parameter
 
-part of 'brick_gen_config.dart';
+part of 'clay_config.dart';
 
-class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
-  BrickGenConfigMapper._();
+class ClayConfigMapper extends ClassMapperBase<ClayConfig> {
+  ClayConfigMapper._();
 
-  static BrickGenConfigMapper? _instance;
-  static BrickGenConfigMapper ensureInitialized() {
+  static ClayConfigMapper? _instance;
+  static ClayConfigMapper ensureInitialized() {
     if (_instance == null) {
-      MapperContainer.globals.use(_instance = BrickGenConfigMapper._());
+      MapperContainer.globals.use(_instance = ClayConfigMapper._());
       ReplacementMapper.ensureInitialized();
       LineDeletionMapper.ensureInitialized();
     }
@@ -22,42 +22,45 @@ class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
   }
 
   @override
-  final String id = 'BrickGenConfig';
+  final String id = 'ClayConfig';
 
-  static String _$reference(BrickGenConfig v) => v.reference;
-  static const Field<BrickGenConfig, String> _f$reference = Field(
+  static String _$reference(ClayConfig v) => v.reference;
+  static const Field<ClayConfig, String> _f$reference = Field(
     'reference',
     _$reference,
     opt: true,
-    def: BrickGenConfig.defaultReferencePath,
+    def: ClayConfig.defaultReferencePath,
   );
-  static List<String> _$ignore(BrickGenConfig v) => v.ignore;
-  static const Field<BrickGenConfig, List<String>> _f$ignore = Field(
+  static List<String> _$ignore(ClayConfig v) => v.ignore;
+  static const Field<ClayConfig, List<String>> _f$ignore = Field(
     'ignore',
     _$ignore,
     opt: true,
     def: const [],
   );
-  static List<Replacement> _$replacements(BrickGenConfig v) => v.replacements;
-  static const Field<BrickGenConfig, List<Replacement>> _f$replacements = Field(
+  static List<Replacement> _$replacements(ClayConfig v) => v.replacements;
+  static const Field<ClayConfig, List<Replacement>> _f$replacements = Field(
     'replacements',
     _$replacements,
     opt: true,
     def: const [],
   );
-  static List<LineDeletion> _$lineDeletions(BrickGenConfig v) =>
-      v.lineDeletions;
-  static const Field<BrickGenConfig, List<LineDeletion>> _f$lineDeletions =
-      Field('lineDeletions', _$lineDeletions, opt: true, def: const []);
-  static String _$target(BrickGenConfig v) => v.target;
-  static const Field<BrickGenConfig, String> _f$target = Field(
+  static List<LineDeletion> _$lineDeletions(ClayConfig v) => v.lineDeletions;
+  static const Field<ClayConfig, List<LineDeletion>> _f$lineDeletions = Field(
+    'lineDeletions',
+    _$lineDeletions,
+    opt: true,
+    def: const [],
+  );
+  static String _$target(ClayConfig v) => v.target;
+  static const Field<ClayConfig, String> _f$target = Field(
     'target',
     _$target,
     opt: true,
   );
 
   @override
-  final MappableFields<BrickGenConfig> fields = const {
+  final MappableFields<ClayConfig> fields = const {
     #reference: _f$reference,
     #ignore: _f$ignore,
     #replacements: _f$replacements,
@@ -65,8 +68,8 @@ class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
     #target: _f$target,
   };
 
-  static BrickGenConfig _instantiate(DecodingData data) {
-    return BrickGenConfig(
+  static ClayConfig _instantiate(DecodingData data) {
+    return ClayConfig(
       reference: data.dec(_f$reference),
       ignore: data.dec(_f$ignore),
       replacements: data.dec(_f$replacements),
@@ -78,65 +81,62 @@ class BrickGenConfigMapper extends ClassMapperBase<BrickGenConfig> {
   @override
   final Function instantiate = _instantiate;
 
-  static BrickGenConfig fromMap(Map<String, dynamic> map) {
-    return ensureInitialized().decodeMap<BrickGenConfig>(map);
+  static ClayConfig fromMap(Map<String, dynamic> map) {
+    return ensureInitialized().decodeMap<ClayConfig>(map);
   }
 
-  static BrickGenConfig fromJson(String json) {
-    return ensureInitialized().decodeJson<BrickGenConfig>(json);
+  static ClayConfig fromJson(String json) {
+    return ensureInitialized().decodeJson<ClayConfig>(json);
   }
 }
 
-mixin BrickGenConfigMappable {
+mixin ClayConfigMappable {
   String toJson() {
-    return BrickGenConfigMapper.ensureInitialized().encodeJson<BrickGenConfig>(
-      this as BrickGenConfig,
+    return ClayConfigMapper.ensureInitialized().encodeJson<ClayConfig>(
+      this as ClayConfig,
     );
   }
 
   Map<String, dynamic> toMap() {
-    return BrickGenConfigMapper.ensureInitialized().encodeMap<BrickGenConfig>(
-      this as BrickGenConfig,
+    return ClayConfigMapper.ensureInitialized().encodeMap<ClayConfig>(
+      this as ClayConfig,
     );
   }
 
-  BrickGenConfigCopyWith<BrickGenConfig, BrickGenConfig, BrickGenConfig>
-      get copyWith =>
-          _BrickGenConfigCopyWithImpl<BrickGenConfig, BrickGenConfig>(
-            this as BrickGenConfig,
-            $identity,
-            $identity,
-          );
+  ClayConfigCopyWith<ClayConfig, ClayConfig, ClayConfig> get copyWith =>
+      _ClayConfigCopyWithImpl<ClayConfig, ClayConfig>(
+        this as ClayConfig,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
-    return BrickGenConfigMapper.ensureInitialized().stringifyValue(
-      this as BrickGenConfig,
+    return ClayConfigMapper.ensureInitialized().stringifyValue(
+      this as ClayConfig,
     );
   }
 
   @override
   bool operator ==(Object other) {
-    return BrickGenConfigMapper.ensureInitialized().equalsValue(
-      this as BrickGenConfig,
+    return ClayConfigMapper.ensureInitialized().equalsValue(
+      this as ClayConfig,
       other,
     );
   }
 
   @override
   int get hashCode {
-    return BrickGenConfigMapper.ensureInitialized().hashValue(
-      this as BrickGenConfig,
-    );
+    return ClayConfigMapper.ensureInitialized().hashValue(this as ClayConfig);
   }
 }
 
-extension BrickGenConfigValueCopy<$R, $Out>
-    on ObjectCopyWith<$R, BrickGenConfig, $Out> {
-  BrickGenConfigCopyWith<$R, BrickGenConfig, $Out> get $asBrickGenConfig =>
-      $base.as((v, t, t2) => _BrickGenConfigCopyWithImpl<$R, $Out>(v, t, t2));
+extension ClayConfigValueCopy<$R, $Out>
+    on ObjectCopyWith<$R, ClayConfig, $Out> {
+  ClayConfigCopyWith<$R, ClayConfig, $Out> get $asClayConfig =>
+      $base.as((v, t, t2) => _ClayConfigCopyWithImpl<$R, $Out>(v, t, t2));
 }
 
-abstract class BrickGenConfigCopyWith<$R, $In extends BrickGenConfig, $Out>
+abstract class ClayConfigCopyWith<$R, $In extends ClayConfig, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get ignore;
   ListCopyWith<$R, Replacement,
@@ -150,19 +150,17 @@ abstract class BrickGenConfigCopyWith<$R, $In extends BrickGenConfig, $Out>
     List<LineDeletion>? lineDeletions,
     String? target,
   });
-  BrickGenConfigCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
-    Then<$Out2, $R2> t,
-  );
+  ClayConfigCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
 
-class _BrickGenConfigCopyWithImpl<$R, $Out>
-    extends ClassCopyWithBase<$R, BrickGenConfig, $Out>
-    implements BrickGenConfigCopyWith<$R, BrickGenConfig, $Out> {
-  _BrickGenConfigCopyWithImpl(super.value, super.then, super.then2);
+class _ClayConfigCopyWithImpl<$R, $Out>
+    extends ClassCopyWithBase<$R, ClayConfig, $Out>
+    implements ClayConfigCopyWith<$R, ClayConfig, $Out> {
+  _ClayConfigCopyWithImpl(super.value, super.then, super.then2);
 
   @override
-  late final ClassMapperBase<BrickGenConfig> $mapper =
-      BrickGenConfigMapper.ensureInitialized();
+  late final ClassMapperBase<ClayConfig> $mapper =
+      ClayConfigMapper.ensureInitialized();
   @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get ignore =>
       ListCopyWith(
@@ -204,7 +202,7 @@ class _BrickGenConfigCopyWithImpl<$R, $Out>
         }),
       );
   @override
-  BrickGenConfig $make(CopyWithData data) => BrickGenConfig(
+  ClayConfig $make(CopyWithData data) => ClayConfig(
         reference: data.get(#reference, or: $value.reference),
         ignore: data.get(#ignore, or: $value.ignore),
         replacements: data.get(#replacements, or: $value.replacements),
@@ -213,8 +211,8 @@ class _BrickGenConfigCopyWithImpl<$R, $Out>
       );
 
   @override
-  BrickGenConfigCopyWith<$R2, BrickGenConfig, $Out2> $chain<$R2, $Out2>(
+  ClayConfigCopyWith<$R2, ClayConfig, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   ) =>
-      _BrickGenConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
+      _ClayConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }

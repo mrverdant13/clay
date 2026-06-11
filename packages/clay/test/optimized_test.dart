@@ -4,13 +4,13 @@
 import 'package:test_api/test_api.dart';
 
 import 'src/entities/annotation_issue_test.dart' as _i1;
-import 'src/entities/brick_gen_config_test.dart' as _i2;
+import 'src/entities/clay_config_test.dart' as _i2;
 import 'src/entities/line_deletion_test.dart' as _i3;
 import 'src/entities/line_range_test.dart' as _i4;
 import 'src/entities/replacement_test.dart' as _i5;
-import 'src/features/config/brick_gen_config_exception_test.dart' as _i6;
-import 'src/features/config/discover_brick_gen_config_test.dart' as _i7;
-import 'src/features/config/load_brick_gen_config_test.dart' as _i8;
+import 'src/features/config/clay_config_exception_test.dart' as _i6;
+import 'src/features/config/discover_clay_config_test.dart' as _i7;
+import 'src/features/config/load_clay_config_test.dart' as _i8;
 import 'src/features/config/matches_ignore_pattern_test.dart' as _i9;
 import 'src/features/config/resolve_paths_test.dart' as _i10;
 import 'src/features/generation/assert_distinct_reference_and_target_paths_test.dart'
@@ -54,7 +54,7 @@ void main() {
     },
   );
   group(
-    'src/entities/brick_gen_config_test.dart',
+    'src/entities/clay_config_test.dart',
     () {
       _i2.main();
     },
@@ -78,19 +78,19 @@ void main() {
     },
   );
   group(
-    'src/features/config/brick_gen_config_exception_test.dart',
+    'src/features/config/clay_config_exception_test.dart',
     () {
       _i6.main();
     },
   );
   group(
-    'src/features/config/discover_brick_gen_config_test.dart',
+    'src/features/config/discover_clay_config_test.dart',
     () {
       _i7.main();
     },
   );
   group(
-    'src/features/config/load_brick_gen_config_test.dart',
+    'src/features/config/load_clay_config_test.dart',
     () {
       _i8.main();
     },

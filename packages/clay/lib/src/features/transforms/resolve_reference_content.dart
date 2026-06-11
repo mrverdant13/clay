@@ -1,4 +1,4 @@
-import 'package:clay/src/entities/brick_gen_config.dart';
+import 'package:clay/src/entities/clay_config.dart';
 import 'package:clay/src/features/transforms/apply_insert_blocks.dart';
 import 'package:clay/src/features/transforms/apply_line_deletions.dart';
 import 'package:clay/src/features/transforms/apply_mustache_tags.dart';
@@ -21,7 +21,7 @@ String resolveReferenceContent({
   required String content,
   required String targetRelativePath,
   required String targetAbsolutePath,
-  required BrickGenConfig config,
+  required ClayConfig config,
 }) {
   if (shouldSkipContentTransforms(targetRelativePath)) {
     return content;
