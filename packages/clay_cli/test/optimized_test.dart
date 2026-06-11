@@ -10,9 +10,10 @@ import 'src/commands/gen_command_test.dart' as _i4;
 import 'src/commands/preview_command_test.dart' as _i5;
 import 'src/commands/validate_command_test.dart' as _i6;
 import 'src/public_api/import_boundary_test.dart' as _i7;
-import 'src/run/run_gen_test.dart' as _i8;
-import 'src/run/run_preview_test.dart' as _i9;
-import 'src/run/run_validate_test.dart' as _i10;
+import 'src/run/resolve_project_config_test.dart' as _i8;
+import 'src/run/run_gen_test.dart' as _i9;
+import 'src/run/run_preview_test.dart' as _i10;
+import 'src/run/run_validate_test.dart' as _i11;
 
 void main() {
   group(
@@ -58,21 +59,27 @@ void main() {
     },
   );
   group(
-    'src/run/run_gen_test.dart',
+    'src/run/resolve_project_config_test.dart',
     () {
       _i8.main();
     },
   );
   group(
-    'src/run/run_preview_test.dart',
+    'src/run/run_gen_test.dart',
     () {
       _i9.main();
     },
   );
   group(
-    'src/run/run_validate_test.dart',
+    'src/run/run_preview_test.dart',
     () {
       _i10.main();
+    },
+  );
+  group(
+    'src/run/run_validate_test.dart',
+    () {
+      _i11.main();
     },
   );
 }

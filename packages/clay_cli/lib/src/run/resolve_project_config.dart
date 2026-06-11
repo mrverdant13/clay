@@ -41,10 +41,9 @@ Future<ResolvedProjectConfig> resolveProjectConfig({
   );
 }
 
-/// Discovers `clay.yaml`, falling back to `brick-gen.json` when omitted.
+/// Discovers `clay.yaml` in the working directory or parent directories.
 ///
-/// Explicit `--config` paths are resolved as-is. JSON paths remain supported
-/// until e2e fixtures migrate in a follow-up PR.
+/// Explicit `--config` paths are resolved as-is.
 DiscoveredClayConfig discoverProjectConfig({
   String? configPath,
   String? cwd,
@@ -53,33 +52,13 @@ DiscoveredClayConfig discoverProjectConfig({
     return _discoverExplicitConfig(configPath: configPath, cwd: cwd);
   }
 
-  try {
-    return discoverClayConfig(cwd: cwd);
-  } on ClayConfigNotFoundException catch (clayError) {
-    try {
-      final brick = discoverBrickGenConfig(cwd: cwd);
-      return DiscoveredClayConfig(
-        configPath: brick.configPath,
-        projectRoot: brick.projectRoot,
-      );
-    } on BrickGenConfigNotFoundException {
-      throw clayError;
-    }
-  }
+  return discoverClayConfig(cwd: cwd);
 }
 
-/// Loads a config file, routing JSON paths to the legacy loader.
+/// Loads a `clay.yaml` config file.
 Future<ClayConfig> loadProjectConfig({
   required String configPath,
 }) async {
-  if (p.extension(configPath).toLowerCase() == '.json') {
-    try {
-      return await loadBrickGenConfig(configPath: configPath);
-    } on BrickGenConfigException catch (error) {
-      throw ClayConfigException(error.message);
-    }
-  }
-
   return loadClayConfig(configPath: configPath);
 }
 
