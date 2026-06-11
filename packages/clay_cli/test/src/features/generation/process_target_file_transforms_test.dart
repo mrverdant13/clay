@@ -1,9 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
-import 'package:clay_cli/src/entities/line_deletion.dart';
-import 'package:clay_cli/src/entities/line_range.dart';
-import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/generation/process_target_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';

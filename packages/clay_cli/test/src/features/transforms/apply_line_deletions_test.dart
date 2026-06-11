@@ -1,5 +1,4 @@
-import 'package:clay_cli/src/entities/line_deletion.dart';
-import 'package:clay_cli/src/entities/line_range.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/transforms/apply_line_deletions.dart';
 import 'package:test/test.dart';
 

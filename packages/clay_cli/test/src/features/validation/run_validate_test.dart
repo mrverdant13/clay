@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/annotation_issue.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
 import 'package:clay_cli/src/features/validation/run_validate.dart';
 import 'package:clay_cli/src/features/validation/validation_exception.dart';
