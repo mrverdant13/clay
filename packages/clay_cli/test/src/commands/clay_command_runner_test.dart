@@ -80,7 +80,7 @@ void main() {
 
       final results = runner.parse(const [
         '--config',
-        'brick-gen.json',
+        'clay.yaml',
         '--cwd',
         '/tmp/project',
         'fake-command',
@@ -88,7 +88,7 @@ void main() {
 
       expect(
         results.option(ClayCommandRunner.configOptionName),
-        'brick-gen.json',
+        'clay.yaml',
       );
       expect(
         results.option(ClayCommandRunner.cwdOptionName),
@@ -150,11 +150,9 @@ void main() {
         'clay_default_command_',
       );
       try {
-        File(p.join(tempDir.path, 'brick-gen.json')).writeAsStringSync('''
-{
-  "reference": "reference",
-  "target": "target"
-}
+        File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
 ''');
         final referenceDir = Directory(p.join(tempDir.path, 'reference'))
           ..createSync(recursive: true);
@@ -170,7 +168,7 @@ void main() {
 
         final exitCode = await runner.run([
           '--config',
-          'brick-gen.json',
+          'clay.yaml',
           '--cwd',
           tempDir.path,
         ]);
