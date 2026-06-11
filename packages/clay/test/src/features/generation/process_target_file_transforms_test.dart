@@ -27,7 +27,7 @@ void main() {
     Future<File> processFile({
       required String relativePath,
       required String content,
-      BrickGenConfig? config,
+      ClayConfig? config,
     }) async {
       final file = File(p.join(targetDir.path, relativePath))
         ..createSync(recursive: true)
@@ -35,7 +35,7 @@ void main() {
       await processTargetFile(
         file: file,
         targetAbsolutePath: targetDir.path,
-        config: config ?? BrickGenConfig(),
+        config: config ?? ClayConfig(),
       );
       return file;
     }
@@ -64,7 +64,7 @@ line 9
       final file = await processFile(
         relativePath: 'file.txt',
         content: originalContent,
-        config: BrickGenConfig(
+        config: ClayConfig(
           lineDeletions: const [
             LineDeletion(
               filePath: 'file.txt',
@@ -106,7 +106,7 @@ line 9
       final file = await processFile(
         relativePath: 'file.txt',
         content: originalContent,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(
               from: RegExp(r'line (\d+) to be replaced'),

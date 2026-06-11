@@ -30,7 +30,7 @@ void main() {
       await processTargetFile(
         file: ignoredFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(ignore: const ['build/']),
+        config: ClayConfig(ignore: const ['build/']),
       );
 
       expect(ignoredFile.existsSync(), isFalse);
@@ -47,7 +47,7 @@ void main() {
       await processTargetLink(
         link: ignoredLink,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(ignore: const ['build/']),
+        config: ClayConfig(ignore: const ['build/']),
       );
 
       expect(ignoredLink.existsSync(), isFalse);
@@ -63,7 +63,7 @@ void main() {
       await processTargetLink(
         link: originalLink,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
         ),
       );
@@ -87,7 +87,7 @@ void main() {
       await processTargetLink(
         link: sourceLink,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
           ignore: const ['to_link.txt'],
         ),
@@ -107,7 +107,7 @@ void main() {
       await processTargetFile(
         file: originalFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
         ),
       );
@@ -127,7 +127,7 @@ void main() {
       await processTargetFile(
         file: sourceFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
           ignore: const ['to.txt'],
         ),
@@ -149,7 +149,7 @@ void main() {
       await processTargetFile(
         file: sourceFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(from: RegExp(r'^from\.txt$'), to: 'build'),
           ],
@@ -177,7 +177,7 @@ void main() {
       await processTargetFile(
         file: sourceFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(from: RegExp(r'^from\.txt$'), to: 'build'),
           ],
@@ -204,7 +204,7 @@ void main() {
       await processTargetFile(
         file: originalFile,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(
               from: RegExp(r'^flat\.txt$'),
@@ -231,7 +231,7 @@ void main() {
         await processTargetFile(
           file: file,
           targetAbsolutePath: targetDir.path,
-          config: BrickGenConfig(
+          config: ClayConfig(
             lineDeletions: const [
               LineDeletion(
                 filePath: 'nested/file.txt',
@@ -256,7 +256,7 @@ void main() {
       await processTargetFile(
         file: file,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
 
       expect(file.readAsStringSync(), 'line\n');
@@ -271,7 +271,7 @@ void main() {
       await processTargetFile(
         file: file,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
 
       expect(file.readAsBytesSync(), bytes);
@@ -286,7 +286,7 @@ void main() {
       await processTargetFile(
         file: file,
         targetAbsolutePath: targetDir.path,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
 
       expect(file.readAsBytesSync(), bytes);

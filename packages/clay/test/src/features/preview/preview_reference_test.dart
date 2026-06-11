@@ -208,13 +208,13 @@ void main() {
     late Directory tempDir;
     late Directory referenceDir;
     late String referenceFilePath;
-    late BrickGenConfig config;
+    late ClayConfig config;
 
     setUp(() {
       tempDir = Directory.systemTemp.createTempSync('clay_preview_ref_');
       referenceDir = Directory(p.join(tempDir.path, 'reference'))
         ..createSync(recursive: true);
-      config = BrickGenConfig(
+      config = ClayConfig(
         replacements: [
           Replacement(
             from: RegExp('Widget'),
@@ -316,7 +316,7 @@ class App extends Widget {
     });
 
     test('wraps path replacement failures as PreviewException', () async {
-      final badConfig = BrickGenConfig(
+      final badConfig = ClayConfig(
         replacements: [
           Replacement(
             from: RegExp('widget.dart'),

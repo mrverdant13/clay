@@ -12,7 +12,7 @@ void main() {
             '/target/b.txt',
           ],
           targetAbsolutePath: '/target',
-          config: BrickGenConfig(),
+          config: ClayConfig(),
         ),
         returnsNormally,
       );
@@ -26,7 +26,7 @@ void main() {
             '/target/b_widget.dart',
           ],
           targetAbsolutePath: '/target',
-          config: BrickGenConfig(
+          config: ClayConfig(
             replacements: [
               Replacement(
                 from: RegExp(r'^.+_widget\.dart$'),
@@ -53,7 +53,7 @@ void main() {
             '/target/build/b.txt',
           ],
           targetAbsolutePath: '/target',
-          config: BrickGenConfig(ignore: const ['build/']),
+          config: ClayConfig(ignore: const ['build/']),
         ),
         returnsNormally,
       );

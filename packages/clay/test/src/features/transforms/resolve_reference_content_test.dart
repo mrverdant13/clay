@@ -35,7 +35,7 @@ line1
         content: input,
         targetRelativePath: 'file.txt',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
       expect(result, expected);
     });
@@ -47,7 +47,7 @@ line1
         content: input,
         targetRelativePath: 'file.txt',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
       expect(result, expected);
     });
@@ -62,7 +62,7 @@ drop me
         content: input,
         targetRelativePath: 'assets/icon.png',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
       expect(result, input);
     });
@@ -74,7 +74,7 @@ drop me
         content: input,
         targetRelativePath: 'file.txt',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(
               from: RegExp('remove-start'),
@@ -96,7 +96,7 @@ keep
         content: input,
         targetRelativePath: 'file.txt',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(from: RegExp('keep'), to: 'removed'),
           ],
@@ -128,7 +128,7 @@ after
         content: input,
         targetRelativePath: 'file.txt',
         targetAbsolutePath: targetAbsolutePath,
-        config: BrickGenConfig(),
+        config: ClayConfig(),
       );
       expect(result, expected);
       final partialFile = File(

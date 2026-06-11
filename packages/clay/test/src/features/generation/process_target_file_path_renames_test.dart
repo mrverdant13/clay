@@ -24,7 +24,7 @@ void main() {
       }
     });
 
-    final replacementConfig = BrickGenConfig(
+    final replacementConfig = ClayConfig(
       replacements: [Replacement(from: RegExp('from'), to: 'to')],
     );
 

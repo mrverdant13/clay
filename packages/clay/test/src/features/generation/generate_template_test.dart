@@ -28,7 +28,7 @@ void main() {
       File(p.join(referenceDir.path, 'hello.txt')).writeAsStringSync('hello\n');
 
       await generateTemplate(
-        config: BrickGenConfig(),
+        config: ClayConfig(),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
@@ -46,7 +46,7 @@ void main() {
         ..writeAsBytesSync(bytes);
 
       await generateTemplate(
-        config: BrickGenConfig(),
+        config: ClayConfig(),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
@@ -66,7 +66,7 @@ void main() {
         ..writeAsStringSync('ignored\n');
 
       await generateTemplate(
-        config: BrickGenConfig(ignore: const ['build/']),
+        config: ClayConfig(ignore: const ['build/']),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
@@ -91,7 +91,7 @@ void main() {
             .writeAsStringSync('class Widget {}\n/*drop*/\n');
 
         await generateTemplate(
-          config: BrickGenConfig(
+          config: ClayConfig(
             replacements: [Replacement(from: RegExp('from'), to: 'to')],
           ),
           referencePath: 'reference',
@@ -113,7 +113,7 @@ void main() {
         ..writeAsStringSync('main\n');
 
       await generateTemplate(
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [
             Replacement(from: RegExp('reference/'), to: 'template/'),
             Replacement(from: RegExp(r'\.dart$'), to: '.mustache'),
@@ -136,7 +136,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(
+          config: ClayConfig(
             replacements: [
               Replacement(from: RegExp(r'^alpha\.txt$'), to: 'beta.txt'),
               Replacement(from: RegExp(r'^beta\.txt$'), to: 'gamma.txt'),
@@ -160,7 +160,7 @@ void main() {
           .writeAsStringSync('class Widget {}\n/*drop*/\n');
 
       await generateTemplate(
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
         ),
         referencePath: referenceDir.path,
@@ -180,7 +180,7 @@ void main() {
           .createSync(linkedFile.path);
 
       await generateTemplate(
-        config: BrickGenConfig(ignore: const ['build/']),
+        config: ClayConfig(ignore: const ['build/']),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
@@ -199,7 +199,7 @@ void main() {
           .createSync(externalFile.path);
 
       await generateTemplate(
-        config: BrickGenConfig(
+        config: ClayConfig(
           replacements: [Replacement(from: RegExp('from'), to: 'to')],
         ),
         referencePath: referenceDir.path,
@@ -221,7 +221,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(
+          config: ClayConfig(
             replacements: [
               Replacement(
                 from: RegExp(r'^.+_widget\.dart$'),
@@ -248,7 +248,7 @@ void main() {
       File(p.join(referenceDir.path, 'fresh.txt')).writeAsStringSync('fresh\n');
 
       await generateTemplate(
-        config: BrickGenConfig(),
+        config: ClayConfig(),
         referencePath: referenceDir.path,
         targetPath: targetDir.path,
       );
@@ -263,7 +263,7 @@ void main() {
     test('throws when reference and target paths are equal', () async {
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(),
+          config: ClayConfig(),
           referencePath: referenceDir.path,
           targetPath: referenceDir.path,
         ),
@@ -283,7 +283,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(),
+          config: ClayConfig(),
           referencePath: referenceDir.path,
           targetPath: nestedTarget.path,
         ),
@@ -306,7 +306,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(),
+          config: ClayConfig(),
           referencePath: nestedReference.path,
           targetPath: targetDir.path,
         ),
@@ -329,7 +329,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(),
+          config: ClayConfig(),
           referencePath: referenceDir.path,
           targetPath: rootPath,
         ),
@@ -351,7 +351,7 @@ void main() {
         () => processCopiedTargetEntities(
           targetEntities: [Directory(p.join(targetDir.path, 'nested'))],
           normalizedTargetPath: targetDir.path,
-          config: BrickGenConfig(),
+          config: ClayConfig(),
         ),
         throwsA(
           isA<StateError>().having(
@@ -368,7 +368,7 @@ void main() {
 
       expect(
         () => generateTemplate(
-          config: BrickGenConfig(),
+          config: ClayConfig(),
           referencePath: referenceDir.path,
           targetPath: targetDir.path,
         ),
