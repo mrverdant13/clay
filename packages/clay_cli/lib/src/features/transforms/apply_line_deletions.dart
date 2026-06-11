@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clay_cli/src/entities/line_deletion.dart';
+import 'package:clay/clay.dart';
 import 'package:path/path.dart' as path;
 
 /// Drops configured line ranges from [content] when [filePath] matches.

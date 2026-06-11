@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/transforms/apply_replacements.dart';
 import 'package:test/test.dart';
 

@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/utils/binary_content.dart';
+import 'package:clay/clay.dart';
 
 /// Whether [targetRelativePath] should bypass the annotation transform
 /// pipeline.

@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:clay_cli/src/features/generation/resolve_target_file_path.dart';

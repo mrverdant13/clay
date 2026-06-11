@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/config/matches_ignore_pattern.dart'
     show normalizeIgnoreRelativePath, shouldIgnoreAtRoot;
 import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.dart';

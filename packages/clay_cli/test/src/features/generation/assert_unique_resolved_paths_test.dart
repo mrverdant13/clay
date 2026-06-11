@@ -1,5 +1,4 @@
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
-import 'package:clay_cli/src/entities/replacement.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/generation/assert_unique_resolved_paths.dart';
 import 'package:clay_cli/src/features/generation/generation_exception.dart';
 import 'package:test/test.dart';

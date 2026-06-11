@@ -1,4 +1,4 @@
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/transforms/apply_insert_blocks.dart';
 import 'package:clay_cli/src/features/transforms/apply_line_deletions.dart';
 import 'package:clay_cli/src/features/transforms/apply_mustache_tags.dart';

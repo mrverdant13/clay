@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/annotation_issue.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/validation/annotation_validator.dart';
 
 /// Recursively validates annotation markers under [referenceDir].

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clay_cli/src/entities/brick_gen_config.dart';
+import 'package:clay/clay.dart';
 import 'package:clay_cli/src/features/config/brick_gen_config_exception.dart';
 import 'package:clay_cli/src/features/config/load_brick_gen_config.dart';
 import 'package:path/path.dart' as p;
