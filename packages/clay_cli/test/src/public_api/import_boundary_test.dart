@@ -150,6 +150,7 @@ void main() {
   group('import boundary', () {
     const allowedPackages = {
       'args',
+      'clay',
       'clay_cli',
       'dart_mappable',
       'glob',
