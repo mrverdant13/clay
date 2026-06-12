@@ -34,3 +34,52 @@ dependencies:
 ```
 
 Requires Dart SDK `>=3.5.0 <4.0.0`.
+
+## Usage
+
+Discover `clay.yaml`, resolve paths, generate a template, and validate
+annotations:
+
+```dart
+import 'dart:io';
+
+import 'package:clay/clay.dart';
+
+Future<void> main() async {
+  final discovered = discoverClayConfig();
+  final config = await loadClayConfig(configPath: discovered.configPath);
+
+  final referencePath = resolveReferencePath(
+    projectRoot: discovered.projectRoot,
+    config: config,
+  );
+  final targetPath = resolveTargetPath(
+    projectRoot: discovered.projectRoot,
+    config: config,
+  );
+
+  await generateTemplate(
+    config: config,
+    referencePath: referencePath,
+    targetPath: targetPath,
+  );
+
+  final issues = validateAnnotations(
+    referenceDir: Directory(referencePath),
+  );
+  for (final issue in issues) {
+    stdout.writeln(issue);
+  }
+}
+```
+
+Preview a single file without Mason rendering (`templateOnly: true`):
+
+```dart
+final output = await previewReferenceFile(
+  filePath: 'lib/main.dart',
+  referencePath: referencePath,
+  config: config,
+  templateOnly: true,
+);
+```
