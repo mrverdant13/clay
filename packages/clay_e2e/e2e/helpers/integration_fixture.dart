@@ -5,22 +5,21 @@ import 'package:test/test.dart';
 
 import 'fixture_paths.dart';
 
-final _clayPackageNamePattern = RegExp(r'^name:\s*clay\s*$', multiLine: true);
-
-/// Locates `packages/clay` from the current working directory.
+/// Locates `packages/clay_e2e` from the current working directory.
 Directory e2ePackageRoot() {
   var current = Directory.current;
   while (true) {
     final pubspec = File(p.join(current.path, 'pubspec.yaml'));
     if (pubspec.existsSync() &&
-        _clayPackageNamePattern.hasMatch(pubspec.readAsStringSync())) {
+        pubspec.readAsStringSync().contains('name: clay_e2e')) {
       return current;
     }
 
     final parent = current.parent;
     if (parent.path == current.path) {
       throw StateError(
-        'Could not locate clay package root from ${Directory.current.path}',
+        'Could not locate clay_e2e package root from '
+        '${Directory.current.path}',
       );
     }
     current = parent;
@@ -70,7 +69,7 @@ class IntegrationFixture {
   /// Fixture identifier (directory name).
   final String name;
 
-  /// `clay` package root.
+  /// `clay_e2e` package root.
   final Directory packageRoot;
 
   /// Committed fixture tree (includes `expected/`).
