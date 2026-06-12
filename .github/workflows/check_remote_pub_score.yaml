@@ -1,8 +1,7 @@
 # Remote pub.dev score checks for published packages.
 #
-# Skips packages that are not yet on pub.dev. After PR 1.6 / 1.7, both jobs
-# run pana against the hosted release. Threshold 10 allows a missing example
-# directory; lower it when examples are added.
+# Skips packages not yet on pub.dev. Threshold 10 (pub-score.remote) allows a
+# missing example directory; lower it when examples are added.
 name: Check remote Pub.dev score
 
 on:
@@ -16,32 +15,43 @@ concurrency:
 
 jobs:
   check-remote-pub-score:
-    name: Remote Pub.dev score (${{ matrix.package }})
+    name: Check remote Pub.dev score
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [clay, clay_cli]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
       - name: Install Dart
         uses: dart-lang/setup-dart@v1
-      - name: Install pana
-        run: dart pub global activate pana
+      - name: Install melos
+        run: dart pub global activate melos 7.5.1
+      - name: Bootstrap workspace
+        run: melos bs
       - name: Verify remote Pub.dev score
         run: |
-          package="${{ matrix.package }}"
-          if ! curl -sf "https://pub.dev/api/packages/${package}" \
-            | grep -q "\"name\":\"${package}\""; then
-            echo "::notice::${package} is not published on pub.dev yet; skipping."
-            exit 0
+          set -e
+          checked=0
+          for package in clay clay_cli; do
+            if ! curl -sf "https://pub.dev/api/packages/${package}" \
+              | grep -q "\"name\":\"${package}\""; then
+              echo "::notice::${package} is not published on pub.dev yet; skipping."
+              continue
+            fi
+            checked=1
+            dart run pub_score_checker check_pub_score remote \
+              --markdown-output "packages/${package}/.dart_tool/remote_pub_score.md" \
+              --package-name "$package" \
+              --threshold 10
+          done
+          if [[ "$checked" -eq 0 ]]; then
+            echo "::notice::No published packages to check yet."
           fi
-          set +e
-          pana --no-warning --hosted "$package" --exit-code-threshold 10 \
-            | tee pana_report.txt
-          result=$?
-          echo "### ${package} (remote)" >> "$GITHUB_STEP_SUMMARY"
-          tail -3 pana_report.txt >> "$GITHUB_STEP_SUMMARY"
-          exit "$result"
-        shell: bash
+      - name: Set step summary
+        if: always()
+        run: |
+          for package in clay clay_cli; do
+            report="packages/${package}/.dart_tool/remote_pub_score.md"
+            if [[ -f "$report" ]]; then
+              echo "### ${package} (remote)" >> "$GITHUB_STEP_SUMMARY"
+              cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done

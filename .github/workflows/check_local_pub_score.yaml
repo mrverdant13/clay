@@ -1,8 +1,7 @@
 # Local pub.dev score checks for publishable workspace packages.
 #
-# Score threshold (--exit-code-threshold): 35 points below the maximum (160).
-# Pre-release gaps until PR 1.6 / 1.7: missing LICENSE and README, no example,
-# and publish_to: none in pubspec.yaml. Lower the threshold as those land.
+# Threshold 35 (pub-score.local): pre-release gaps until publish PRs land —
+# missing LICENSE and README, no example, and publish_to: none in pubspec.yaml.
 name: Check local Pub.dev score
 
 on:
@@ -32,30 +31,26 @@ concurrency:
 
 jobs:
   check-local-pub-score:
-    name: Local Pub.dev score (${{ matrix.package }})
+    name: Check local Pub.dev score
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: [clay, clay_cli]
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
       - name: Install Dart
         uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        run: dart pub global activate melos 7.5.1
       - name: Bootstrap workspace
-        run: |
-          dart pub global activate melos 7.5.1
-          melos bs
-      - name: Install pana
-        run: dart pub global activate pana
+        run: melos bs
       - name: Verify local Pub.dev score
-        working-directory: packages/${{ matrix.package }}
+        run: melos run pub-score.local
+      - name: Set step summary
+        if: always()
         run: |
-          set +e
-          pana --no-warning --exit-code-threshold 35 . | tee pana_report.txt
-          result=$?
-          echo "### ${{ matrix.package }}" >> "$GITHUB_STEP_SUMMARY"
-          tail -3 pana_report.txt >> "$GITHUB_STEP_SUMMARY"
-          exit "$result"
-        shell: bash
+          for package in clay clay_cli; do
+            report="packages/${package}/.dart_tool/local_pub_score.md"
+            if [[ -f "$report" ]]; then
+              echo "### ${package}" >> "$GITHUB_STEP_SUMMARY"
+              cat "$report" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
