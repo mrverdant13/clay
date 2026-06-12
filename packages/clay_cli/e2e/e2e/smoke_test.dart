@@ -11,7 +11,6 @@ void main() {
       final dartExecutable = Platform.resolvedExecutable;
       final clayCliRelativeScriptPath = p.joinAll([
         '..',
-        'clay_cli',
         'bin',
         'clay.dart',
       ]);
