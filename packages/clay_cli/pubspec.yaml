@@ -6,6 +6,12 @@ publish_to: none
 homepage: https://github.com/mrverdant13/clay
 repository: https://github.com/mrverdant13/clay/tree/main/packages/clay_cli
 issue_tracker: https://github.com/mrverdant13/clay/issues
+topics:
+  - mason
+  - template
+  - codegen
+  - cli
+  - annotations
 resolution: workspace
 
 environment:
