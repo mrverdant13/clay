@@ -1,0 +1,10 @@
+name: clay_example
+description: Minimal runnable example for the clay library.
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  clay:
+    path: ../
