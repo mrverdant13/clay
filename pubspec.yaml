@@ -6,6 +6,10 @@ environment:
 dev_dependencies:
   coverde: ^0.4.0
   melos: ^7.5.1
+  pub_score_checker:
+    git:
+      url: https://github.com/mrverdant13/pub_score_checker.git
+      ref: 526653ebf1ea09b3376550edc0ce03a153ca62f2
   very_good_analysis: ^10.0.0
 
 melos:
@@ -166,6 +170,31 @@ melos:
         --test-randomize-ordering-seed random
         e2e/optimized_test.dart
         "
+
+    pub-score.local:
+      description: Check local pub.dev score for clay and clay_cli
+      run: >
+        dart run pub_score_checker check_pub_score local
+        --markdown-output MELOS_ROOT_PATH/packages/clay/.dart_tool/local_pub_score.md
+        --package-path MELOS_ROOT_PATH/packages/clay
+        --threshold 35
+        &&
+        dart run pub_score_checker check_pub_score local
+        --markdown-output MELOS_ROOT_PATH/packages/clay_cli/.dart_tool/local_pub_score.md
+        --package-path MELOS_ROOT_PATH/packages/clay_cli
+        --threshold 35
+    pub-score.remote:
+      description: Check remote pub.dev score for clay and clay_cli
+      run: >
+        dart run pub_score_checker check_pub_score remote
+        --markdown-output MELOS_ROOT_PATH/packages/clay/.dart_tool/remote_pub_score.md
+        --package-name clay
+        --threshold 10
+        &&
+        dart run pub_score_checker check_pub_score remote
+        --markdown-output MELOS_ROOT_PATH/packages/clay_cli/.dart_tool/remote_pub_score.md
+        --package-name clay_cli
+        --threshold 10
 
 workspace:
   - packages/clay/
