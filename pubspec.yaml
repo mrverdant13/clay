@@ -15,7 +15,8 @@ dev_dependencies:
 melos:
   categories:
     e2e:
-      - "**/*e2e*"
+      - packages/clay/e2e
+      - packages/clay_cli/e2e
     publishable:
       - packages/clay
       - packages/clay_cli
@@ -203,4 +204,4 @@ workspace:
   - packages/clay/
   - packages/clay/e2e/
   - packages/clay_cli/
-  - packages/clay_cli_e2e/
+  - packages/clay_cli/e2e/
