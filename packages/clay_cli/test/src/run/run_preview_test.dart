@@ -52,6 +52,19 @@ class App extends Widget {
       expect(result.content, isNot(contains('scaffold')));
     });
 
+    test('accepts an absolute reference file path', () async {
+      final absoluteFilePath = p.normalize(referenceFilePath);
+      final result = await runPreview(
+        filePath: absoluteFilePath,
+        templateOnly: false,
+        vars: {'use_riverpod': true},
+        cwd: tempDir.path,
+      );
+
+      expect(result.filePath, absoluteFilePath);
+      expect(result.content, contains('class App extends ConsumerWidget'));
+    });
+
     test('keeps mustache tags when templateOnly is true', () async {
       final result = await runPreview(
         filePath: 'widget.dart',
