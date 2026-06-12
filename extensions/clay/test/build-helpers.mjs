@@ -102,3 +102,29 @@ await esbuild.build({
   platform: 'node',
   external: [],
 });
+
+const vscodeExternalBundles = [
+  'rangeUtils',
+  'supportedFiles',
+  'insertHighlighting',
+  'removeHighlighting',
+  'replaceHighlighting',
+  'partialHighlighting',
+  'spacingHighlighting',
+  'blockFolding',
+  'annotationHighlighting',
+  'annotationConfigReader',
+  'variableQuickPick',
+  'previewCommand',
+];
+
+for (const moduleName of vscodeExternalBundles) {
+  await esbuild.build({
+    entryPoints: [join(extensionRoot, `src/${moduleName}.ts`)],
+    bundle: true,
+    outfile: join(extensionRoot, `test/out/${moduleName}.cjs`),
+    format: 'cjs',
+    platform: 'node',
+    external: ['vscode'],
+  });
+}
