@@ -22,6 +22,23 @@ void main() {
       }
     });
 
+    test('invokes onIgnoredFile when ignored entities are pruned', () async {
+      final ignoredFile = File(p.join(targetDir.path, 'build', 'output.txt'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('ignored');
+      final ignoredPaths = <String>[];
+
+      await processCopiedTargetEntities(
+        targetEntities: [ignoredFile],
+        normalizedTargetPath: targetDir.path,
+        config: ClayConfig(ignore: const ['build/']),
+        onIgnoredFile: ignoredPaths.add,
+      );
+
+      expect(ignoredFile.existsSync(), isFalse);
+      expect(ignoredPaths, ['build/output.txt']);
+    });
+
     test('deletes ignored files and prunes empty parents', () async {
       final ignoredFile = File(p.join(targetDir.path, 'build', 'output.txt'))
         ..createSync(recursive: true)
