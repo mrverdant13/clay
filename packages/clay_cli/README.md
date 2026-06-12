@@ -21,13 +21,13 @@ Clay discovers `clay.yaml` by walking up from the working directory (or
 
 ## Installation
 
-Activate the CLI globally:
+Install the CLI globally with [`dart install`](https://dart.dev/tools/dart-install):
 
 ```bash
-dart pub global activate clay_cli
+dart install clay_cli
 ```
 
-Ensure the pub cache `bin` directory is on your `PATH`, then run `clay`:
+Verify the `clay` executable is available:
 
 ```bash
 clay --version
