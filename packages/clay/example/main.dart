@@ -38,4 +38,15 @@ Future<void> main() async {
       stdout.writeln('  $issue');
     }
   }
+
+  const previewFile = 'lib/ref_pkg/greeting.dart.ref';
+  final preview = await previewReferenceFile(
+    filePath: previewFile,
+    referencePath: referencePath,
+    config: config,
+    templateOnly: true,
+  );
+
+  stdout.writeln('Preview ($previewFile, template-only):');
+  stdout.writeln(preview);
 }
