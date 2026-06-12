@@ -25,7 +25,7 @@ class ClayProcessResult {
 String clayCliScriptPath({String? e2ePackageRoot}) {
   final root = e2ePackageRoot ?? Directory.current.path;
   return p.normalize(
-    p.join(root, '..', 'clay_cli', 'bin', 'clay.dart'),
+    p.join(root, '..', 'bin', 'clay.dart'),
   );
 }
 

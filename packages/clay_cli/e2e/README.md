@@ -1,6 +1,6 @@
 # clay_cli_e2e
 
-End-to-end tests for the `clay` CLI. Tests spawn real CLI processes and assert on exit codes, stdout/stderr, and generated output.
+End-to-end tests for the `clay` CLI. Package path: `packages/clay_cli/e2e/`. Tests spawn real CLI processes and assert on exit codes, stdout/stderr, and generated output.
 
 Run from the repository root:
 

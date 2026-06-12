@@ -12,7 +12,7 @@
 /// - `.golden` — expected output; compared under the logical path after
 ///   generation (e.g. `widget.dart.golden` ↔ `widget.dart`).
 ///
-/// See `packages/clay_cli_e2e/README.md` for the full contributor guide.
+/// See `packages/clay_cli/e2e/README.md` for the full contributor guide.
 library;
 
 /// Suffix appended to committed reference sources (stripped in working copies).

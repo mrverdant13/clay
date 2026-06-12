@@ -9,10 +9,9 @@ environment:
 
 dependencies:
   clay_cli:
-    path: ../clay_cli
+    path: ..
   path: ^1.9.1
 
 dev_dependencies:
   test: ^1.31.1
   very_good_analysis: ^10.2.0
-

@@ -57,7 +57,7 @@ clay/
 │   ├── clay/               # Core library (config, transforms, generation)
 │   │   └── e2e/            # End-to-end library tests
 │   ├── clay_cli/           # Publishable CLI
-│   └── clay_cli_e2e/       # End-to-end CLI tests
+│   │   └── e2e/            # End-to-end CLI tests
 ├── extensions/
 │   └── clay/               # VS Code extension (TypeScript)
 ├── doc/                    # User docs (annotations, JSON schema)
@@ -97,7 +97,7 @@ All behavior changes should include or update tests.
 | Command tests | `packages/clay_cli/test/` | Args parsing, exit codes, stderr formatting |
 | Fixture tests | `packages/clay_cli/test/` or dedicated fixture dir | Golden `clay gen` output for representative reference projects |
 | E2E | `packages/clay/e2e/` | Public API integration (gen, validate, preview) |
-| E2E | `packages/clay_cli_e2e/` | Full CLI invocations |
+| E2E | `packages/clay_cli/e2e/` | Full CLI invocations |
 | Extension | `extensions/clay/` | Compile + smoke tests |
 
 ---
