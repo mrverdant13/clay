@@ -6,8 +6,9 @@
 /build/
 /pubspec.lock
 
-# Clay example output
-/brick/
+# Testing and coverage
+/coverage/
+/test/optimized_test.dart
 
 # Melos
 /melos_*.iml
