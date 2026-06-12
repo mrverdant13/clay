@@ -58,5 +58,22 @@ target: target
         p.normalize(p.join(tempDir.path, 'clay.yaml')),
       );
     });
+
+    test('resolves an absolute explicit config path as-is', () {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'))
+        ..writeAsStringSync('''
+reference: reference
+target: target
+''');
+
+      final absoluteConfigPath = p.normalize(configFile.absolute.path);
+      final discovered = discoverProjectConfig(
+        configPath: absoluteConfigPath,
+        cwd: tempDir.path,
+      );
+
+      expect(discovered.configPath, absoluteConfigPath);
+      expect(discovered.projectRoot, p.dirname(absoluteConfigPath));
+    });
   });
 }
