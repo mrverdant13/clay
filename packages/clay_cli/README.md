@@ -34,3 +34,64 @@ clay --version
 ```
 
 Requires Dart SDK `>=3.5.0 <4.0.0`.
+
+## Quick start
+
+A typical project layout:
+
+```
+my-brick/
+├── clay.yaml               # declares reference and target paths
+├── reference/              # runnable reference project
+│   └── …
+└── brick/
+    └── __brick__/          # generated template (output of `clay gen`)
+        └── …
+```
+
+Example `clay.yaml`:
+
+```yaml
+reference: reference
+target: brick/__brick__
+ignore:
+  - .dart_tool/
+  - build/
+  - coverage/
+  - "**/*.iml"
+  - .DS_Store
+replacements: []
+lineDeletions: []
+```
+
+### Generate a template
+
+From the directory that contains `clay.yaml` (or any child directory):
+
+```bash
+clay gen
+```
+
+Clay loads the config, copies the reference tree to the target directory,
+applies transforms, and prints resolved paths and file count to stdout.
+Invoking `clay` without a subcommand runs `gen` by default.
+
+### Validate annotations
+
+```bash
+clay validate
+```
+
+Recursively scans the reference directory and reports
+`filePath:line:column: message` issues. Exits with code `1` when any issue
+exists.
+
+### Preview a single file
+
+```bash
+# Annotations + clay.yaml transforms only (Mustache tags left intact)
+clay preview --file lib/main.dart --template-only
+
+# Full preview with Mason variables
+clay preview --file lib/main.dart --vars name=MyApp,useRiverpod=true
+```
