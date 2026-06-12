@@ -1,0 +1,47 @@
+# Remote pub.dev score checks for published packages.
+#
+# Skips packages that are not yet on pub.dev. After PR 1.6 / 1.7, both jobs
+# run pana against the hosted release. Threshold 10 allows a missing example
+# directory; lower it when examples are added.
+name: Check remote Pub.dev score
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  check-remote-pub-score:
+    name: Remote Pub.dev score (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [clay, clay_cli]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install pana
+        run: dart pub global activate pana
+      - name: Verify remote Pub.dev score
+        run: |
+          package="${{ matrix.package }}"
+          if ! curl -sf "https://pub.dev/api/packages/${package}" \
+            | grep -q "\"name\":\"${package}\""; then
+            echo "::notice::${package} is not published on pub.dev yet; skipping."
+            exit 0
+          fi
+          set +e
+          pana --no-warning --hosted "$package" --exit-code-threshold 10 \
+            | tee pana_report.txt
+          result=$?
+          echo "### ${package} (remote)" >> "$GITHUB_STEP_SUMMARY"
+          tail -3 pana_report.txt >> "$GITHUB_STEP_SUMMARY"
+          exit "$result"
+        shell: bash
