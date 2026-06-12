@@ -214,6 +214,7 @@ clay/
 ├── packages/
 │   ├── clay/                    # Core library (config, transforms, generation)
 │   ├── clay_cli/                # Publishable CLI package
+│   ├── clay_e2e/                # Library integration tests
 │   └── clay_cli_e2e/            # CLI integration tests
 ├── extensions/
 │   └── clay/                    # VS Code extension
