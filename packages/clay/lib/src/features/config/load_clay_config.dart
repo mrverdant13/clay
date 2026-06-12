@@ -4,11 +4,14 @@ import 'package:clay/src/entities/clay_config.dart';
 import 'package:clay/src/features/config/clay_config_exception.dart';
 import 'package:clay/src/features/config/parse_config_map.dart';
 import 'package:clay/src/features/config/yaml_to_dart.dart';
+import 'package:meta/meta.dart';
 import 'package:yaml/yaml.dart';
 
 /// Loads and parses `clay.yaml` from [configPath].
 Future<ClayConfig> loadClayConfig({
   required String configPath,
+  @visibleForTesting ClayConfig Function(Map<String, dynamic> map)?
+      parseConfigMapForTesting,
 }) async {
   final file = File(configPath);
   if (!file.existsSync()) {
@@ -29,7 +32,8 @@ Future<ClayConfig> loadClayConfig({
     final map = Map<String, dynamic>.from(
       yamlToDart(parsed)! as Map,
     );
-    return parseConfigMap(map);
+    final parse = parseConfigMapForTesting ?? parseConfigMap;
+    return parse(map);
   } on YamlException catch (error) {
     throw ClayConfigException(
       'Invalid clay.yaml at $configPath: $error',

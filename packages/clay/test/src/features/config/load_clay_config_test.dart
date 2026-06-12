@@ -111,6 +111,30 @@ replacements:
       );
     });
 
+    test('throws when parsing raises a non-ignore FormatException', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('{}');
+
+      expect(
+        () => loadClayConfig(
+          configPath: configFile.path,
+          parseConfigMapForTesting: (_) =>
+              throw const FormatException('invalid replacement regex'),
+        ),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid clay.yaml'),
+              contains('invalid replacement regex'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
     test('throws when ignore patterns use backslashes', () async {
       final configFile = File(p.join(tempDir.path, 'clay.yaml'));
       await configFile.writeAsString(r'''
