@@ -83,3 +83,25 @@ final output = await previewReferenceFile(
   templateOnly: true,
 );
 ```
+
+## Public API
+
+Import `package:clay/clay.dart`, or narrower libraries such as `config.dart`,
+`generation.dart`, `preview.dart`, `transforms.dart`, and `validation.dart`.
+
+| Area       | Key symbols                                                                 |
+| ---------- | --------------------------------------------------------------------------- |
+| Config     | `discoverClayConfig`, `loadClayConfig`, `ClayConfig`, `resolveReferencePath`, `resolveTargetPath` |
+| Generation | `generateTemplate`                                                          |
+| Validation | `validateAnnotations`, `AnnotationIssue`                                    |
+| Preview    | `previewReferenceFile`, `parsePreviewVars`                                  |
+
+## Resources
+
+- [Repository](https://github.com/mrverdant13/clay/tree/main/packages/clay)
+- [Issue tracker](https://github.com/mrverdant13/clay/issues)
+- [Changelog](CHANGELOG.md)
+
+## License
+
+MIT — see [LICENSE](LICENSE).
