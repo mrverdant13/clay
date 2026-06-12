@@ -1,0 +1,5 @@
+reference: reference
+target: brick
+replacements:
+  - from: ref_pkg
+    to: "{{package_name}}"

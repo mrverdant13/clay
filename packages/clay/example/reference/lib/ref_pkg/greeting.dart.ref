@@ -1,0 +1,4 @@
+/// Greeting helpers for ref_pkg.
+String greeting(String name) => 'Hello, $name!';
+/*drop*/
+void _exampleOnly() {}
