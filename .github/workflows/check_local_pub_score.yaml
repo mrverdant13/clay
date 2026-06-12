@@ -1,0 +1,61 @@
+# Local pub.dev score checks for publishable workspace packages.
+#
+# Score threshold (--exit-code-threshold): 35 points below the maximum (160).
+# Pre-release gaps until PR 1.6 / 1.7: missing LICENSE and README, no example,
+# and publish_to: none in pubspec.yaml. Lower the threshold as those land.
+name: Check local Pub.dev score
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - packages/clay/**
+      - packages/clay_cli/**
+      - pubspec.yaml
+      - pubspec.lock
+      - .github/workflows/check_local_pub_score.yaml
+  push:
+    branches:
+      - main
+    paths:
+      - packages/clay/**
+      - packages/clay_cli/**
+      - pubspec.yaml
+      - pubspec.lock
+      - .github/workflows/check_local_pub_score.yaml
+  workflow_dispatch: {}
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  check-local-pub-score:
+    name: Local Pub.dev score (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [clay, clay_cli]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Bootstrap workspace
+        run: |
+          dart pub global activate melos 7.5.1
+          melos bs
+      - name: Install pana
+        run: dart pub global activate pana
+      - name: Verify local Pub.dev score
+        working-directory: packages/${{ matrix.package }}
+        run: |
+          set +e
+          pana --no-warning --exit-code-threshold 35 . | tee pana_report.txt
+          result=$?
+          echo "### ${{ matrix.package }}" >> "$GITHUB_STEP_SUMMARY"
+          tail -3 pana_report.txt >> "$GITHUB_STEP_SUMMARY"
+          exit "$result"
+        shell: bash
