@@ -16,6 +16,9 @@ melos:
   categories:
     e2e:
       - "**/*e2e*"
+    publishable:
+      - packages/clay
+      - packages/clay_cli
 
   command:
     bootstrap:
@@ -172,29 +175,29 @@ melos:
         "
 
     pub-score.local:
-      description: Check local pub.dev score for clay and clay_cli
+      description: Check local pub.dev score for publishable packages
       run: >
         dart run pub_score_checker check_pub_score local
-        --markdown-output MELOS_ROOT_PATH/packages/clay/.dart_tool/local_pub_score.md
-        --package-path MELOS_ROOT_PATH/packages/clay
+        --markdown-output MELOS_PACKAGE_PATH/.dart_tool/local_pub_score.md
+        --package-path MELOS_PACKAGE_PATH
         --threshold 35
-        &&
-        dart run pub_score_checker check_pub_score local
-        --markdown-output MELOS_ROOT_PATH/packages/clay_cli/.dart_tool/local_pub_score.md
-        --package-path MELOS_ROOT_PATH/packages/clay_cli
-        --threshold 35
+      exec:
+        concurrency: 1
+      packageFilters:
+        category:
+          - publishable
     pub-score.remote:
-      description: Check remote pub.dev score for clay and clay_cli
+      description: Check remote pub.dev score for publishable packages
       run: >
         dart run pub_score_checker check_pub_score remote
-        --markdown-output MELOS_ROOT_PATH/packages/clay/.dart_tool/remote_pub_score.md
-        --package-name clay
+        --markdown-output MELOS_PACKAGE_PATH/.dart_tool/remote_pub_score.md
+        --package-name MELOS_PACKAGE_NAME
         --threshold 10
-        &&
-        dart run pub_score_checker check_pub_score remote
-        --markdown-output MELOS_ROOT_PATH/packages/clay_cli/.dart_tool/remote_pub_score.md
-        --package-name clay_cli
-        --threshold 10
+      exec:
+        concurrency: 1
+      packageFilters:
+        category:
+          - publishable
 
 workspace:
   - packages/clay/
