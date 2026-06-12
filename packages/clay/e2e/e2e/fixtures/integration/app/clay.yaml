@@ -1,0 +1,5 @@
+reference: reference
+target: target
+replacements:
+  - from: ref_app
+    to: "{{app_name}}"

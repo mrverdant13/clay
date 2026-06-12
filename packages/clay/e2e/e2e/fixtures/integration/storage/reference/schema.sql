@@ -1,0 +1,4 @@
+-- DROP ME
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY
+);

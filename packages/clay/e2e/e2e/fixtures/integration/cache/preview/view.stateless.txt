@@ -1,0 +1,6 @@
+
+class SampleCacheView extends StatelessWidget {
+    
+    final String key;
+    
+}
