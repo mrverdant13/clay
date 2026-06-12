@@ -1,6 +1,6 @@
 # clay_e2e
 
-End-to-end tests for the `clay` library. Tests call the public API directly
+End-to-end tests for the `clay` library. Package path: `packages/clay/e2e/`. Tests call the public API directly
 (config load, generation, validation, preview) and assert on outputs and golden
 trees — no CLI subprocess.
 

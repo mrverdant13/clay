@@ -201,6 +201,6 @@ melos:
 
 workspace:
   - packages/clay/
+  - packages/clay/e2e/
   - packages/clay_cli/
-  - packages/clay_e2e/
   - packages/clay_cli_e2e/

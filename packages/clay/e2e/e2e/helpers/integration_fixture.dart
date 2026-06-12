@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 import 'fixture_paths.dart';
 
-/// Locates `packages/clay_e2e` from the current working directory.
+/// Locates `packages/clay/e2e` from the current working directory.
 Directory e2ePackageRoot() {
   var current = Directory.current;
   while (true) {
@@ -69,7 +69,7 @@ class IntegrationFixture {
   /// Fixture identifier (directory name).
   final String name;
 
-  /// `clay_e2e` package root.
+  /// `clay_e2e` package root (`packages/clay/e2e/`).
   final Directory packageRoot;
 
   /// Committed fixture tree (includes `expected/`).
