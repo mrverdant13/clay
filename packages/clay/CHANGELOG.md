@@ -11,3 +11,9 @@ Initial **preview** release of the `clay` core library. This package powers the 
 - **FEAT**: path resolution for reference and target roots relative to the config file directory.
 - **FEAT**: gitignore-style `ignore` glob matching for files excluded during generation.
 - **FEAT**: `generateTemplate` — copy a reference tree to a target directory, apply ignore patterns, path renames, and content transforms, and prune empty directories.
+- **FEAT**: annotation transform pipeline — remotions, replace/insert blocks, Mustache unwrapping, spacing groups, and partials across C-style, hash, and HTML comment flavors.
+- **FEAT**: `clay.yaml` regex `replacements` and per-file `lineDeletions` applied before annotation transforms.
+- **FEAT**: binary file detection — image and other binary assets are copied without text transforms.
+- **FEAT**: `validateAnnotations` — recursive reference scan with `filePath:line:column: message` issue formatting.
+- **FEAT**: `previewReferenceFile` — single-file preview with optional Mason variable rendering (`templateOnly` mode preserves Mustache tags).
+- **TEST**: unit tests for config, generation, transforms, preview, and validation; import-boundary enforcement for the public API.
