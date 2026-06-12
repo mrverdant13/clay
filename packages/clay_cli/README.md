@@ -95,3 +95,58 @@ clay preview --file lib/main.dart --template-only
 # Full preview with Mason variables
 clay preview --file lib/main.dart --vars name=MyApp,useRiverpod=true
 ```
+
+## CLI reference
+
+### Invocation
+
+```
+clay [--config <path>] [--cwd <path>] [--verbose] [--version] <command> [options]
+```
+
+### Global flags
+
+| Flag              | Description                                                         |
+| ----------------- | ------------------------------------------------------------------- |
+| `--version`       | Print package version                                               |
+| `--verbose`       | Verbose logging (resolved paths, excluded files)                    |
+| `--config <path>` | Path to `clay.yaml` (skips discovery; any filename is accepted)     |
+| `--cwd <path>`    | Working directory for config discovery (default: current directory) |
+
+### Shared command flags
+
+| Flag                 | Default         | Description                           |
+| -------------------- | --------------- | ------------------------------------- |
+| `--reference <path>` | *(from config)* | Overrides `clay.yaml` → `reference`   |
+| `--target <path>`    | *(from config)* | Overrides `clay.yaml` → `target`      |
+
+Path resolution order: CLI flag → `clay.yaml` field → built-in default
+(`reference` / `brick/__brick__`). Relative paths resolve from the **project
+root** (the directory containing `clay.yaml`).
+
+### Commands
+
+| Command    | Description                                                        |
+| ---------- | ------------------------------------------------------------------ |
+| `gen`      | Generate the template from the reference project (default command) |
+| `validate` | Validate annotation markers in the reference directory             |
+| `preview`  | Transform a single reference file and write result to stdout       |
+
+#### `clay preview` flags
+
+| Flag               | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `--file <path>`    | **Required.** Path to a file under the reference directory      |
+| `--template-only`  | Apply config + annotations only; leave Mustache tags unresolved |
+| `--vars <k=v,...>` | Comma-separated Mason variables for full preview rendering      |
+
+## Resources
+
+- [Repository](https://github.com/mrverdant13/clay/tree/main/packages/clay_cli)
+- [Issue tracker](https://github.com/mrverdant13/clay/issues)
+- [Changelog](CHANGELOG.md)
+- [`clay` library](https://pub.dev/packages/clay) — embed Clay in Dart tools
+
+## License
+
+MIT — see [LICENSE](LICENSE).
