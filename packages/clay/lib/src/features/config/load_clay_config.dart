@@ -10,8 +10,8 @@ import 'package:yaml/yaml.dart';
 /// Loads and parses `clay.yaml` from [configPath].
 Future<ClayConfig> loadClayConfig({
   required String configPath,
-  @visibleForTesting ClayConfig Function(Map<String, dynamic> map)?
-      parseConfigMapForTesting,
+  @visibleForTesting
+  ClayConfig Function(Map<String, dynamic> map)? parseConfigMapForTesting,
 }) async {
   final file = File(configPath);
   if (!file.existsSync()) {
