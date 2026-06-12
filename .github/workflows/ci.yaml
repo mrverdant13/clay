@@ -43,8 +43,8 @@ jobs:
         run: dart pub global activate melos 7.5.1
       - name: Initialize melos
         run: melos bs
-      - name: Run tests and merge coverage
-        run: melos run test.ci && melos run coverage.merge
+      - name: Run tests, merge coverage, and check coverage
+        run: melos run test.ci && melos run coverage.merge && melos run coverage.check
       - name: Upload coverage trace file as artifact
         uses: actions/upload-artifact@v7
         if: matrix.os == 'ubuntu-latest'
