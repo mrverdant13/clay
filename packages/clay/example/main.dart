@@ -17,9 +17,10 @@ Future<void> main() async {
     config: config,
   );
 
-  stdout.writeln('Generating template...');
-  stdout.writeln('  reference: $referencePath');
-  stdout.writeln('  target:    $targetPath');
+  stdout
+    ..writeln('Generating template...')
+    ..writeln('  reference: $referencePath')
+    ..writeln('  target:    $targetPath');
 
   await generateTemplate(
     config: config,
@@ -47,6 +48,7 @@ Future<void> main() async {
     templateOnly: true,
   );
 
-  stdout.writeln('Preview ($previewFile, template-only):');
-  stdout.writeln(preview);
+  stdout
+    ..writeln('Preview ($previewFile, template-only):')
+    ..writeln(preview);
 }
