@@ -4,6 +4,9 @@ description: >-
   generation, and annotation validation.
 version: 0.0.1
 publish_to: none
+homepage: https://github.com/mrverdant13/clay
+repository: https://github.com/mrverdant13/clay/tree/main/packages/clay
+issue_tracker: https://github.com/mrverdant13/clay/issues
 resolution: workspace
 
 environment:
