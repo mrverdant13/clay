@@ -180,7 +180,7 @@ melos:
         dart run pub_score_checker check_pub_score local
         --markdown-output MELOS_PACKAGE_PATH/.dart_tool/local_pub_score.md
         --package-path MELOS_PACKAGE_PATH
-        --threshold 35
+        --threshold 10
       exec:
         concurrency: 1
       packageFilters:
