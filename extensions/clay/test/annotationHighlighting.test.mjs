@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
+import { mock, test } from 'node:test';
 import { createRequire } from 'node:module';
-import { test } from 'node:test';
 
 import { createMockEditor, installVscodeMock } from './vscode-mock.mjs';
 
@@ -32,28 +32,34 @@ test('registerAnnotationHighlighting refreshes visible editors on configuration 
   assert.ok(editor.decorationCalls.length > 0, 'expected highlight refresh after config change');
 });
 
-test('registerAnnotationHighlighting debounces document change refreshes', async () => {
-  const editor = createMockEditor('/*remove-start*/x/*remove-end*/');
-  const document = editor.document;
+test('registerAnnotationHighlighting debounces document change refreshes', () => {
+  mock.timers.enable({ apis: ['setTimeout'] });
 
-  let documentHandler;
-  mockVscode.window.visibleTextEditors = [editor];
-  mockVscode.workspace.onDidChangeTextDocument = (handler) => {
-    documentHandler = handler;
-    return { dispose: () => {} };
-  };
-  mockVscode.workspace.onDidChangeConfiguration = () => ({ dispose: () => {} });
-  mockVscode.workspace.onDidOpenTextDocument = () => ({ dispose: () => {} });
-  mockVscode.window.onDidChangeActiveTextEditor = () => ({ dispose: () => {} });
+  try {
+    const editor = createMockEditor('/*remove-start*/x/*remove-end*/');
+    const document = editor.document;
 
-  const subscriptions = [];
-  registerAnnotationHighlighting({ subscriptions });
-  assert.ok(documentHandler, 'document listener was not registered');
+    let documentHandler;
+    mockVscode.window.visibleTextEditors = [editor];
+    mockVscode.workspace.onDidChangeTextDocument = (handler) => {
+      documentHandler = handler;
+      return { dispose: () => {} };
+    };
+    mockVscode.workspace.onDidChangeConfiguration = () => ({ dispose: () => {} });
+    mockVscode.workspace.onDidOpenTextDocument = () => ({ dispose: () => {} });
+    mockVscode.window.onDidChangeActiveTextEditor = () => ({ dispose: () => {} });
 
-  editor.decorationCalls.length = 0;
-  documentHandler({ document });
-  assert.equal(editor.decorationCalls.length, 0, 'refresh should be debounced');
+    const subscriptions = [];
+    registerAnnotationHighlighting({ subscriptions });
+    assert.ok(documentHandler, 'document listener was not registered');
 
-  await new Promise((resolve) => setTimeout(resolve, 200));
-  assert.ok(editor.decorationCalls.length > 0, 'expected debounced highlight refresh');
+    editor.decorationCalls.length = 0;
+    documentHandler({ document });
+    assert.equal(editor.decorationCalls.length, 0, 'refresh should be debounced');
+
+    mock.timers.tick(150);
+    assert.ok(editor.decorationCalls.length > 0, 'expected debounced highlight refresh');
+  } finally {
+    mock.timers.reset();
+  }
 });
