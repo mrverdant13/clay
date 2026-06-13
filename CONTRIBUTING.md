@@ -98,7 +98,8 @@ All behavior changes should include or update tests.
 | Fixture tests | `packages/clay_cli/test/` or dedicated fixture dir | Golden `clay gen` output for representative reference projects |
 | E2E | `packages/clay/e2e/` | Public API integration (gen, validate, preview) |
 | E2E | `packages/clay_cli/e2e/` | Full CLI invocations |
-| Extension | `extensions/clay/` | Compile + smoke tests |
+| Unit | `extensions/clay/test/` | Fast mocked module tests (`pnpm test`) |
+| E2E | `extensions/clay/e2e/` | Extension Development Host integration (`pnpm test:e2e`) |
 
 ---
 
