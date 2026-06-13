@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "name": "sample-brick",
+      "path": "."
+    },
+    {
+      "name": "clay",
+      "path": "../../../../../"
+    }
+  ],
+  "settings": {
+    "clay.cliPath": "/Users/mrverdant13/Desktop/Workspaces/Personal/clay/extensions/clay/e2e/fixtures/sample-brick/tools/clay.sh"
+  }
+}

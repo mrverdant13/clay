@@ -277,6 +277,7 @@
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationConfig.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/clayConfig.test.mjs test/brickScope.test.mjs test/clayCli.test.mjs test/previewRunner.test.mjs test/brickVariables.test.mjs test/previewFileVariables.test.mjs test/previewVariableState.test.mjs test/rangeUtils.test.mjs test/supportedFiles.test.mjs test/highlighting.test.mjs test/blockFolding.test.mjs test/annotationConfigReader.test.mjs test/variableQuickPick.test.mjs test/previewCommand.test.mjs test/annotationHighlighting.test.mjs",
+    "test:e2e": "pnpm run compile && node test/build-helpers.mjs && vscode-test --label integration",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
   },
@@ -286,8 +287,12 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/vscode": "1.85.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.2.1",
     "esbuild": "^0.24.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   }
 }
