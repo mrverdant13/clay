@@ -38,4 +38,4 @@ jobs:
       - name: Run extension unit tests
         run: pnpm test
       - name: Run extension integration tests
-        run: pnpm test:e2e
+        run: xvfb-run -a pnpm test:e2e

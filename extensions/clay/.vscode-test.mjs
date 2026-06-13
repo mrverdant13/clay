@@ -41,6 +41,7 @@ export default defineConfig({
   extensionDevelopmentPath: extensionRoot,
   launchArgs: [
     '--disable-extensions',
+    '--disable-gpu',
     '--disable-workspace-trust',
     '--user-data-dir=/tmp/clay-vsc-test',
   ],
