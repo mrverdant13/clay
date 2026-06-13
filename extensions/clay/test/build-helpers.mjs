@@ -1,130 +1,35 @@
 import * as esbuild from 'esbuild';
-import { dirname, join } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const srcDir = join(extensionRoot, 'src');
 
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/annotationColors.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/annotationColors.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
+const skipModules = new Set(['extension']);
 
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/annotationConfig.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/annotationConfig.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
+function usesVscodeRuntime(source) {
+  return /import\s+\*\s+as\s+vscode\s+from\s+['"]vscode['"]/.test(source)
+    || /import\s+(?!type\s)\{[^}]+\}\s+from\s+['"]vscode['"]/.test(source);
+}
 
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/annotationBlockPairing.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/annotationBlockPairing.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
+const moduleNames = readdirSync(srcDir)
+  .filter((entry) => entry.endsWith('.ts'))
+  .map((entry) => basename(entry, '.ts'))
+  .filter((name) => !skipModules.has(name))
+  .sort();
 
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/annotationMarkerSets.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/annotationMarkerSets.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
+for (const moduleName of moduleNames) {
+  const sourcePath = join(srcDir, `${moduleName}.ts`);
+  const source = readFileSync(sourcePath, 'utf8');
+  const external = usesVscodeRuntime(source) ? ['vscode'] : [];
 
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/clayConfig.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/clayConfig.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/brickScope.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/brickScope.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/workspaceClayScript.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/workspaceClayScript.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/previewRunner.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/previewRunner.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/brickVariables.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/brickVariables.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/previewFileVariables.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/previewFileVariables.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-await esbuild.build({
-  entryPoints: [join(extensionRoot, 'src/previewVariableState.ts')],
-  bundle: true,
-  outfile: join(extensionRoot, 'test/out/previewVariableState.cjs'),
-  format: 'cjs',
-  platform: 'node',
-  external: [],
-});
-
-const vscodeExternalBundles = [
-  'rangeUtils',
-  'supportedFiles',
-  'insertHighlighting',
-  'removeHighlighting',
-  'replaceHighlighting',
-  'partialHighlighting',
-  'spacingHighlighting',
-  'blockFolding',
-  'annotationHighlighting',
-  'annotationConfigReader',
-  'variableQuickPick',
-  'previewCommand',
-];
-
-for (const moduleName of vscodeExternalBundles) {
   await esbuild.build({
-    entryPoints: [join(extensionRoot, `src/${moduleName}.ts`)],
+    entryPoints: [sourcePath],
     bundle: true,
     outfile: join(extensionRoot, `test/out/${moduleName}.cjs`),
     format: 'cjs',
     platform: 'node',
-    external: ['vscode'],
+    external,
   });
 }

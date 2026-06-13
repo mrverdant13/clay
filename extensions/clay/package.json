@@ -276,7 +276,7 @@
   "scripts": {
     "compile": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
-    "test": "node test/build-helpers.mjs && node --test test/smoke.test.mjs test/annotationConfig.test.mjs test/annotationPairing.test.mjs test/mustacheHighlighting.test.mjs test/clayConfig.test.mjs test/brickScope.test.mjs test/clayCli.test.mjs test/previewRunner.test.mjs test/brickVariables.test.mjs test/previewFileVariables.test.mjs test/previewVariableState.test.mjs test/rangeUtils.test.mjs test/supportedFiles.test.mjs test/highlighting.test.mjs test/blockFolding.test.mjs test/annotationConfigReader.test.mjs test/variableQuickPick.test.mjs test/previewCommand.test.mjs test/annotationHighlighting.test.mjs",
+    "test": "node test/build-helpers.mjs && node --test test/*.test.mjs",
     "test:e2e": "pnpm run compile && node test/build-helpers.mjs && vscode-test --label integration",
     "package": "pnpm run compile && vsce package --no-dependencies",
     "vscode:prepublish": "pnpm run compile"
