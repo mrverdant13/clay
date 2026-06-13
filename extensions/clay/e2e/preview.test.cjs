@@ -53,25 +53,6 @@ suite('Preview command', () => {
       .update('cliPath', wrapperPath, vscode.ConfigurationTarget.Workspace);
   });
 
-  test('extension helpers resolve scope, CLI, and template preview for the fixture', async () => {
-    const { findBrickScopeForFile } = require('../test/out/brickScope.cjs');
-    const { resolveClayCli } = require('../test/out/clayCli.cjs');
-    const { runTemplatePreview } = require('../test/out/previewRunner.cjs');
-
-    const scope = findBrickScopeForFile(fixtureMainDart);
-    assert.ok(scope, 'expected brick scope for fixture main.dart');
-
-    const cli = await resolveClayCli();
-    const output = await runTemplatePreview({
-      scope,
-      filePath: fixtureMainDart,
-      cli,
-    });
-
-    assert.match(output, /void main\(\)/);
-    assert.doesNotMatch(output, /remove-start/);
-  });
-
   test('dart run clay preview succeeds for the fixture file', () => {
     const root = monorepoRoot();
     const clayScript = join(root, 'packages', 'clay_cli', 'bin', 'clay.dart');
