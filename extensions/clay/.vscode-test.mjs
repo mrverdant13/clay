@@ -60,7 +60,8 @@ export default defineConfig([
     launchArgs: [
       ...baseLaunchArgs,
       '--disable-workspace-trust',
-      '--user-data-dir=/tmp/clay-vsc-test',
+      '--user-data-dir',
+      join(tmpdir(), 'clay-vsc-test'),
     ],
   },
   {
