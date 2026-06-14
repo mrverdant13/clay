@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import {
@@ -11,19 +12,26 @@ import {
 } from './vscode-mock.mjs';
 
 const {
+  configuration,
+  executedCommands,
   mockVscode,
+  openedDocuments,
   registeredCommands,
   warningMessages,
-  executedCommands,
 } = installVscodeMock();
 
 const require = createRequire(import.meta.url);
+const { CLAY_CLI_SCRIPT_RELATIVE_PATH } = require('./out/workspaceClayScript.cjs');
 const {
   PREVIEW_GENERATED_COMMAND_ID,
   PREVIEW_TEMPLATE_COMMAND_ID,
   ensureWorkspaceTrustedForPreview,
   registerPreviewCommands,
 } = require('./out/previewCommand.cjs');
+
+const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = join(extensionRoot, '..', '..');
+const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
 
 registerPreviewCommands({ subscriptions: [] });
 
@@ -40,8 +48,25 @@ assert.equal(typeof generatedHandler, 'function');
 function resetMockState() {
   warningMessages.length = 0;
   executedCommands.length = 0;
+  openedDocuments.length = 0;
+  configuration.clear();
   mockVscode.window.activeTextEditor = undefined;
   mockVscode.workspace.workspaceFolders = undefined;
+}
+
+/** Creates an executable wrapper that runs the workspace `clay.dart` script. */
+function createClayCliWrapper() {
+  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-wrapper-'));
+  const wrapperPath = join(wrapperDir, 'clay.sh');
+  writeFileSync(
+    wrapperPath,
+    `#!/usr/bin/env bash
+set -euo pipefail
+exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
+`,
+    { mode: 0o755 },
+  );
+  return { wrapperDir, wrapperPath };
 }
 
 function createPreviewFixture({
