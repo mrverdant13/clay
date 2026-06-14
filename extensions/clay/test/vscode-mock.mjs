@@ -223,7 +223,12 @@ export function installVscodeMock(overrides = {}) {
     workspace: {
       workspaceFolders: undefined,
       getConfiguration: (section) => ({
-        get: (key, defaultValue) => configuration.get(`${section}.${key}`, defaultValue),
+        get: (key, defaultValue) => {
+          const fullKey = `${section}.${key}`;
+          return configuration.has(fullKey)
+            ? configuration.get(fullKey)
+            : defaultValue;
+        },
         update: async (key, value) => {
           configuration.set(`${section}.${key}`, value);
         },
