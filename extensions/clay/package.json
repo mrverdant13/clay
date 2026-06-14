@@ -20,6 +20,15 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Clay preview commands execute the CLI against workspace files. Syntax highlighting, folding, and annotation decorations work in Restricted Mode.",
+      "restrictedConfigurations": [
+        "clay.cliPath"
+      ]
+    }
+  },
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -38,12 +47,12 @@
       "editor/context": [
         {
           "command": "clay.previewTemplate",
-          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore",
+          "when": "(editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore) && isWorkspaceTrusted",
           "group": "clay@1"
         },
         {
           "command": "clay.previewGenerated",
-          "when": "editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore",
+          "when": "(editorLangId == dart || editorLangId == shellscript || editorLangId == yaml || editorLangId == html || editorLangId == xml || editorLangId == markdown || editorLangId == ignore) && isWorkspaceTrusted",
           "group": "clay@2"
         }
       ]
