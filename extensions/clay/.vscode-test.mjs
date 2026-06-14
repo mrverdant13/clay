@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { defineConfig } from '@vscode/test-cli';
 import { fileURLToPath } from 'node:url';
@@ -27,24 +28,18 @@ function resolvePathEnv() {
   return [...new Set(filtered)].join(':');
 }
 
-export default defineConfig({
-  label: 'integration',
-  files: 'e2e/**/*.test.cjs',
+const workspaceFolder = join(
+  extensionRoot,
+  'e2e',
+  'fixtures',
+  'sample-brick',
+  'sample-brick.code-workspace',
+);
+
+const shared = {
   version: '1.85.2',
-  workspaceFolder: join(
-    extensionRoot,
-    'e2e',
-    'fixtures',
-    'sample-brick',
-    'sample-brick.code-workspace',
-  ),
+  workspaceFolder,
   extensionDevelopmentPath: extensionRoot,
-  launchArgs: [
-    '--disable-extensions',
-    '--disable-gpu',
-    '--disable-workspace-trust',
-    '--user-data-dir=/tmp/clay-vsc-test',
-  ],
   env: {
     ...process.env,
     PATH: resolvePathEnv(),
@@ -53,4 +48,49 @@ export default defineConfig({
     ui: 'tdd',
     timeout: 120_000,
   },
-});
+};
+
+const baseLaunchArgs = ['--disable-extensions', '--disable-gpu'];
+
+export default defineConfig([
+  {
+    label: 'integration',
+    files: 'e2e/*.test.cjs',
+    ...shared,
+    launchArgs: [
+      ...baseLaunchArgs,
+      '--disable-workspace-trust',
+      '--user-data-dir',
+      join(tmpdir(), 'clay-vsc-test'),
+    ],
+  },
+  {
+    label: 'trustedWorkspaceTests',
+    files: 'e2e/trust/trusted.test.cjs',
+    ...shared,
+    launchArgs: [
+      ...baseLaunchArgs,
+      '--disable-workspace-trust',
+      '--user-data-dir',
+      join(tmpdir(), 'clay-vsc-trusted-test'),
+    ],
+  },
+  {
+    label: 'untrustedWorkspaceTests',
+    files: 'e2e/trust/untrusted.test.cjs',
+    ...shared,
+    env: {
+      ...shared.env,
+      CLAY_E2E_SIMULATE_UNTRUSTED: '1',
+    },
+    mocha: {
+      ...shared.mocha,
+      require: join(extensionRoot, 'e2e', 'helpers', 'trust-preload.cjs'),
+    },
+    launchArgs: [
+      ...baseLaunchArgs,
+      '--user-data-dir',
+      join(tmpdir(), 'clay-vsc-untrusted-test'),
+    ],
+  },
+]);
