@@ -18,6 +18,19 @@ import { collectPreviewVariableValues } from './variableQuickPick';
 export const PREVIEW_TEMPLATE_COMMAND_ID = 'clay.previewTemplate';
 export const PREVIEW_GENERATED_COMMAND_ID = 'clay.previewGenerated';
 
+const UNTRUSTED_WORKSPACE_MESSAGE =
+  'Clay preview requires a trusted workspace because it runs the CLI against workspace files.';
+
+/** Returns false when preview commands must not run in Restricted Mode. */
+export function ensureWorkspaceTrustedForPreview(): boolean {
+  if (vscode.workspace.isTrusted) {
+    return true;
+  }
+
+  void vscode.window.showWarningMessage(UNTRUSTED_WORKSPACE_MESSAGE);
+  return false;
+}
+
 /** Registers preview commands. */
 export function registerPreviewCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -42,6 +55,10 @@ async function previewGeneratedOutput(
 ): Promise<void> {
   const document = await resolveTargetDocument(uri);
   if (!document) {
+    return;
+  }
+
+  if (!ensureWorkspaceTrustedForPreview()) {
     return;
   }
 
@@ -131,6 +148,10 @@ async function previewGeneratedOutput(
 async function previewTemplateOutput(uri?: vscode.Uri): Promise<void> {
   const document = await resolveTargetDocument(uri);
   if (!document) {
+    return;
+  }
+
+  if (!ensureWorkspaceTrustedForPreview()) {
     return;
   }
 
