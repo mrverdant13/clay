@@ -191,6 +191,46 @@ test('template preview warns when the workspace is not trusted', async () => {
   }
 });
 
+test('template preview opens a diff document on success', async () => {
+  resetMockState();
+  const { wrapperDir, wrapperPath } = createClayCliWrapper();
+  configuration.set('clay.cliPath', wrapperPath);
+
+  const fileContent = [
+    'void main() {',
+    '  /*remove-start*/',
+    '  print("scaffold");',
+    '  /*remove-end*/',
+    '}',
+    '',
+  ].join('\n');
+  const fixture = createPreviewFixture({ fileContent });
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      fileContent,
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 0);
+
+    const previewDocumentEntry = openedDocuments.find((entry) => entry.kind === 'content');
+    assert.ok(previewDocumentEntry, 'expected preview content document to open');
+    assert.match(previewDocumentEntry.document.getText(), /void main\(\)/);
+    assert.doesNotMatch(previewDocumentEntry.document.getText(), /remove-start/);
+
+    const diffCommand = executedCommands.find((entry) => entry.command === 'vscode.diff');
+    assert.ok(diffCommand, 'expected vscode.diff command to run');
+    assert.equal(diffCommand.args[0], mockVscode.window.activeTextEditor.document.uri);
+    assert.equal(diffCommand.args[1], previewDocumentEntry.document.uri);
+    assert.match(String(diffCommand.args[2]), /Template preview: main\.dart/);
+  } finally {
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+    rmSync(wrapperDir, { recursive: true, force: true });
+  }
+});
+
 test('ensureWorkspaceTrustedForPreview returns false in Restricted Mode', () => {
   resetMockState();
   mockVscode.workspace.isTrusted = false;
