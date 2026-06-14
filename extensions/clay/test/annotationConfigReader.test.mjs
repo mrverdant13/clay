@@ -4,7 +4,8 @@ import { test } from 'node:test';
 
 import { installVscodeMock } from './vscode-mock.mjs';
 
-const { mockVscode } = installVscodeMock();
+const { mockVscode, configuration } = installVscodeMock();
+const builtInGetConfiguration = mockVscode.workspace.getConfiguration;
 
 const require = createRequire(import.meta.url);
 const { readAnnotationConfig } = require('./out/annotationConfigReader.cjs');
@@ -27,6 +28,17 @@ test('readAnnotationConfig returns defaults when settings are unset', () => {
   });
 
   const config = readAnnotationConfig();
+  assert.equal(config.spacing.markerForeground, '#A0A1A7');
+  assert.equal(config.mustache.tagForeground, '#C678DD');
+});
+
+test('readAnnotationConfig uses built-in mock defaults when settings are unset', () => {
+  configuration.clear();
+  mockVscode.workspace.getConfiguration = builtInGetConfiguration;
+
+  const config = readAnnotationConfig();
+
+  assert.equal(config.remove.markerForeground, '#F48771');
   assert.equal(config.spacing.markerForeground, '#A0A1A7');
   assert.equal(config.mustache.tagForeground, '#C678DD');
 });

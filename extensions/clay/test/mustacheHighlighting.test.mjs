@@ -1,31 +1,49 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 
-const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+import {
+  createMockEditor,
+  defaultAnnotationConfig,
+  installVscodeMock,
+  rangesText,
+} from './vscode-mock.mjs';
 
-test('mustache tag body regex rejects empty tags', () => {
-  const source = readFileSync(
-    join(extensionRoot, 'src/mustachePatterns.ts'),
-    'utf8',
-  );
-  const patternMatch = source.match(
-    /export const MUSTACHE_TAG_PATTERN = String\.raw`([^`]+)`;/,
-  );
-  assert.ok(patternMatch, 'MUSTACHE_TAG_PATTERN not found');
+installVscodeMock();
 
-  const replaceMatch = source.match(
-    /MUSTACHE_TAG_PATTERN\.replace\('([^']+)', '([^']+)'\)/,
-  );
-  assert.ok(replaceMatch, 'MUSTACHE_TAG_BODY_REGEX replace not found');
+const require = createRequire(import.meta.url);
+const { refreshMustacheHighlights } = require('./out/mustacheHighlighting.cjs');
 
-  const regex = new RegExp(
-    patternMatch[1].replace(replaceMatch[1], replaceMatch[2]),
-    'g',
-  );
+test('refreshMustacheHighlights decorates mustache tags inside block comments', () => {
+  const text = 'before /*{{name}}*/ after';
+  const editor = createMockEditor(text);
 
-  assert.equal('{{}}'.match(regex), null);
-  assert.match('{{#foo}}', regex);
+  refreshMustacheHighlights(editor, defaultAnnotationConfig);
+
+  assert.equal(editor.decorationCalls.length, 3);
+  assert.deepEqual(rangesText(editor.document, editor.decorationCalls, 1), ['{{name}}']);
+});
+
+test('refreshMustacheHighlights ignores empty mustache tags', () => {
+  const text = '/*{{}}*/ valid /*{{#foo}}*/';
+  const editor = createMockEditor(text);
+
+  refreshMustacheHighlights(editor, defaultAnnotationConfig);
+
+  const tagSpans = rangesText(editor.document, editor.decorationCalls, 1);
+  assert.deepEqual(tagSpans, ['{{#foo}}']);
+});
+
+test('refreshMustacheHighlights clears decorations for unsupported files', () => {
+  const editor = createMockEditor('/*{{name}}*/', '/project/notes.txt');
+
+  refreshMustacheHighlights(editor, defaultAnnotationConfig);
+  assert.equal(editor.decorationCalls.length, 3);
+
+  editor.decorationCalls.length = 0;
+  refreshMustacheHighlights(editor, defaultAnnotationConfig);
+
+  for (const call of editor.decorationCalls) {
+    assert.deepEqual(call.ranges, []);
+  }
 });

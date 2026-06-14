@@ -27,11 +27,38 @@ class FoldingRange {
   }
 }
 
+class Uri {
+  /** @param {string} fsPath @param {string} [scheme] */
+  constructor(fsPath, scheme = 'file') {
+    this.scheme = scheme;
+    this.fsPath = fsPath;
+    this.path = fsPath;
+  }
+
+  /** @param {string} fsPath */
+  static file(fsPath) {
+    return new Uri(fsPath);
+  }
+
+  /** @param {string} value */
+  static parse(value) {
+    if (value.startsWith('file://')) {
+      return new Uri(value.slice('file://'.length));
+    }
+    return new Uri(value);
+  }
+
+  toString() {
+    return `${this.scheme}://${this.fsPath}`;
+  }
+}
+
 /**
  * @param {string} text
  * @param {string} [fileName]
+ * @param {{ isDirty?: boolean, saveResult?: boolean }} [options]
  */
-export function createMockDocument(text, fileName = '/project/lib/main.dart') {
+export function createMockDocument(text, fileName = '/project/lib/main.dart', options = {}) {
   const lines = text.split('\n');
   const lineStarts = [];
   let offset = 0;
@@ -40,11 +67,20 @@ export function createMockDocument(text, fileName = '/project/lib/main.dart') {
     offset += line.length + 1;
   }
 
+  const uri = Uri.file(fileName);
+  let isDirty = options.isDirty ?? false;
+  const saveResult = options.saveResult ?? true;
+
   return {
     fileName,
     languageId: 'dart',
-    uri: { toString: () => `file://${fileName}` },
-    isDirty: false,
+    uri,
+    get isDirty() {
+      return isDirty;
+    },
+    set isDirty(value) {
+      isDirty = value;
+    },
   /** @param {Range} [range] */
     getText(range) {
       if (range === undefined) {
@@ -95,14 +131,18 @@ export function createMockDocument(text, fileName = '/project/lib/main.dart') {
       };
     },
     async save() {
+      if (!saveResult) {
+        return false;
+      }
+      isDirty = false;
       return true;
     },
   };
 }
 
-/** @param {string} text @param {string} [fileName] */
-export function createMockEditor(text, fileName) {
-  const document = createMockDocument(text, fileName);
+/** @param {string} text @param {string} [fileName] @param {{ isDirty?: boolean, saveResult?: boolean }} [options] */
+export function createMockEditor(text, fileName, options) {
+  const document = createMockDocument(text, fileName, options);
   const decorationCalls = [];
 
   return {
@@ -126,6 +166,25 @@ export function rangesText(document, calls, index) {
   });
 }
 
+/** @param {Record<string, unknown>} [initial] */
+export function createMockExtensionContext(initial = {}) {
+  const state = new Map(Object.entries(initial));
+  const subscriptions = [];
+
+  return {
+    subscriptions,
+    globalState: {
+      get(key) {
+        return state.get(key);
+      },
+      async update(key, value) {
+        state.set(key, value);
+      },
+    },
+    _state: state,
+  };
+}
+
 /**
  * Installs a minimal `vscode` module mock for compiled extension helpers.
  * @param {Record<string, unknown>} [overrides]
@@ -134,8 +193,13 @@ export function installVscodeMock(overrides = {}) {
   const foldingProviders = [];
   const registeredCommands = [];
   const subscriptions = [];
+  const warningMessages = [];
+  const executedCommands = [];
+  const openedDocuments = [];
+  const configuration = new Map();
 
   const mockVscode = {
+    Uri,
     Range,
     Position,
     FoldingRange,
@@ -150,25 +214,52 @@ export function installVscodeMock(overrides = {}) {
       onDidChangeActiveTextEditor: () => ({ dispose: () => {} }),
       showQuickPick: async () => undefined,
       showInputBox: async () => undefined,
-      showWarningMessage: () => {},
+      showWarningMessage: (message) => {
+        warningMessages.push(message);
+      },
       showErrorMessage: () => {},
       withProgress: async (_options, task) => task(),
     },
     workspace: {
-      getConfiguration: () => ({
-        get: (_key, defaultValue) => defaultValue,
+      workspaceFolders: undefined,
+      getConfiguration: (section) => ({
+        get: (key, defaultValue) => {
+          const fullKey = `${section}.${key}`;
+          return configuration.has(fullKey)
+            ? configuration.get(fullKey)
+            : defaultValue;
+        },
+        update: async (key, value) => {
+          configuration.set(`${section}.${key}`, value);
+        },
       }),
       onDidChangeConfiguration: () => ({ dispose: () => {} }),
       onDidChangeTextDocument: () => ({ dispose: () => {} }),
       onDidOpenTextDocument: () => ({ dispose: () => {} }),
-      openTextDocument: async (uri) => uri,
+      openTextDocument: async (target) => {
+        if (typeof target === 'string' || target instanceof Uri) {
+          const uri = typeof target === 'string' ? Uri.parse(target) : target;
+          const document = createMockDocument('', uri.fsPath);
+          openedDocuments.push({ kind: 'uri', uri, document });
+          return document;
+        }
+
+        const document = createMockDocument(target.content ?? '', 'untitled:preview', {
+          isDirty: false,
+        });
+        document.languageId = target.language ?? 'dart';
+        openedDocuments.push({ kind: 'content', target, document });
+        return document;
+      },
     },
     commands: {
       registerCommand: (id, handler) => {
         registeredCommands.push({ id, handler });
         return { dispose: () => {} };
       },
-      executeCommand: async () => {},
+      executeCommand: async (command, ...args) => {
+        executedCommands.push({ command, args });
+      },
     },
     languages: {
       registerFoldingRangeProvider: (_selector, provider) => {
@@ -204,6 +295,10 @@ export function installVscodeMock(overrides = {}) {
     foldingProviders,
     registeredCommands,
     subscriptions,
+    warningMessages,
+    executedCommands,
+    openedDocuments,
+    configuration,
   };
 }
 

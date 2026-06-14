@@ -1,10 +1,21 @@
 import assert from 'node:assert/strict';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 
-import { installVscodeMock } from './vscode-mock.mjs';
+import {
+  createMockEditor,
+  installVscodeMock,
+} from './vscode-mock.mjs';
 
-const { registeredCommands } = installVscodeMock();
+const {
+  mockVscode,
+  registeredCommands,
+  warningMessages,
+  executedCommands,
+} = installVscodeMock();
 
 const require = createRequire(import.meta.url);
 const {
@@ -14,6 +25,49 @@ const {
 } = require('./out/previewCommand.cjs');
 
 registerPreviewCommands({ subscriptions: [] });
+
+const templateHandler = registeredCommands.find(
+  (entry) => entry.id === PREVIEW_TEMPLATE_COMMAND_ID,
+)?.handler;
+const generatedHandler = registeredCommands.find(
+  (entry) => entry.id === PREVIEW_GENERATED_COMMAND_ID,
+)?.handler;
+
+assert.equal(typeof templateHandler, 'function');
+assert.equal(typeof generatedHandler, 'function');
+
+function resetMockState() {
+  warningMessages.length = 0;
+  executedCommands.length = 0;
+  mockVscode.window.activeTextEditor = undefined;
+  mockVscode.workspace.workspaceFolders = undefined;
+}
+
+function createPreviewFixture({
+  fileContent = [
+    'void main() {',
+    '  /*remove-start*/',
+    '  print("scaffold");',
+    '  /*remove-end*/',
+    '}',
+    '',
+  ].join('\n'),
+} = {}) {
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-preview-command-'));
+  const referenceDir = join(tempDir, 'reference');
+  const nestedDir = join(referenceDir, 'lib');
+  mkdirSync(nestedDir, { recursive: true });
+
+  writeFileSync(
+    join(tempDir, 'clay.yaml'),
+    'reference: reference\ntarget: brick/__brick__\n',
+  );
+
+  const filePath = join(nestedDir, 'main.dart');
+  writeFileSync(filePath, fileContent);
+
+  return { tempDir, filePath };
+}
 
 test('preview command ids match package.json contributions', () => {
   assert.equal(PREVIEW_TEMPLATE_COMMAND_ID, 'clay.previewTemplate');
@@ -26,6 +80,63 @@ test('registerPreviewCommands wires template and generated handlers', () => {
     PREVIEW_TEMPLATE_COMMAND_ID,
     PREVIEW_GENERATED_COMMAND_ID,
   ]);
-  assert.equal(typeof registeredCommands[0].handler, 'function');
-  assert.equal(typeof registeredCommands[1].handler, 'function');
+});
+
+test('template preview warns for unsupported reference files', async () => {
+  resetMockState();
+  mockVscode.window.activeTextEditor = createMockEditor('notes', '/project/readme.txt');
+
+  await templateHandler();
+
+  assert.equal(warningMessages.length, 1);
+  assert.match(
+    warningMessages[0],
+    /Clay preview is only available for supported reference files/,
+  );
+  assert.equal(executedCommands.length, 0);
+});
+
+test('template preview warns when no brick scope is found', async () => {
+  resetMockState();
+  const tempDir = mkdtempSync(join(tmpdir(), 'clay-preview-command-'));
+  try {
+    const filePath = join(tempDir, 'lib', 'main.dart');
+    mkdirSync(dirname(filePath), { recursive: true });
+    writeFileSync(filePath, 'void main() {}');
+    mockVscode.window.activeTextEditor = createMockEditor('void main() {}', filePath);
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 1);
+    assert.match(
+      warningMessages[0],
+      /Could not find a brick scope \(clay.yaml\) for this file/,
+    );
+    assert.equal(executedCommands.length, 0);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('template preview returns early when the document is not saved', async () => {
+  resetMockState();
+  const fixture = createPreviewFixture();
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      'void main() {}',
+      fixture.filePath,
+      { isDirty: true, saveResult: false },
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 1);
+    assert.match(
+      warningMessages[0],
+      /Save the file before previewing template output/,
+    );
+    assert.equal(executedCommands.length, 0);
+  } finally {
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
 });
