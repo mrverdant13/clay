@@ -221,6 +221,7 @@ export function installVscodeMock(overrides = {}) {
       withProgress: async (_options, task) => task(),
     },
     workspace: {
+      isTrusted: true,
       workspaceFolders: undefined,
       getConfiguration: (section) => ({
         get: (key, defaultValue) => {

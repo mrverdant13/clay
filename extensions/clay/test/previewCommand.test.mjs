@@ -21,6 +21,7 @@ const require = createRequire(import.meta.url);
 const {
   PREVIEW_GENERATED_COMMAND_ID,
   PREVIEW_TEMPLATE_COMMAND_ID,
+  ensureWorkspaceTrustedForPreview,
   registerPreviewCommands,
 } = require('./out/previewCommand.cjs');
 
@@ -139,4 +140,42 @@ test('template preview returns early when the document is not saved', async () =
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
+});
+
+test('template preview warns when the workspace is not trusted', async () => {
+  resetMockState();
+  const fixture = createPreviewFixture();
+  mockVscode.workspace.isTrusted = false;
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      'void main() {}',
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 1);
+    assert.match(
+      warningMessages[0],
+      /Clay preview requires a trusted workspace/,
+    );
+    assert.equal(executedCommands.length, 0);
+  } finally {
+    mockVscode.workspace.isTrusted = true;
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
+});
+
+test('ensureWorkspaceTrustedForPreview returns false in Restricted Mode', () => {
+  resetMockState();
+  mockVscode.workspace.isTrusted = false;
+
+  assert.equal(ensureWorkspaceTrustedForPreview(), false);
+  assert.equal(warningMessages.length, 1);
+  assert.match(
+    warningMessages[0],
+    /Clay preview requires a trusted workspace/,
+  );
+
+  mockVscode.workspace.isTrusted = true;
 });
