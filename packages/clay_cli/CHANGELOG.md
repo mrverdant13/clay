@@ -1,4 +1,4 @@
-## 0.0.1
+## 0.0.1-dev.1
 
 - **FEAT**: `--config`, `--cwd`, `--verbose`, and `--version` global flags (#20).
 - **FEAT**: `clay gen` generates a Mason template from the reference project (#21).
