@@ -172,6 +172,58 @@ docs: document clay.yaml fields in README
 
 ---
 
+## Release tagging
+
+Published packages in this monorepo are tagged **independently** — one git tag per package release, created **after** the artifact is live (pub.dev or Visual Studio Marketplace).
+
+### Format
+
+```
+<scope>/<version>
+```
+
+- **`<scope>`** — same scope names as [commit conventions](#scopes) (`clay_core`, `clay_cli`, `clay_vsc_extension`).
+- **`<version>`** — exact version string from the package manifest (`pubspec.yaml` or `extensions/clay/package.json`). No `v` prefix.
+
+### Examples
+
+```
+clay_core/0.0.1-dev.1
+clay_cli/0.0.2
+clay_vsc_extension/0.1.2
+```
+
+### Rules
+
+- Tag the merge commit that contains the version bump for that package.
+- The tag version must match the published artifact version exactly.
+- Create an **annotated** tag with a short message naming the package and version.
+- Do not tag before a successful publish — failed publishes should not leave orphan tags.
+- One package per release PR; only tag the package that was published in that PR.
+
+### Commands
+
+After `clay_core` `0.0.1-dev.1` is live on pub.dev:
+
+```bash
+git tag -a clay_core/0.0.1-dev.1 -m "clay_core 0.0.1-dev.1"
+git push origin clay_core/0.0.1-dev.1
+```
+
+List tags for a package:
+
+```bash
+git tag -l 'clay_cli/*'
+```
+
+Checkout a release:
+
+```bash
+git checkout clay_core/0.0.1-dev.1
+```
+
+---
+
 ## Pull request guidelines
 
 - Keep PRs **atomic and reviewable** — one logical change per PR.
