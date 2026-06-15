@@ -57,15 +57,15 @@ function resetMockState() {
 /** Creates an executable wrapper that runs the workspace `clay.dart` script. */
 function createClayCliWrapper() {
   const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-wrapper-'));
-  const wrapperPath = join(wrapperDir, 'clay.sh');
-  writeFileSync(
-    wrapperPath,
-    `#!/usr/bin/env bash
+  const isWindows = process.platform === 'win32';
+  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
+  const wrapperContent = isWindows
+    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
+    : `#!/usr/bin/env bash
 set -euo pipefail
 exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
-`,
-    { mode: 0o755 },
-  );
+`;
+  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
   return { wrapperDir, wrapperPath };
 }
 
