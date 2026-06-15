@@ -71,7 +71,7 @@ During monorepo development, open the clay repository (or any workspace that inc
 After `clay_cli` is published to pub.dev:
 
 ```bash
-dart pub global activate clay_cli
+dart install clay_cli
 ```
 
 Ensure the pub-cache `bin` directory is on your `PATH`, or set `clay.cliPath` to the absolute path of the `clay` executable.
@@ -98,13 +98,13 @@ Preview commands and scope-dependent features require a valid brick scope. If a 
 
 Annotation highlighting, folding, shading, and preview commands apply to:
 
-| Kind | Extensions / names |
-| --- | --- |
-| Dart | `.dart` |
-| Shell | `.sh` |
-| YAML | `.yaml`, `.yml` |
-| HTML / XML | `.html`, `.htm`, `.xml` |
-| Markdown | `.md`, `.markdown` |
+| Kind         | Extensions / names            |
+| ------------ | ----------------------------- |
+| Dart         | `.dart`                       |
+| Shell        | `.sh`                         |
+| YAML         | `.yaml`, `.yml`               |
+| HTML / XML   | `.html`, `.htm`, `.xml`       |
+| Markdown     | `.md`, `.markdown`            |
 | Ignore files | `.gitignore`, `.dockerignore` |
 
 Three comment flavors are supported equivalently: C-style (`/* … */`), hash (`# … #`), and HTML (`<!-- … -->`). See [`doc/annotations.md`](../../doc/annotations.md) for marker syntax.
@@ -113,10 +113,10 @@ Three comment flavors are supported equivalently: C-style (`/* … */`), hash (`
 
 Both commands are available from the editor context menu (right-click) and the Command Palette under the **Clay** category. The active file must be saved before a preview runs.
 
-| Command | CLI equivalent | Description |
-| --- | --- | --- |
-| **Clay: Preview template output** | `clay preview --template-only --file …` | Applies `clay.yaml` transforms and annotation resolution. Mustache tags remain in the output. |
-| **Clay: Preview generated output** | `clay preview --vars … --file …` | Full Mason rendering. Prompts for brick variables (from `brick.yaml`) and file-level Mustache variables, then shows a diff against the saved reference file. |
+| Command                            | CLI equivalent                          | Description                                                                                                                                                  |
+| ---------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Clay: Preview template output**  | `clay preview --template-only --file …` | Applies `clay.yaml` transforms and annotation resolution. Mustache tags remain in the output.                                                                |
+| **Clay: Preview generated output** | `clay preview --vars … --file …`        | Full Mason rendering. Prompts for brick variables (from `brick.yaml`) and file-level Mustache variables, then shows a diff against the saved reference file. |
 
 Generated preview remembers variable values per brick scope for the current VS Code session.
 
@@ -131,31 +131,31 @@ Generated preview remembers variable values per brick scope for the current VS C
 
 ## Settings
 
-| Setting | Description |
-| --- | --- |
+| Setting        | Description                                                                                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `clay.cliPath` | Path to the `clay` executable. When empty, the extension searches `PATH`, the Dart install bin directory, the pub-cache bin directory, and the workspace `packages/clay_cli` script. |
 
 ### Annotation colors
 
 Block shading and marker foreground colors are configurable under `clay.colors.*`. Values accept any CSS color string (hex, `rgb()`, `rgba()`, etc.). Changes apply immediately without reloading the window.
 
-| Setting | Default | Applies to |
-| --- | --- | --- |
-| `clay.colors.remove.markerForeground` | `#F48771` | Remove, drop, and remove-boundary markers |
-| `clay.colors.remove.contentBackground` | `rgba(244, 135, 113, 0.14)` | Content removed at generation time |
-| `clay.colors.replace.boundaryMarkerForeground` | `#E5A84B` | `replace-start` and `replace-end` markers |
-| `clay.colors.replace.withMarkerForeground` | `#4EC9B0` | `with` marker inside replace blocks |
-| `clay.colors.replace.originalBackground` | `rgba(229, 168, 75, 0.14)` | Scaffold content replaced at generation time |
-| `clay.colors.replace.replacementBackground` | `rgba(78, 201, 176, 0.14)` | Replacement content kept after generation |
-| `clay.colors.insert.markerForeground` | `#C586C0` | Insert-block boundary markers |
-| `clay.colors.insert.contentBackground` | `rgba(197, 134, 192, 0.14)` | Content inserted at generation time |
-| `clay.colors.partial.markerForeground` | `#569CD6` | Partial-block boundary markers |
-| `clay.colors.partial.payloadBackground` | `rgba(86, 156, 214, 0.14)` | Partial payload extracted to a `.partial` file |
-| `clay.colors.mustache.tagForeground` | `#C678DD` | Mustache variable tags in annotation comments |
-| `clay.colors.mustache.commentBackground` | `rgba(198, 120, 221, 0.10)` | Mustache tag spans in annotation comments |
-| `clay.colors.mustache.dropFlagForeground` | `#F48771` | `x` whitespace-control flags on Mustache tags |
-| `clay.colors.spacing.markerForeground` | `#A0A1A7` | Spacing-group (`w … w`) markers |
-| `clay.colors.spacing.markerBackground` | `rgba(160, 161, 167, 0.12)` | Spacing-group marker spans |
+| Setting                                        | Default                     | Applies to                                     |
+| ---------------------------------------------- | --------------------------- | ---------------------------------------------- |
+| `clay.colors.remove.markerForeground`          | `#F48771`                   | Remove, drop, and remove-boundary markers      |
+| `clay.colors.remove.contentBackground`         | `rgba(244, 135, 113, 0.14)` | Content removed at generation time             |
+| `clay.colors.replace.boundaryMarkerForeground` | `#E5A84B`                   | `replace-start` and `replace-end` markers      |
+| `clay.colors.replace.withMarkerForeground`     | `#4EC9B0`                   | `with` marker inside replace blocks            |
+| `clay.colors.replace.originalBackground`       | `rgba(229, 168, 75, 0.14)`  | Scaffold content replaced at generation time   |
+| `clay.colors.replace.replacementBackground`    | `rgba(78, 201, 176, 0.14)`  | Replacement content kept after generation      |
+| `clay.colors.insert.markerForeground`          | `#C586C0`                   | Insert-block boundary markers                  |
+| `clay.colors.insert.contentBackground`         | `rgba(197, 134, 192, 0.14)` | Content inserted at generation time            |
+| `clay.colors.partial.markerForeground`         | `#569CD6`                   | Partial-block boundary markers                 |
+| `clay.colors.partial.payloadBackground`        | `rgba(86, 156, 214, 0.14)`  | Partial payload extracted to a `.partial` file |
+| `clay.colors.mustache.tagForeground`           | `#C678DD`                   | Mustache variable tags in annotation comments  |
+| `clay.colors.mustache.commentBackground`       | `rgba(198, 120, 221, 0.10)` | Mustache tag spans in annotation comments      |
+| `clay.colors.mustache.dropFlagForeground`      | `#F48771`                   | `x` whitespace-control flags on Mustache tags  |
+| `clay.colors.spacing.markerForeground`         | `#A0A1A7`                   | Spacing-group (`w … w`) markers                |
+| `clay.colors.spacing.markerBackground`         | `rgba(160, 161, 167, 0.12)` | Spacing-group marker spans                     |
 
 Syntax highlighting colors for annotation markers are contributed via TextMate scopes in `package.json` (`configurationDefaults`). Use VS Code's `editor.tokenColorCustomizations` to override those scopes if needed.
 
@@ -163,14 +163,14 @@ Syntax highlighting colors for annotation markers are contributed via TextMate s
 
 ## Troubleshooting
 
-| Symptom | Likely cause | What to try |
-| --- | --- | --- |
-| "The clay CLI was not found" | No executable on `PATH` and no workspace script | Install or activate `clay_cli`, set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`. |
-| "Could not find a brick scope" | No `clay.yaml` above the file, or file is outside `reference` | Add or fix `clay.yaml`; ensure the open file is under the configured reference directory. |
-| "Clay preview is only available for supported reference files" | Unsupported language or extension | Open a file listed in [Supported file types](#supported-file-types). |
-| Preview shows stale output | Unsaved editor buffer | Save the file before running preview; the CLI reads from disk. |
-| Generated preview missing variables | No `brick.yaml` next to the target directory | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `clay.yaml`. |
-| Colors do not update | Settings cached by VS Code | Change any `clay.colors.*` value; the extension listens for configuration changes and refreshes decorations immediately. |
+| Symptom                                                        | Likely cause                                                  | What to try                                                                                                              |
+| -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| "The clay CLI was not found"                                   | No executable on `PATH` and no workspace script               | Install or activate `clay_cli`, set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`.               |
+| "Could not find a brick scope"                                 | No `clay.yaml` above the file, or file is outside `reference` | Add or fix `clay.yaml`; ensure the open file is under the configured reference directory.                                |
+| "Clay preview is only available for supported reference files" | Unsupported language or extension                             | Open a file listed in [Supported file types](#supported-file-types).                                                     |
+| Preview shows stale output                                     | Unsaved editor buffer                                         | Save the file before running preview; the CLI reads from disk.                                                           |
+| Generated preview missing variables                            | No `brick.yaml` next to the target directory                  | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `clay.yaml`.                           |
+| Colors do not update                                           | Settings cached by VS Code                                    | Change any `clay.colors.*` value; the extension listens for configuration changes and refreshes decorations immediately. |
 
 For CLI behavior, flags, and `clay.yaml` fields, see the [root README](../../README.md) and [`doc/annotations.md`](../../doc/annotations.md).
 
@@ -178,12 +178,12 @@ For CLI behavior, flags, and `clay.yaml` fields, see the [root README](../../REA
 
 ## Development
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm run compile` | One-off esbuild bundle to `out/extension.js` |
-| `pnpm run watch` | Rebuild on source changes (used by the VS Code launch task) |
-| `pnpm test` | Compile smoke test, grammar validation, and unit tests |
-| `pnpm run package` | Compile and produce a `.vsix` via `@vscode/vsce` |
+| Command            | Purpose                                                     |
+| ------------------ | ----------------------------------------------------------- |
+| `pnpm run compile` | One-off esbuild bundle to `out/extension.js`                |
+| `pnpm run watch`   | Rebuild on source changes (used by the VS Code launch task) |
+| `pnpm test`        | Compile smoke test, grammar validation, and unit tests      |
+| `pnpm run package` | Compile and produce a `.vsix` via `@vscode/vsce`            |
 
 Source lives under `src/`. TypeScript is bundled with esbuild; `vscode` is marked external and provided by the host at runtime.
 
