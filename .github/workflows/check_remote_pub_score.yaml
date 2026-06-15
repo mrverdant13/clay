@@ -23,7 +23,7 @@ jobs:
       - name: Install Dart
         uses: dart-lang/setup-dart@v1
       - name: Install melos
-        run: dart pub global activate melos 7.5.1
+        run: dart install melos 7.5.1
       - name: Bootstrap workspace
         run: melos bs
       - name: Verify remote Pub.dev score
