@@ -1,4 +1,4 @@
-## 0.0.1
+## 0.0.1-dev.1
 
 - **FEAT**: copy binary assets unchanged during template generation (#45).
 - **FEAT**: resolve `reference` and `target` paths from `clay.yaml` relative to the config file (#47).
