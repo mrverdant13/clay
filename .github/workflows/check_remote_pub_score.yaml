@@ -30,7 +30,7 @@ jobs:
         run: |
           set -e
           checked=0
-          for package in clay clay_cli; do
+          for package in clay_core clay_cli; do
             if ! curl -sf "https://pub.dev/api/packages/${package}" \
               | grep -q "\"name\":\"${package}\""; then
               echo "::notice::${package} is not published on pub.dev yet; skipping."
@@ -48,7 +48,7 @@ jobs:
       - name: Set step summary
         if: always()
         run: |
-          for package in clay clay_cli; do
+          for package in clay_core clay_cli; do
             report="packages/${package}/.dart_tool/remote_pub_score.md"
             if [[ -f "$report" ]]; then
               echo "### ${package} (remote)" >> "$GITHUB_STEP_SUMMARY"

@@ -15,10 +15,10 @@ dev_dependencies:
 melos:
   categories:
     e2e:
-      - packages/clay/e2e
+      - packages/clay_core/e2e
       - packages/clay_cli/e2e
     publishable:
-      - packages/clay
+      - packages/clay_core
       - packages/clay_cli
 
   command:
@@ -201,7 +201,7 @@ melos:
           - publishable
 
 workspace:
-  - packages/clay/
-  - packages/clay/e2e/
+  - packages/clay_core/
+  - packages/clay_core/e2e/
   - packages/clay_cli/
   - packages/clay_cli/e2e/

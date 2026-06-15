@@ -150,7 +150,7 @@ void main() {
   group('import boundary', () {
     const allowedPackages = {
       'args',
-      'clay',
+      'clay_core',
       'clay_cli',
       'mason_logger',
       'meta',

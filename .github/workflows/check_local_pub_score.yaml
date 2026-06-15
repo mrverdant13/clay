@@ -9,7 +9,7 @@ on:
     branches:
       - main
     paths:
-      - packages/clay/**
+      - packages/clay_core/**
       - packages/clay_cli/**
       - pubspec.yaml
       - pubspec.lock
@@ -18,7 +18,7 @@ on:
     branches:
       - main
     paths:
-      - packages/clay/**
+      - packages/clay_core/**
       - packages/clay_cli/**
       - pubspec.yaml
       - pubspec.lock

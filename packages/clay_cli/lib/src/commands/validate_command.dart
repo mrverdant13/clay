@@ -1,7 +1,7 @@
-import 'package:clay/config.dart';
-import 'package:clay/validation.dart';
 import 'package:clay_cli/src/commands/clay_command.dart';
 import 'package:clay_cli/src/run/run_validate.dart';
+import 'package:clay_core/config.dart';
+import 'package:clay_core/validation.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// {@template clay_cli.validate_command}

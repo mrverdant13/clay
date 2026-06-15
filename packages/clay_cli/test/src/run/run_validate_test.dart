@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart' show AnnotationIssue;
-import 'package:clay/config.dart';
-import 'package:clay/validation.dart';
 import 'package:clay_cli/src/run/run_validate.dart';
+import 'package:clay_core/clay.dart' show AnnotationIssue;
+import 'package:clay_core/config.dart';
+import 'package:clay_core/validation.dart';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
