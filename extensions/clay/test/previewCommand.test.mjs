@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
 import {
@@ -11,19 +12,26 @@ import {
 } from './vscode-mock.mjs';
 
 const {
+  configuration,
+  executedCommands,
   mockVscode,
+  openedDocuments,
   registeredCommands,
   warningMessages,
-  executedCommands,
 } = installVscodeMock();
 
 const require = createRequire(import.meta.url);
+const { CLAY_CLI_SCRIPT_RELATIVE_PATH } = require('./out/workspaceClayScript.cjs');
 const {
   PREVIEW_GENERATED_COMMAND_ID,
   PREVIEW_TEMPLATE_COMMAND_ID,
   ensureWorkspaceTrustedForPreview,
   registerPreviewCommands,
 } = require('./out/previewCommand.cjs');
+
+const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
+const repoRoot = join(extensionRoot, '..', '..');
+const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
 
 registerPreviewCommands({ subscriptions: [] });
 
@@ -40,8 +48,25 @@ assert.equal(typeof generatedHandler, 'function');
 function resetMockState() {
   warningMessages.length = 0;
   executedCommands.length = 0;
+  openedDocuments.length = 0;
+  configuration.clear();
   mockVscode.window.activeTextEditor = undefined;
   mockVscode.workspace.workspaceFolders = undefined;
+}
+
+/** Creates an executable wrapper that runs the workspace `clay.dart` script. */
+function createClayCliWrapper() {
+  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-wrapper-'));
+  const isWindows = process.platform === 'win32';
+  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
+  const wrapperContent = isWindows
+    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
+    : `#!/usr/bin/env bash
+set -euo pipefail
+exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
+`;
+  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
+  return { wrapperDir, wrapperPath };
 }
 
 function createPreviewFixture({
@@ -163,6 +188,46 @@ test('template preview warns when the workspace is not trusted', async () => {
   } finally {
     mockVscode.workspace.isTrusted = true;
     rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
+});
+
+test('template preview opens a diff document on success', async () => {
+  resetMockState();
+  const { wrapperDir, wrapperPath } = createClayCliWrapper();
+  configuration.set('clay.cliPath', wrapperPath);
+
+  const fileContent = [
+    'void main() {',
+    '  /*remove-start*/',
+    '  print("scaffold");',
+    '  /*remove-end*/',
+    '}',
+    '',
+  ].join('\n');
+  const fixture = createPreviewFixture({ fileContent });
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      fileContent,
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 0);
+
+    const previewDocumentEntry = openedDocuments.find((entry) => entry.kind === 'content');
+    assert.ok(previewDocumentEntry, 'expected preview content document to open');
+    assert.match(previewDocumentEntry.document.getText(), /void main\(\)/);
+    assert.doesNotMatch(previewDocumentEntry.document.getText(), /remove-start/);
+
+    const diffCommand = executedCommands.find((entry) => entry.command === 'vscode.diff');
+    assert.ok(diffCommand, 'expected vscode.diff command to run');
+    assert.equal(diffCommand.args[0], mockVscode.window.activeTextEditor.document.uri);
+    assert.equal(diffCommand.args[1], previewDocumentEntry.document.uri);
+    assert.match(String(diffCommand.args[2]), /Template preview: main\.dart/);
+  } finally {
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+    rmSync(wrapperDir, { recursive: true, force: true });
   }
 });
 
