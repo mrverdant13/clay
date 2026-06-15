@@ -202,7 +202,7 @@
         "clay.cliPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. Install with `dart pub global activate clay_cli` after release, or use `dart run` against the workspace package during development."
+          "markdownDescription": "Path to the `clay` CLI executable. When empty, the extension searches `PATH`, the Dart install bin directory, and the pub-cache bin directory. Install with `dart install clay_cli` after release, or use `dart run` against the workspace package during development."
         },
         "clay.colors.remove.markerForeground": {
           "type": "string",

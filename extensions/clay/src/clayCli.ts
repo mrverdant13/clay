@@ -26,7 +26,7 @@ export interface ClayCliInvocation {
 }
 
 const INSTALL_HINT =
-  'Install the CLI with `dart pub global activate clay_cli` after release, ' +
+  'Install the CLI with `dart install clay_cli` after release, ' +
   'set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`.';
 
 /** Resolves an available Clay CLI invocation and verifies it runs. */
