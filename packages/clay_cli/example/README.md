@@ -19,7 +19,7 @@ example/
 Install the CLI globally:
 
 ```bash
-dart pub global activate clay_cli
+dart install clay_cli
 ```
 
 Ensure `~/.pub-cache/bin` is on your `PATH`, then verify:
