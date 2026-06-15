@@ -8,7 +8,7 @@
 | Item              | Value                                                                                         |
 | ----------------- | --------------------------------------------------------------------------------------------- |
 | Repository        | Standalone monorepo (Melos workspace) |
-| Pub package       | [`clay_cli`](packages/clay_cli/)                                                              |
+| Pub package       | [`clay_core`](packages/clay_core/), [`clay_cli`](packages/clay_cli/)                         |
 | Executable        | `clay`                                                                                        |
 | VS Code extension | **Clay** — [`extensions/clay/`](extensions/clay/)                                             |
 | License           | MIT                                                                                           |
@@ -212,7 +212,7 @@ clay/
 ├── CONTRIBUTING.md              # Contributor guide
 ├── pubspec.yaml                 # Melos workspace root
 ├── packages/
-│   ├── clay/                    # Core library (config, transforms, generation)
+│   ├── clay_core/               # Core library (config, transforms, generation)
 │   │   └── e2e/                 # Library integration tests
 │   ├── clay_cli/                # Publishable CLI package
 │   │   └── e2e/                 # CLI integration tests
@@ -226,10 +226,10 @@ clay/
 
 ## Programmatic API
 
-Core logic lives in the [`clay`](packages/clay/) library package, exposed for programmatic use:
+Core logic lives in the [`clay_core`](packages/clay_core/) library package, exposed for programmatic use:
 
 ```dart
-import 'package:clay/clay.dart';
+import 'package:clay_core/clay.dart';
 
 Future<ClayConfig> loadClayConfig({required String configPath});
 

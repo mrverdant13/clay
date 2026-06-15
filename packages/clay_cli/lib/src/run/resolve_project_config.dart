@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:clay/clay.dart' show ClayConfig;
-import 'package:clay/config.dart';
+import 'package:clay_core/clay.dart' show ClayConfig;
+import 'package:clay_core/config.dart';
 import 'package:path/path.dart' as p;
 
 /// Resolved Clay project config and its on-disk location.

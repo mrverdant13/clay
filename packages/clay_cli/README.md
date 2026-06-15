@@ -7,7 +7,7 @@ annotated reference projects using `clay.yaml`.
 
 ## What it does
 
-The `clay` executable wraps the [`clay`](https://pub.dev/packages/clay) library
+The `clay` executable wraps the [`clay_core`](https://pub.dev/packages/clay_core) library
 with three commands:
 
 - **`clay gen`** — copy a reference project to a target directory and apply
@@ -145,7 +145,7 @@ root** (the directory containing `clay.yaml`).
 - [Repository](https://github.com/mrverdant13/clay/tree/main/packages/clay_cli)
 - [Issue tracker](https://github.com/mrverdant13/clay/issues)
 - [Changelog](CHANGELOG.md)
-- [`clay` library](https://pub.dev/packages/clay) — embed Clay in Dart tools
+- [`clay_core` library](https://pub.dev/packages/clay_core) — embed Clay in Dart tools ([`packages/clay_core/`](../clay_core/))
 
 ## License
 

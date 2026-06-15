@@ -1,6 +1,7 @@
-import 'package:clay/config.dart' show resolveReferencePath, resolveTargetPath;
-import 'package:clay/preview.dart';
 import 'package:clay_cli/src/run/resolve_project_config.dart';
+import 'package:clay_core/config.dart'
+    show resolveReferencePath, resolveTargetPath;
+import 'package:clay_core/preview.dart';
 import 'package:path/path.dart' as p;
 
 /// Outcome of a successful preview run.

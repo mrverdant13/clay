@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:clay/config.dart';
-import 'package:clay/preview.dart';
 import 'package:clay_cli/src/commands/clay_command.dart';
 import 'package:clay_cli/src/run/run_preview.dart';
+import 'package:clay_core/config.dart';
+import 'package:clay_core/preview.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 /// {@template clay_cli.preview_command}

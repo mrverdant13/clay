@@ -19,8 +19,8 @@ environment:
 
 dependencies:
   args: ^2.7.0
-  clay:
-    path: ../clay
+  clay_core:
+    path: ../clay_core
   mason_logger: ^0.3.3
   meta: ^1.18.0
   path: ^1.9.1
