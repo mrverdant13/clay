@@ -64,7 +64,7 @@ lineDeletions: []
 After the first pub.dev release:
 
 ```bash
-dart pub global activate clay_cli
+dart install clay_cli
 ```
 
 During local development in this repository, run the CLI via Melos or `dart run` from `packages/clay_cli` (see [Contributing](CONTRIBUTING.md)).

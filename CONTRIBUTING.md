@@ -11,7 +11,7 @@ Thank you for helping build Clay. This guide covers local development, testing e
 - **Dart SDK** — stable channel (3.x). [Install Dart](https://dart.dev/get-dart) or use Flutter's bundled SDK.
 - **Melos** — workspace orchestration for this monorepo. Install globally:
   ```bash
-  dart pub global activate melos
+  dart install melos
   ```
 - **Git**
 
@@ -27,7 +27,7 @@ For VS Code extension work under `extensions/clay/`:
 Optional:
 
 - **VS Code** — for extension development and manual smoke tests
-- **coverde** — coverage reporting in CI (`dart pub global activate coverde`)
+- **coverde** — coverage reporting in CI (`dart install coverde`)
 
 ### Clone and bootstrap
 
