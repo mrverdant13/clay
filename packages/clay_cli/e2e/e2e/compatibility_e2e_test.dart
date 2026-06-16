@@ -1,4 +1,4 @@
-import 'package:clay_core/clay.dart' show clayCoreVersion;
+import 'package:clay_core/clay.dart';
 import 'package:test/test.dart';
 
 import 'helpers/fixture_project.dart';

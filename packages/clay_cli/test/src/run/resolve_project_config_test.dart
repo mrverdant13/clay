@@ -102,7 +102,8 @@ target: target
       expect(resolved.config.environment.clay.toString(), 'any');
     });
 
-    test('loads config when environment.clay allows the current version', () async {
+    test('loads config when environment.clay allows the current version',
+        () async {
       File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
 reference: reference
 target: target
