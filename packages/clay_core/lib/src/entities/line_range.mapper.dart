@@ -110,20 +110,20 @@ class _LineRangeCopyWithImpl<$R, $Out>
       LineRangeMapper.ensureInitialized();
   @override
   $R call({int? start, int? end}) => $apply(
-        FieldCopyWithData({
-          if (start != null) #start: start,
-          if (end != null) #end: end,
-        }),
-      );
+    FieldCopyWithData({
+      if (start != null) #start: start,
+      if (end != null) #end: end,
+    }),
+  );
   @override
   LineRange $make(CopyWithData data) => LineRange(
-        start: data.get(#start, or: $value.start),
-        end: data.get(#end, or: $value.end),
-      );
+    start: data.get(#start, or: $value.start),
+    end: data.get(#end, or: $value.end),
+  );
 
   @override
   LineRangeCopyWith<$R2, LineRange, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) =>
-      _LineRangeCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _LineRangeCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

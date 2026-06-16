@@ -15,6 +15,7 @@ class ClayConfigMapper extends ClassMapperBase<ClayConfig> {
   static ClayConfigMapper ensureInitialized() {
     if (_instance == null) {
       MapperContainer.globals.use(_instance = ClayConfigMapper._());
+      ClayEnvironmentMapper.ensureInitialized();
       ReplacementMapper.ensureInitialized();
       LineDeletionMapper.ensureInitialized();
     }
@@ -30,6 +31,13 @@ class ClayConfigMapper extends ClassMapperBase<ClayConfig> {
     _$reference,
     opt: true,
     def: ClayConfig.defaultReferencePath,
+  );
+  static ClayEnvironment _$environment(ClayConfig v) => v.environment;
+  static const Field<ClayConfig, ClayEnvironment> _f$environment = Field(
+    'environment',
+    _$environment,
+    opt: true,
+    def: const ClayEnvironment(),
   );
   static List<String> _$ignore(ClayConfig v) => v.ignore;
   static const Field<ClayConfig, List<String>> _f$ignore = Field(
@@ -62,6 +70,7 @@ class ClayConfigMapper extends ClassMapperBase<ClayConfig> {
   @override
   final MappableFields<ClayConfig> fields = const {
     #reference: _f$reference,
+    #environment: _f$environment,
     #ignore: _f$ignore,
     #replacements: _f$replacements,
     #lineDeletions: _f$lineDeletions,
@@ -71,6 +80,7 @@ class ClayConfigMapper extends ClassMapperBase<ClayConfig> {
   static ClayConfig _instantiate(DecodingData data) {
     return ClayConfig(
       reference: data.dec(_f$reference),
+      environment: data.dec(_f$environment),
       ignore: data.dec(_f$ignore),
       replacements: data.dec(_f$replacements),
       lineDeletions: data.dec(_f$lineDeletions),
@@ -138,13 +148,23 @@ extension ClayConfigValueCopy<$R, $Out>
 
 abstract class ClayConfigCopyWith<$R, $In extends ClayConfig, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
+  ClayEnvironmentCopyWith<$R, ClayEnvironment, ClayEnvironment> get environment;
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get ignore;
-  ListCopyWith<$R, Replacement,
-      ReplacementCopyWith<$R, Replacement, Replacement>> get replacements;
-  ListCopyWith<$R, LineDeletion,
-      LineDeletionCopyWith<$R, LineDeletion, LineDeletion>> get lineDeletions;
+  ListCopyWith<
+    $R,
+    Replacement,
+    ReplacementCopyWith<$R, Replacement, Replacement>
+  >
+  get replacements;
+  ListCopyWith<
+    $R,
+    LineDeletion,
+    LineDeletionCopyWith<$R, LineDeletion, LineDeletion>
+  >
+  get lineDeletions;
   $R call({
     String? reference,
+    ClayEnvironment? environment,
     List<String>? ignore,
     List<Replacement>? replacements,
     List<LineDeletion>? lineDeletions,
@@ -162,6 +182,10 @@ class _ClayConfigCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ClayConfig> $mapper =
       ClayConfigMapper.ensureInitialized();
   @override
+  ClayEnvironmentCopyWith<$R, ClayEnvironment, ClayEnvironment>
+  get environment =>
+      $value.environment.copyWith.$chain((v) => call(environment: v));
+  @override
   ListCopyWith<$R, String, ObjectCopyWith<$R, String, String>> get ignore =>
       ListCopyWith(
         $value.ignore,
@@ -169,50 +193,58 @@ class _ClayConfigCopyWithImpl<$R, $Out>
         (v) => call(ignore: v),
       );
   @override
-  ListCopyWith<$R, Replacement,
-          ReplacementCopyWith<$R, Replacement, Replacement>>
-      get replacements => ListCopyWith(
-            $value.replacements,
-            (v, t) => v.copyWith.$chain(t),
-            (v) => call(replacements: v),
-          );
+  ListCopyWith<
+    $R,
+    Replacement,
+    ReplacementCopyWith<$R, Replacement, Replacement>
+  >
+  get replacements => ListCopyWith(
+    $value.replacements,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(replacements: v),
+  );
   @override
-  ListCopyWith<$R, LineDeletion,
-          LineDeletionCopyWith<$R, LineDeletion, LineDeletion>>
-      get lineDeletions => ListCopyWith(
-            $value.lineDeletions,
-            (v, t) => v.copyWith.$chain(t),
-            (v) => call(lineDeletions: v),
-          );
+  ListCopyWith<
+    $R,
+    LineDeletion,
+    LineDeletionCopyWith<$R, LineDeletion, LineDeletion>
+  >
+  get lineDeletions => ListCopyWith(
+    $value.lineDeletions,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(lineDeletions: v),
+  );
   @override
   $R call({
     String? reference,
+    ClayEnvironment? environment,
     List<String>? ignore,
     List<Replacement>? replacements,
     List<LineDeletion>? lineDeletions,
     Object? target = $none,
-  }) =>
-      $apply(
-        FieldCopyWithData({
-          if (reference != null) #reference: reference,
-          if (ignore != null) #ignore: ignore,
-          if (replacements != null) #replacements: replacements,
-          if (lineDeletions != null) #lineDeletions: lineDeletions,
-          if (target != $none) #target: target,
-        }),
-      );
+  }) => $apply(
+    FieldCopyWithData({
+      if (reference != null) #reference: reference,
+      if (environment != null) #environment: environment,
+      if (ignore != null) #ignore: ignore,
+      if (replacements != null) #replacements: replacements,
+      if (lineDeletions != null) #lineDeletions: lineDeletions,
+      if (target != $none) #target: target,
+    }),
+  );
   @override
   ClayConfig $make(CopyWithData data) => ClayConfig(
-        reference: data.get(#reference, or: $value.reference),
-        ignore: data.get(#ignore, or: $value.ignore),
-        replacements: data.get(#replacements, or: $value.replacements),
-        lineDeletions: data.get(#lineDeletions, or: $value.lineDeletions),
-        target: data.get(#target, or: $value.target),
-      );
+    reference: data.get(#reference, or: $value.reference),
+    environment: data.get(#environment, or: $value.environment),
+    ignore: data.get(#ignore, or: $value.ignore),
+    replacements: data.get(#replacements, or: $value.replacements),
+    lineDeletions: data.get(#lineDeletions, or: $value.lineDeletions),
+    target: data.get(#target, or: $value.target),
+  );
 
   @override
   ClayConfigCopyWith<$R2, ClayConfig, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) =>
-      _ClayConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ClayConfigCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+
