@@ -11,11 +11,11 @@ void main() {
 
     test('fromMap with explicit clay constraint', () {
       final environment = ClayEnvironment.fromMap(const {
-        'clay': r'^0.0.1-dev.1',
+        'clay': '^0.0.1-dev.1',
       });
       expect(
         environment.clay,
-        VersionConstraint.parse(r'^0.0.1-dev.1'),
+        VersionConstraint.parse('^0.0.1-dev.1'),
       );
     });
 
