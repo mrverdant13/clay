@@ -2,6 +2,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
+import {
+  DEFAULT_CLAY_CONSTRAINT,
+  validateClayVersionConstraint,
+} from './clayCompatibility';
+
 /** Filename for the Clay config at the project root. */
 export const CLAY_CONFIG_FILE_NAME = 'clay.yaml';
 
@@ -17,12 +22,18 @@ export interface ClayReplacement {
   to: string;
 }
 
+/** Semver environment constraints declared in `clay.yaml`. */
+export interface ClayEnvironment {
+  clay: string;
+}
+
 /** Parsed `clay.yaml` fields used by the extension. */
 export interface ClayConfig {
   reference: string;
   target: string;
   ignore: string[];
   replacements: ClayReplacement[];
+  environment: ClayEnvironment;
 }
 
 interface ClayConfigDocument {
@@ -30,6 +41,10 @@ interface ClayConfigDocument {
   target?: string;
   ignore?: string[];
   replacements?: Array<{ from: string | RegExpSource; to: string }>;
+  environment?: {
+    clay?: unknown;
+    [key: string]: unknown;
+  };
 }
 
 interface RegExpSource {
@@ -55,6 +70,30 @@ function readIgnoreField(document: ClayConfigDocument): string[] {
   }
 
   return document.ignore.filter((pattern): pattern is string => typeof pattern === 'string');
+}
+
+function readEnvironmentField(document: ClayConfigDocument): ClayEnvironment {
+  const environment = document.environment;
+  if (
+    environment === null ||
+    environment === undefined ||
+    typeof environment !== 'object' ||
+    Array.isArray(environment)
+  ) {
+    return { clay: DEFAULT_CLAY_CONSTRAINT };
+  }
+
+  const clay = environment.clay;
+  if (clay === undefined) {
+    return { clay: DEFAULT_CLAY_CONSTRAINT };
+  }
+
+  if (typeof clay !== 'string') {
+    throw new Error('environment.clay must be a string');
+  }
+
+  validateClayVersionConstraint(clay);
+  return { clay };
 }
 
 function readReplacementsField(document: ClayConfigDocument): ClayReplacement[] {
@@ -105,6 +144,7 @@ export function parseClayConfig(raw: string): ClayConfig {
     target: readStringField(document, 'target', DEFAULT_TARGET_PATH),
     ignore: readIgnoreField(document),
     replacements: readReplacementsField(document),
+    environment: readEnvironmentField(document),
   };
 }
 

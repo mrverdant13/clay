@@ -26,6 +26,7 @@ test('parseClayConfig applies defaults for omitted path fields', () => {
   assert.equal(config.target, DEFAULT_TARGET_PATH);
   assert.deepEqual(config.ignore, []);
   assert.deepEqual(config.replacements, []);
+  assert.deepEqual(config.environment, { clay: 'any' });
 });
 
 test('parseClayConfig reads explicit path fields', () => {
@@ -146,6 +147,29 @@ replacements:
   assert.throws(
     () => applyClayReplacements('class App extends Widget {}', config.replacements),
     /capture group \$\{2\}/,
+  );
+});
+
+test('parseClayConfig reads explicit environment.clay constraint', () => {
+  const config = parseClayConfig(`
+environment:
+  clay: ^0.0.1-dev.1
+`);
+
+  assert.equal(config.environment.clay, '^0.0.1-dev.1');
+});
+
+test('parseClayConfig rejects invalid environment.clay constraints', () => {
+  assert.throws(
+    () => parseClayConfig('environment:\n  clay: not-a-version\n'),
+    /environment\.clay must be a valid semver constraint/,
+  );
+});
+
+test('parseClayConfig rejects non-string environment.clay values', () => {
+  assert.throws(
+    () => parseClayConfig('environment:\n  clay: 42\n'),
+    /environment\.clay must be a string/,
   );
 });
 
