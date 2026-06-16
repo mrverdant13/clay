@@ -1,5 +1,6 @@
 import 'package:clay_core/src/entities/clay_environment.dart';
 import 'package:clay_core/src/features/config/validate_environment.dart';
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -92,6 +93,34 @@ void main() {
           ),
         ),
       );
+    });
+
+    test('rejects invalid semver constraints', () {
+      expect(
+        () => validateClayEnvironment(
+          const ClayEnvironment(clay: 'not-a-version'),
+        ),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'message',
+            contains('environment.clay must be a valid semver constraint'),
+          ),
+        ),
+      );
+    });
+  });
+
+  group('parseClayVersionConstraint', () {
+    test('parses any constraint', () {
+      expect(parseClayVersionConstraint('any'), isA<VersionConstraint>());
+    });
+
+    test('parses caret constraints', () {
+      final constraint = parseClayVersionConstraint('^0.0.1-dev.1');
+      expect(constraint.allows(Version.parse('0.0.1-dev.1')), isTrue);
+      expect(constraint.allows(Version.parse('0.0.1-dev.2')), isTrue);
+      expect(constraint.allows(Version.parse('1.0.0')), isFalse);
     });
   });
 }

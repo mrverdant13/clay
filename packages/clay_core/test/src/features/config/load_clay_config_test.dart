@@ -124,6 +124,29 @@ environment:
       );
     });
 
+    test('throws when environment.clay is not a valid semver constraint', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: not-a-version
+''');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('valid semver constraint'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
     test('throws when config file does not exist', () async {
       final missingPath = p.join(tempDir.path, 'missing.yaml');
 

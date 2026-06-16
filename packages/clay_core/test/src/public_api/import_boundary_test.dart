@@ -168,6 +168,7 @@ void main() {
       'mason',
       'meta',
       'path',
+      'pub_semver',
       'yaml',
     };
 
