@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clay_core/clay.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -55,7 +56,7 @@ environment:
 
       final config = await loadClayConfig(configPath: configFile.path);
 
-      expect(config.environment.clay, '^0.0.1-dev.1');
+      expect(config.environment.clay, VersionConstraint.parse('^0.0.1-dev.1'));
     });
 
     test('throws when environment is not a mapping', () async {

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clay_core/clay.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -43,7 +44,7 @@ void main() {
             .having(
               (r) => r.environment.clay,
               'environment.clay',
-              '^0.0.1-dev.1',
+              VersionConstraint.parse('^0.0.1-dev.1'),
             )
             .having((r) => r.ignore, 'ignore', ['.dart_tool/', 'build/'])
             .having((r) => r.replacements, 'replacements', isNotEmpty)

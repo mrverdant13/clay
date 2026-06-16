@@ -65,62 +65,35 @@ void main() {
     });
   });
 
-  group('validateClayEnvironment', () {
-    test('accepts any constraint', () {
+  group('ClayEnvironment.fromMap', () {
+    test('decodes clay constraint strings into VersionConstraint', () {
+      final environment = ClayEnvironment.fromMap(const {
+        'clay': '^0.0.1-dev.1',
+      });
+
       expect(
-        () => validateClayEnvironment(const ClayEnvironment()),
-        returnsNormally,
+        environment.clay,
+        VersionConstraint.parse('^0.0.1-dev.1'),
       );
     });
 
-    test('accepts explicit semver constraints', () {
-      expect(
-        () => validateClayEnvironment(
-          const ClayEnvironment(clay: '^0.0.1-dev.1'),
-        ),
-        returnsNormally,
-      );
+    test('defaults clay to any when omitted', () {
+      final environment = ClayEnvironment.fromMap(const {});
+
+      expect(environment.clay, ClayEnvironment.defaultClayConstraint);
     });
 
-    test('rejects empty clay constraints', () {
+    test('rejects invalid clay constraints', () {
       expect(
-        () => validateClayEnvironment(const ClayEnvironment(clay: '')),
+        () => ClayEnvironment.fromMap(const {'clay': 'not-a-version'}),
         throwsA(
-          isA<FormatException>().having(
-            (error) => error.message,
-            'message',
-            'environment.clay must not be empty',
-          ),
-        ),
-      );
-    });
-
-    test('rejects invalid semver constraints', () {
-      expect(
-        () => validateClayEnvironment(
-          const ClayEnvironment(clay: 'not-a-version'),
-        ),
-        throwsA(
-          isA<FormatException>().having(
-            (error) => error.message,
+          isA<Exception>().having(
+            (error) => error.toString(),
             'message',
             contains('environment.clay must be a valid semver constraint'),
           ),
         ),
       );
-    });
-  });
-
-  group('parseClayVersionConstraint', () {
-    test('parses any constraint', () {
-      expect(parseClayVersionConstraint('any'), isA<VersionConstraint>());
-    });
-
-    test('parses caret constraints', () {
-      final constraint = parseClayVersionConstraint('^0.0.1-dev.1');
-      expect(constraint.allows(Version.parse('0.0.1-dev.1')), isTrue);
-      expect(constraint.allows(Version.parse('0.0.1-dev.2')), isTrue);
-      expect(constraint.allows(Version.parse('1.0.0')), isFalse);
     });
   });
 }
