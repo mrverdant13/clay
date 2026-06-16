@@ -248,7 +248,8 @@ environment:
       expect(
         () => loadClayConfig(
           configPath: configFile.path,
-          parseConfigMapForTesting: (_) => throw Exception('environment failed'),
+          parseConfigMapForTesting: (_) =>
+              throw Exception('environment failed'),
         ),
         throwsA(
           isA<ClayConfigException>().having(
