@@ -49,6 +49,9 @@ class ValidateCommand extends ClayCommand {
     } on ClayConfigException catch (error) {
       logger.err(error.message);
       return ExitCode.software.code;
+    } on ClayIncompatibleException catch (error) {
+      logger.err(error.toString());
+      return ExitCode.software.code;
     } on ValidationException catch (error) {
       logger.err(error.message);
       return ExitCode.software.code;
