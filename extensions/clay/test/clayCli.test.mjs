@@ -6,11 +6,16 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 
+import { installVscodeMock } from './vscode-mock.mjs';
+
+installVscodeMock();
+
 const require = createRequire(import.meta.url);
 
 const { CLAY_CLI_SCRIPT_RELATIVE_PATH, resolveWorkspaceClayScript } = require(
   './out/workspaceClayScript.cjs',
 );
+const { getClayCliVersion } = require('./out/clayCli.cjs');
 
 const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(extensionRoot, '..', '..');
@@ -48,5 +53,26 @@ test('resolveWorkspaceClayScript checks folders in order', () => {
     );
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('getClayCliVersion reads the workspace clay CLI version', async () => {
+  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-version-'));
+  const isWindows = process.platform === 'win32';
+  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
+  const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
+  const wrapperContent = isWindows
+    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
+    : `#!/usr/bin/env bash
+set -euo pipefail
+exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
+`;
+  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
+
+  try {
+    const version = await getClayCliVersion({ executable: wrapperPath, prefixArgs: [] });
+    assert.match(version, /^0\.0\.1-dev\.\d+$/);
+  } finally {
+    rmSync(wrapperDir, { recursive: true, force: true });
   }
 });
