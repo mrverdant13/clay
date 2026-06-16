@@ -43,6 +43,85 @@ replacements:
 
       expect(config.reference, ClayConfig.defaultReferencePath);
       expect(config.target, ClayConfig.defaultTargetPath);
+      expect(config.environment.clay, ClayEnvironment.defaultClayConstraint);
+    });
+
+    test('loads environment.clay constraint from YAML', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: ^0.0.1-dev.1
+''');
+
+      final config = await loadClayConfig(configPath: configFile.path);
+
+      expect(config.environment.clay, '^0.0.1-dev.1');
+    });
+
+    test('throws when environment is not a mapping', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('environment: not-a-map');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('environment must be a mapping'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when environment contains unknown keys', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  mason: ^1.0.0
+''');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('unknown keys'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when environment.clay is empty', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: ""
+''');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('must not be empty'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
     });
 
     test('throws when config file does not exist', () async {
@@ -235,6 +314,10 @@ ignore:
         } else {
           expect(config.reference, ClayConfig.defaultReferencePath);
           expect(config.target, ClayConfig.defaultTargetPath);
+          expect(
+            config.environment.clay,
+            ClayEnvironment.defaultClayConstraint,
+          );
           expect(config.ignore, isEmpty);
         }
         expect(config.replacements, isNotEmpty);
