@@ -14,7 +14,7 @@ void main() {
     test('accepts environment with clay constraint', () {
       expect(
         () => validateEnvironmentMap(const {
-          'environment': {'clay': r'^0.0.1-dev.1'},
+          'environment': {'clay': '^0.0.1-dev.1'},
         }),
         returnsNormally,
       );
@@ -75,7 +75,7 @@ void main() {
     test('accepts explicit semver constraints', () {
       expect(
         () => validateClayEnvironment(
-          const ClayEnvironment(clay: r'^0.0.1-dev.1'),
+          const ClayEnvironment(clay: '^0.0.1-dev.1'),
         ),
         returnsNormally,
       );

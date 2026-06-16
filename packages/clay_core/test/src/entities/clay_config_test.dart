@@ -21,7 +21,7 @@ void main() {
       final config = ClayConfig.fromMap(const {
         'reference': 'src/reference',
         'target': 'out/template',
-        'environment': {'clay': r'^0.0.1-dev.1'},
+        'environment': {'clay': '^0.0.1-dev.1'},
         'ignore': ['.dart_tool/', 'build/'],
         'replacements': [
           {'from': r'^from$', 'to': 'to'},
@@ -43,7 +43,7 @@ void main() {
             .having(
               (r) => r.environment.clay,
               'environment.clay',
-              r'^0.0.1-dev.1',
+              '^0.0.1-dev.1',
             )
             .having((r) => r.ignore, 'ignore', ['.dart_tool/', 'build/'])
             .having((r) => r.replacements, 'replacements', isNotEmpty)
