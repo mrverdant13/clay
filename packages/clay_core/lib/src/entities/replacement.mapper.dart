@@ -112,17 +112,18 @@ class _ReplacementCopyWithImpl<$R, $Out>
       ReplacementMapper.ensureInitialized();
   @override
   $R call({RegExp? from, String? to}) => $apply(
-    FieldCopyWithData({if (from != null) #from: from, if (to != null) #to: to}),
-  );
+        FieldCopyWithData(
+            {if (from != null) #from: from, if (to != null) #to: to}),
+      );
   @override
   Replacement $make(CopyWithData data) => Replacement(
-    from: data.get(#from, or: $value.from),
-    to: data.get(#to, or: $value.to),
-  );
+        from: data.get(#from, or: $value.from),
+        to: data.get(#to, or: $value.to),
+      );
 
   @override
   ReplacementCopyWith<$R2, Replacement, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ReplacementCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) =>
+      _ReplacementCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
-

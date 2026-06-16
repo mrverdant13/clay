@@ -62,12 +62,12 @@ mixin ClayEnvironmentMappable {
   }
 
   ClayEnvironmentCopyWith<ClayEnvironment, ClayEnvironment, ClayEnvironment>
-  get copyWith =>
-      _ClayEnvironmentCopyWithImpl<ClayEnvironment, ClayEnvironment>(
-        this as ClayEnvironment,
-        $identity,
-        $identity,
-      );
+      get copyWith =>
+          _ClayEnvironmentCopyWithImpl<ClayEnvironment, ClayEnvironment>(
+            this as ClayEnvironment,
+            $identity,
+            $identity,
+          );
   @override
   String toString() {
     return ClayEnvironmentMapper.ensureInitialized().stringifyValue(
@@ -123,6 +123,6 @@ class _ClayEnvironmentCopyWithImpl<$R, $Out>
   @override
   ClayEnvironmentCopyWith<$R2, ClayEnvironment, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) => _ClayEnvironmentCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) =>
+      _ClayEnvironmentCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
-
