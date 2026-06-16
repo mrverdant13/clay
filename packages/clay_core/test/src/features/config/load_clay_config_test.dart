@@ -216,6 +216,54 @@ environment:
       );
     });
 
+    test('throws when parsing raises an environment FormatException', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('{}');
+
+      expect(
+        () => loadClayConfig(
+          configPath: configFile.path,
+          parseConfigMapForTesting: (_) => throw const FormatException(
+            'environment must be a mapping',
+          ),
+        ),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('environment must be a mapping'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when parsing raises a non-mapper environment error', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('{}');
+
+      expect(
+        () => loadClayConfig(
+          configPath: configFile.path,
+          parseConfigMapForTesting: (_) => throw Exception('environment failed'),
+        ),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('environment failed'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
     test('throws when ignore patterns use backslashes', () async {
       final configFile = File(p.join(tempDir.path, 'clay.yaml'));
       await configFile.writeAsString(r'''
