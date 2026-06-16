@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clay_core/clay.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -43,6 +44,86 @@ replacements:
 
       expect(config.reference, ClayConfig.defaultReferencePath);
       expect(config.target, ClayConfig.defaultTargetPath);
+      expect(config.environment.clay, ClayEnvironment.defaultClayConstraint);
+    });
+
+    test('loads environment.clay constraint from YAML', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: ^0.0.1-dev.1
+''');
+
+      final config = await loadClayConfig(configPath: configFile.path);
+
+      expect(config.environment.clay, VersionConstraint.parse('^0.0.1-dev.1'));
+    });
+
+    test('throws when environment is not a mapping', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('environment: not-a-map');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('Expected a value of type Map<String, dynamic>'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when environment.clay is empty', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: ""
+''');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('must not be empty'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when environment.clay is not a valid semver constraint',
+        () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('''
+environment:
+  clay: not-a-version
+''');
+
+      expect(
+        () => loadClayConfig(configPath: configFile.path),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('valid semver constraint'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
     });
 
     test('throws when config file does not exist', () async {
@@ -128,6 +209,55 @@ replacements:
             allOf(
               contains('Invalid clay.yaml'),
               contains('invalid replacement regex'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when parsing raises an environment FormatException', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('{}');
+
+      expect(
+        () => loadClayConfig(
+          configPath: configFile.path,
+          parseConfigMapForTesting: (_) => throw const FormatException(
+            'environment must be a mapping',
+          ),
+        ),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('environment must be a mapping'),
+              contains(configFile.path),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('throws when parsing raises a non-mapper environment error', () async {
+      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
+      await configFile.writeAsString('{}');
+
+      expect(
+        () => loadClayConfig(
+          configPath: configFile.path,
+          parseConfigMapForTesting: (_) =>
+              throw Exception('environment failed'),
+        ),
+        throwsA(
+          isA<ClayConfigException>().having(
+            (error) => error.message,
+            'message',
+            allOf(
+              contains('Invalid environment'),
+              contains('environment failed'),
               contains(configFile.path),
             ),
           ),
@@ -235,6 +365,10 @@ ignore:
         } else {
           expect(config.reference, ClayConfig.defaultReferencePath);
           expect(config.target, ClayConfig.defaultTargetPath);
+          expect(
+            config.environment.clay,
+            ClayEnvironment.defaultClayConstraint,
+          );
           expect(config.ignore, isEmpty);
         }
         expect(config.replacements, isNotEmpty);

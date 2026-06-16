@@ -1,3 +1,4 @@
+import 'package:clay_core/src/entities/clay_environment.dart';
 import 'package:clay_core/src/entities/line_deletion.dart';
 import 'package:clay_core/src/entities/replacement.dart';
 import 'package:dart_mappable/dart_mappable.dart';
@@ -13,11 +14,13 @@ class ClayConfig with ClayConfigMappable {
   /// Creates a [ClayConfig].
   ClayConfig({
     this.reference = ClayConfig.defaultReferencePath,
+    ClayEnvironment? environment,
     this.ignore = const [],
     this.replacements = const [],
     this.lineDeletions = const [],
     String? target,
-  }) : target = target ?? ClayConfig.defaultTargetPath;
+  })  : environment = environment ?? ClayEnvironment(),
+        target = target ?? ClayConfig.defaultTargetPath;
 
   /// Creates a [ClayConfig] from a config map.
   // ignore: specify_nonobvious_property_types
@@ -31,6 +34,9 @@ class ClayConfig with ClayConfigMappable {
 
   /// Path to the reference project root.
   final String reference;
+
+  /// Tool version constraints for this project.
+  final ClayEnvironment environment;
 
   /// Path to the template output root.
   final String target;

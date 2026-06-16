@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clay_core/clay.dart';
 import 'package:path/path.dart' as p;
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -11,6 +12,7 @@ void main() {
       expect(config, isA<ClayConfig>());
       expect(config.reference, ClayConfig.defaultReferencePath);
       expect(config.target, ClayConfig.defaultTargetPath);
+      expect(config.environment.clay, ClayEnvironment.defaultClayConstraint);
       expect(config.ignore, isEmpty);
       expect(config.replacements, isEmpty);
       expect(config.lineDeletions, isEmpty);
@@ -20,6 +22,7 @@ void main() {
       final config = ClayConfig.fromMap(const {
         'reference': 'src/reference',
         'target': 'out/template',
+        'environment': {'clay': '^0.0.1-dev.1'},
         'ignore': ['.dart_tool/', 'build/'],
         'replacements': [
           {'from': r'^from$', 'to': 'to'},
@@ -38,6 +41,11 @@ void main() {
         isA<ClayConfig>()
             .having((r) => r.reference, 'reference', 'src/reference')
             .having((r) => r.target, 'target', 'out/template')
+            .having(
+              (r) => r.environment.clay,
+              'environment.clay',
+              VersionConstraint.parse('^0.0.1-dev.1'),
+            )
             .having((r) => r.ignore, 'ignore', ['.dart_tool/', 'build/'])
             .having((r) => r.replacements, 'replacements', isNotEmpty)
             .having((r) => r.lineDeletions, 'lineDeletions', isNotEmpty),
@@ -52,6 +60,7 @@ void main() {
       });
       expect(config.reference, ClayConfig.defaultReferencePath);
       expect(config.target, ClayConfig.defaultTargetPath);
+      expect(config.environment.clay, ClayEnvironment.defaultClayConstraint);
       expect(config.ignore, isEmpty);
       expect(config.lineDeletions, isEmpty);
     });
@@ -97,6 +106,10 @@ void main() {
 
           expect(config.reference, ClayConfig.defaultReferencePath);
           expect(config.target, ClayConfig.defaultTargetPath);
+          expect(
+            config.environment.clay,
+            ClayEnvironment.defaultClayConstraint,
+          );
           expect(config.ignore, isEmpty);
           expect(config.replacements, isNotEmpty);
 
