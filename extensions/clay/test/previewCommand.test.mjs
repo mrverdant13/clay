@@ -13,6 +13,7 @@ import {
 
 const {
   configuration,
+  errorMessages,
   executedCommands,
   mockVscode,
   openedDocuments,
@@ -47,6 +48,7 @@ assert.equal(typeof generatedHandler, 'function');
 
 function resetMockState() {
   warningMessages.length = 0;
+  errorMessages.length = 0;
   executedCommands.length = 0;
   openedDocuments.length = 0;
   configuration.clear();
@@ -78,16 +80,14 @@ function createPreviewFixture({
     '}',
     '',
   ].join('\n'),
+  clayYaml = 'reference: reference\ntarget: brick/__brick__\n',
 } = {}) {
   const tempDir = mkdtempSync(join(tmpdir(), 'clay-preview-command-'));
   const referenceDir = join(tempDir, 'reference');
   const nestedDir = join(referenceDir, 'lib');
   mkdirSync(nestedDir, { recursive: true });
 
-  writeFileSync(
-    join(tempDir, 'clay.yaml'),
-    'reference: reference\ntarget: brick/__brick__\n',
-  );
+  writeFileSync(join(tempDir, 'clay.yaml'), clayYaml);
 
   const filePath = join(nestedDir, 'main.dart');
   writeFileSync(filePath, fileContent);
@@ -225,6 +225,39 @@ test('template preview opens a diff document on success', async () => {
     assert.equal(diffCommand.args[0], mockVscode.window.activeTextEditor.document.uri);
     assert.equal(diffCommand.args[1], previewDocumentEntry.document.uri);
     assert.match(String(diffCommand.args[2]), /Template preview: main\.dart/);
+  } finally {
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+    rmSync(wrapperDir, { recursive: true, force: true });
+  }
+});
+
+test('template preview blocks when environment.clay is not satisfied', async () => {
+  resetMockState();
+  const { wrapperDir, wrapperPath } = createClayCliWrapper();
+  configuration.set('clay.cliPath', wrapperPath);
+
+  const fixture = createPreviewFixture({
+    clayYaml: [
+      'reference: reference',
+      'target: brick/__brick__',
+      'environment:',
+      '  clay: ^99.0.0',
+      '',
+    ].join('\n'),
+  });
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      'void main() {}',
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 0);
+    assert.equal(errorMessages.length, 1);
+    assert.match(errorMessages[0], /The current clay version is/);
+    assert.match(errorMessages[0], /requires clay version \^99\.0\.0/);
+    assert.equal(executedCommands.length, 0);
   } finally {
     rmSync(fixture.tempDir, { recursive: true, force: true });
     rmSync(wrapperDir, { recursive: true, force: true });
