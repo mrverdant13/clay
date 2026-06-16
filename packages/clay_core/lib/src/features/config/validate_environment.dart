@@ -1,3 +1,4 @@
+import 'package:clay_core/src/entities/clay_config.dart';
 import 'package:clay_core/src/entities/clay_environment.dart';
 import 'package:pub_semver/pub_semver.dart';
 

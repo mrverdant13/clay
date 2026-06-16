@@ -124,7 +124,8 @@ environment:
       );
     });
 
-    test('throws when environment.clay is not a valid semver constraint', () async {
+    test('throws when environment.clay is not a valid semver constraint',
+        () async {
       final configFile = File(p.join(tempDir.path, 'clay.yaml'));
       await configFile.writeAsString('''
 environment:
