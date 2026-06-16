@@ -9,6 +9,21 @@ void main() {
     });
   });
 
+  group('ClayIncompatibleException', () {
+    test('toString names current and required versions', () {
+      const exception = ClayIncompatibleException(
+        currentVersion: '0.0.1-dev.1',
+        requiredConstraint: '^0.2.0',
+      );
+
+      expect(
+        exception.toString(),
+        'The current clay version is 0.0.1-dev.1.\n'
+        'This project requires clay version ^0.2.0.',
+      );
+    });
+  });
+
   group('ClayConfigNotFoundException', () {
     test('toString includes searched paths', () {
       const exception = ClayConfigNotFoundException(
