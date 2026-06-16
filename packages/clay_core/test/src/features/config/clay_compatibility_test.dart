@@ -59,7 +59,7 @@ void main() {
               .having(
                 (error) => error.currentVersion,
                 'currentVersion',
-                packageVersion,
+                clayCoreVersion,
               )
               .having(
                 (error) => error.requiredConstraint,
@@ -69,7 +69,7 @@ void main() {
               .having(
                 (error) => error.toString(),
                 'message',
-                'The current clay version is $packageVersion.\n'
+                'The current clay version is $clayCoreVersion.\n'
                 'This project requires clay version ^0.2.0.',
               ),
         ),

@@ -42,7 +42,7 @@ void main() {
               .having(
                 (error) => error.currentVersion,
                 'currentVersion',
-                packageVersion,
+                clayCoreVersion,
               )
               .having(
                 (error) => error.requiredConstraint,
