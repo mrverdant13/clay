@@ -33,6 +33,7 @@ Future<ResolvedProjectConfig> resolveProjectConfig({
     cwd: cwd,
   );
   final config = await loadProjectConfig(configPath: discovered.configPath);
+  assertClayCompatible(config);
 
   return ResolvedProjectConfig(
     configPath: discovered.configPath,

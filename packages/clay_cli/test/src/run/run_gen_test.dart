@@ -75,6 +75,20 @@ ignore:
         emptyDir.deleteSync(recursive: true);
       }
     });
+
+    test('throws when environment.clay excludes the current version', () async {
+      File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+environment:
+  clay: ^0.2.0
+''');
+
+      await expectLater(
+        runGen(cwd: tempDir.path),
+        throwsA(isA<ClayIncompatibleException>()),
+      );
+    });
   });
 
   group('formatGenRunSummary', () {
