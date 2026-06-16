@@ -6,5 +6,6 @@ export 'generation.dart';
 export 'preview.dart';
 export 'src/entities/entities.dart';
 export 'src/utils/binary_content.dart';
+export 'src/version.dart' show clayCoreVersion;
 export 'transforms.dart';
 export 'validation.dart';

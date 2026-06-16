@@ -1,3 +1,4 @@
+export 'clay_compatibility.dart';
 export 'clay_config_exception.dart';
 export 'clay_config_file.dart';
 export 'discover_clay_config.dart';

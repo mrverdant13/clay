@@ -10,6 +10,25 @@ class ClayConfigException implements Exception {
   String toString() => message;
 }
 
+/// Thrown when the running Clay version does not satisfy `environment.clay`.
+class ClayIncompatibleException implements Exception {
+  /// Creates a [ClayIncompatibleException].
+  const ClayIncompatibleException({
+    required this.currentVersion,
+    required this.requiredConstraint,
+  });
+
+  /// The installed Clay library version.
+  final String currentVersion;
+
+  /// The semver constraint declared in `environment.clay`.
+  final String requiredConstraint;
+
+  @override
+  String toString() => 'The current clay version is $currentVersion.\n'
+      'This project requires clay version $requiredConstraint.';
+}
+
 /// Thrown when `clay.yaml` cannot be discovered.
 class ClayConfigNotFoundException implements Exception {
   /// Creates a [ClayConfigNotFoundException].
