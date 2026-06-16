@@ -45,6 +45,11 @@ Future<ClayConfig> loadClayConfig({
         '${error.message}',
       );
     }
+    if (error.message.startsWith('environment')) {
+      throw ClayConfigException(
+        'Invalid environment in clay.yaml at $configPath: ${error.message}',
+      );
+    }
     throw ClayConfigException(
       'Invalid clay.yaml at $configPath: $error',
     );
