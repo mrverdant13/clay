@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_cli/clay_cli.dart';
+import 'package:clay_core/clay.dart' show clayCoreVersion;
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as p;
@@ -208,5 +209,43 @@ class App extends Widget {
       expect(exitCode, ExitCode.software.code);
       verify(() => logger.err(any(that: contains('File not found')))).called(1);
     });
+
+    test(
+      'returns a non-zero exit code when environment.clay is incompatible',
+      () async {
+        File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+environment:
+  clay: ^0.2.0
+replacements:
+  - from: Widget
+    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"
+''');
+
+        final exitCode = await clay(
+          args: [
+            'preview',
+            '--cwd',
+            tempDir.path,
+            '--file',
+            'widget.dart',
+          ],
+          logger: logger,
+        );
+
+        expect(exitCode, ExitCode.software.code);
+        verify(
+          () => logger.err(
+            any(
+              that: allOf(
+                contains('The current clay version is $clayCoreVersion'),
+                contains('This project requires clay version ^0.2.0'),
+              ),
+            ),
+          ),
+        ).called(1);
+      },
+    );
   });
 }

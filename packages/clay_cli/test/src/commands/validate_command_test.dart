@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:clay_cli/clay_cli.dart';
 import 'package:clay_cli/src/run/run_validate.dart';
+import 'package:clay_core/clay.dart' show clayCoreVersion;
 import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as p;
@@ -141,5 +142,34 @@ target: target
       verify(() => logger.err(any(that: contains('Reference directory'))))
           .called(1);
     });
+
+    test(
+      'returns a non-zero exit code when environment.clay is incompatible',
+      () async {
+        File(p.join(tempDir.path, 'clay.yaml')).writeAsStringSync('''
+reference: reference
+target: target
+environment:
+  clay: ^0.2.0
+''');
+
+        final exitCode = await clay(
+          args: ['validate', '--cwd', tempDir.path],
+          logger: logger,
+        );
+
+        expect(exitCode, ExitCode.software.code);
+        verify(
+          () => logger.err(
+            any(
+              that: allOf(
+                contains('The current clay version is $clayCoreVersion'),
+                contains('This project requires clay version ^0.2.0'),
+              ),
+            ),
+          ),
+        ).called(1);
+      },
+    );
   });
 }
