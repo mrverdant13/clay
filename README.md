@@ -150,7 +150,7 @@ Path resolution order: CLI flag → `clay.yaml` field → built-in default (`ref
 
 ## `clay.yaml`
 
-The config file is the single source of truth for paths, ignore patterns, replacements, and line deletions. Clay discovers `clay.yaml` by walking up from `--cwd` (or the current directory) until a config file is found. Use `--config <path>` to load an explicit file instead.
+The config file is the single source of truth for paths, ignore patterns, replacements, line deletions, and optional tool version constraints. Clay discovers `clay.yaml` by walking up from `--cwd` (or the current directory) until a config file is found. Use `--config <path>` to load an explicit file instead.
 
 | Field           | Type       | Default             | Description                                        |
 | --------------- | ---------- | ------------------- | -------------------------------------------------- |
@@ -159,8 +159,35 @@ The config file is the single source of truth for paths, ignore patterns, replac
 | `ignore`        | `string[]` | `[]`                | Gitignore-style glob patterns excluded from output |
 | `replacements`  | `array`    | `[]`                | Regex replacements on file paths and contents      |
 | `lineDeletions` | `array`    | `[]`                | Line ranges to drop from specific target files     |
+| `environment`   | `object`   | *(see below)*       | Semver constraints for tooling required by the project |
 
 Omitted `reference`, `target`, and `ignore` fields use the defaults above.
+
+### `environment.clay`
+
+The optional `environment` block declares which **Clay tool versions** a project supports. It follows the same pattern as Mason's [`environment.mason`](https://github.com/felangel/mason/blob/master/bricks/flavors/brick.yaml) constraint in `brick.yaml`.
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `environment.clay` | `string` | `"any"` | Semver constraint for the installed Clay CLI/library version |
+
+When `environment` is omitted, or `environment.clay` is not set, Clay treats the constraint as **`any`** — existing projects without this field continue to work unchanged.
+
+Pin a constraint when you want `clay gen`, `clay validate`, and `clay preview` to fail fast if contributors or CI use an incompatible Clay version. For new projects after the first pub.dev preview, a practical starting point is:
+
+```yaml
+environment:
+  clay: ^0.0.1-dev.1
+```
+
+Constraints use [Dart semver](https://pub.dev/packages/pub_semver) syntax (`^`, `>=`, ranges, and so on). When the running Clay version does not satisfy `environment.clay`, commands exit with a non-zero status and an error naming both the current version and the required constraint:
+
+```text
+The current clay version is 0.0.1-dev.1.
+This project requires clay version ^0.2.0.
+```
+
+Authors resolve mismatches by updating `environment.clay` or aligning the installed Clay version — there is no bypass flag.
 
 `replacements` accept a plain string (treated as regex) or `{ pattern: string, dotAll?: boolean }` for the `from` field; `to` supports `${n}` capture-group interpolation. They are applied sequentially to file paths and contents. `lineDeletions` use zero-based, inclusive line ranges relative to the target directory root and run before content replacements and annotation transforms.
 
