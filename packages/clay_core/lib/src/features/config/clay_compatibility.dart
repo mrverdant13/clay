@@ -10,7 +10,8 @@ bool isClayConfigCompatibleWithClay(ClayConfig config) {
   return config.environment.clay.allows(currentClayVersion);
 }
 
-/// Throws [ClayIncompatibleException] when [config] is not compatible with Clay.
+/// Throws [ClayIncompatibleException] when [config] is not compatible with
+/// Clay.
 void assertClayCompatible(ClayConfig config) {
   if (isClayConfigCompatibleWithClay(config)) {
     return;

@@ -25,8 +25,7 @@ class ClayIncompatibleException implements Exception {
   final String requiredConstraint;
 
   @override
-  String toString() =>
-      'The current clay version is $currentVersion.\n'
+  String toString() => 'The current clay version is $currentVersion.\n'
       'This project requires clay version $requiredConstraint.';
 }
 

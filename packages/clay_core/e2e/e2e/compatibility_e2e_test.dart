@@ -1,5 +1,4 @@
 import 'package:clay_core/clay.dart';
-import 'package:clay_core/config.dart';
 import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 

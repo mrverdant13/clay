@@ -1,5 +1,4 @@
 import 'package:clay_core/clay.dart';
-import 'package:clay_core/config.dart';
 import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
@@ -70,7 +69,7 @@ void main() {
                 (error) => error.toString(),
                 'message',
                 'The current clay version is $clayCoreVersion.\n'
-                'This project requires clay version ^0.2.0.',
+                    'This project requires clay version ^0.2.0.',
               ),
         ),
       );
@@ -84,8 +83,8 @@ void main() {
         throwsA(
           predicate<Object>(
             (error) => error.toString().contains(
-              'environment.clay must be a valid semver constraint',
-            ),
+                  'environment.clay must be a valid semver constraint',
+                ),
           ),
         ),
       );
