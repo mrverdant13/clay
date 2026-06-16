@@ -40,6 +40,18 @@
       "items": {
         "$ref": "#/$defs/lineDeletion"
       }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Semver constraints for tooling required by this project.",
+      "properties": {
+        "clay": {
+          "type": "string",
+          "default": "any",
+          "description": "Semver constraint for the Clay CLI/library version required by this project."
+        }
+      }
     }
   },
   "$defs": {
@@ -138,7 +150,10 @@
       "target": "brick/__brick__",
       "ignore": [".dart_tool/", "build/", "coverage/", "**/*.iml", ".DS_Store"],
       "replacements": [],
-      "lineDeletions": []
+      "lineDeletions": [],
+      "environment": {
+        "clay": "^0.0.1-dev.1"
+      }
     },
     {
       "replacements": [
