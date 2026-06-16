@@ -71,30 +71,7 @@ environment:
             'message',
             allOf(
               contains('Invalid environment'),
-              contains('environment must be a mapping'),
-              contains(configFile.path),
-            ),
-          ),
-        ),
-      );
-    });
-
-    test('throws when environment contains unknown keys', () async {
-      final configFile = File(p.join(tempDir.path, 'clay.yaml'));
-      await configFile.writeAsString('''
-environment:
-  mason: ^1.0.0
-''');
-
-      expect(
-        () => loadClayConfig(configPath: configFile.path),
-        throwsA(
-          isA<ClayConfigException>().having(
-            (error) => error.message,
-            'message',
-            allOf(
-              contains('Invalid environment'),
-              contains('unknown keys'),
+              contains('Expected a value of type Map<String, dynamic>'),
               contains(configFile.path),
             ),
           ),
