@@ -22,12 +22,12 @@ class ClayEnvironmentMapper extends ClassMapperBase<ClayEnvironment> {
   @override
   final String id = 'ClayEnvironment';
 
-  static String _$clay(ClayEnvironment v) => v.clay;
-  static const Field<ClayEnvironment, String> _f$clay = Field(
+  static VersionConstraint _$clay(ClayEnvironment v) => v.clay;
+  static const Field<ClayEnvironment, VersionConstraint> _f$clay = Field(
     'clay',
     _$clay,
     opt: true,
-    def: ClayEnvironment.defaultClayConstraint,
+    hook: versionConstraintHook,
   );
 
   @override
@@ -62,12 +62,12 @@ mixin ClayEnvironmentMappable {
   }
 
   ClayEnvironmentCopyWith<ClayEnvironment, ClayEnvironment, ClayEnvironment>
-      get copyWith =>
-          _ClayEnvironmentCopyWithImpl<ClayEnvironment, ClayEnvironment>(
-            this as ClayEnvironment,
-            $identity,
-            $identity,
-          );
+  get copyWith =>
+      _ClayEnvironmentCopyWithImpl<ClayEnvironment, ClayEnvironment>(
+        this as ClayEnvironment,
+        $identity,
+        $identity,
+      );
   @override
   String toString() {
     return ClayEnvironmentMapper.ensureInitialized().stringifyValue(
@@ -99,7 +99,7 @@ extension ClayEnvironmentValueCopy<$R, $Out>
 
 abstract class ClayEnvironmentCopyWith<$R, $In extends ClayEnvironment, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
-  $R call({String? clay});
+  $R call({VersionConstraint? clay});
   ClayEnvironmentCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
   );
@@ -114,8 +114,8 @@ class _ClayEnvironmentCopyWithImpl<$R, $Out>
   late final ClassMapperBase<ClayEnvironment> $mapper =
       ClayEnvironmentMapper.ensureInitialized();
   @override
-  $R call({String? clay}) =>
-      $apply(FieldCopyWithData({if (clay != null) #clay: clay}));
+  $R call({Object? clay = $none}) =>
+      $apply(FieldCopyWithData({if (clay != $none) #clay: clay}));
   @override
   ClayEnvironment $make(CopyWithData data) =>
       ClayEnvironment(clay: data.get(#clay, or: $value.clay));
@@ -123,6 +123,6 @@ class _ClayEnvironmentCopyWithImpl<$R, $Out>
   @override
   ClayEnvironmentCopyWith<$R2, ClayEnvironment, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) =>
-      _ClayEnvironmentCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _ClayEnvironmentCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

@@ -6,7 +6,6 @@ import 'package:clay_core/src/features/config/validate_environment.dart';
 ClayConfig parseConfigMap(Map<String, dynamic> map) {
   validateEnvironmentMap(map);
   final config = ClayConfig.fromMap(map);
-  validateClayEnvironment(config.environment);
   validateIgnorePatterns(config.ignore);
   return config;
 }

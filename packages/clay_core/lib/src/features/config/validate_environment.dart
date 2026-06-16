@@ -1,26 +1,5 @@
-import 'package:clay_core/src/entities/clay_config.dart';
-import 'package:clay_core/src/entities/clay_environment.dart';
-import 'package:pub_semver/pub_semver.dart';
-
 /// Allowed keys inside the `environment` block of `clay.yaml`.
 const _allowedEnvironmentKeys = {'clay'};
-
-/// Parses [constraint] as a semver version constraint.
-///
-/// Throws [FormatException] when [constraint] is not a valid constraint string.
-VersionConstraint parseClayVersionConstraint(String constraint) {
-  if (constraint.isEmpty) {
-    throw const FormatException('environment.clay must not be empty');
-  }
-
-  try {
-    return VersionConstraint.parse(constraint);
-  } on FormatException catch (error) {
-    throw FormatException(
-      'environment.clay must be a valid semver constraint: ${error.message}',
-    );
-  }
-}
 
 /// Validates the raw `environment` entry before [ClayConfig] mapping.
 void validateEnvironmentMap(Map<String, dynamic> map) {
@@ -47,9 +26,4 @@ void validateEnvironmentMap(Map<String, dynamic> map) {
   if (clay != null && clay is! String) {
     throw const FormatException('environment.clay must be a string');
   }
-}
-
-/// Validates a parsed [ClayEnvironment].
-void validateClayEnvironment(ClayEnvironment environment) {
-  parseClayVersionConstraint(environment.clay);
 }

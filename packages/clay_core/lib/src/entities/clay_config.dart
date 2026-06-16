@@ -14,12 +14,13 @@ class ClayConfig with ClayConfigMappable {
   /// Creates a [ClayConfig].
   ClayConfig({
     this.reference = ClayConfig.defaultReferencePath,
-    this.environment = const ClayEnvironment(),
+    ClayEnvironment? environment,
     this.ignore = const [],
     this.replacements = const [],
     this.lineDeletions = const [],
     String? target,
-  }) : target = target ?? ClayConfig.defaultTargetPath;
+  })  : environment = environment ?? ClayEnvironment(),
+        target = target ?? ClayConfig.defaultTargetPath;
 
   /// Creates a [ClayConfig] from a config map.
   // ignore: specify_nonobvious_property_types

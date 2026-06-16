@@ -110,7 +110,7 @@ extension LineDeletionValueCopy<$R, $Out>
 abstract class LineDeletionCopyWith<$R, $In extends LineDeletion, $Out>
     implements ClassCopyWith<$R, $In, $Out> {
   ListCopyWith<$R, LineRange, LineRangeCopyWith<$R, LineRange, LineRange>>
-      get ranges;
+  get ranges;
   $R call({String? filePath, List<LineRange>? ranges});
   LineDeletionCopyWith<$R2, $In, $Out2> $chain<$R2, $Out2>(Then<$Out2, $R2> t);
 }
@@ -125,27 +125,27 @@ class _LineDeletionCopyWithImpl<$R, $Out>
       LineDeletionMapper.ensureInitialized();
   @override
   ListCopyWith<$R, LineRange, LineRangeCopyWith<$R, LineRange, LineRange>>
-      get ranges => ListCopyWith(
-            $value.ranges,
-            (v, t) => v.copyWith.$chain(t),
-            (v) => call(ranges: v),
-          );
+  get ranges => ListCopyWith(
+    $value.ranges,
+    (v, t) => v.copyWith.$chain(t),
+    (v) => call(ranges: v),
+  );
   @override
   $R call({String? filePath, List<LineRange>? ranges}) => $apply(
-        FieldCopyWithData({
-          if (filePath != null) #filePath: filePath,
-          if (ranges != null) #ranges: ranges,
-        }),
-      );
+    FieldCopyWithData({
+      if (filePath != null) #filePath: filePath,
+      if (ranges != null) #ranges: ranges,
+    }),
+  );
   @override
   LineDeletion $make(CopyWithData data) => LineDeletion(
-        filePath: data.get(#filePath, or: $value.filePath),
-        ranges: data.get(#ranges, or: $value.ranges),
-      );
+    filePath: data.get(#filePath, or: $value.filePath),
+    ranges: data.get(#ranges, or: $value.ranges),
+  );
 
   @override
   LineDeletionCopyWith<$R2, LineDeletion, $Out2> $chain<$R2, $Out2>(
     Then<$Out2, $R2> t,
-  ) =>
-      _LineDeletionCopyWithImpl<$R2, $Out2>($value, $cast, t);
+  ) => _LineDeletionCopyWithImpl<$R2, $Out2>($value, $cast, t);
 }
+

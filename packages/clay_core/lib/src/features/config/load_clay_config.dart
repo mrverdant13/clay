@@ -4,6 +4,7 @@ import 'package:clay_core/src/entities/clay_config.dart';
 import 'package:clay_core/src/features/config/clay_config_exception.dart';
 import 'package:clay_core/src/features/config/parse_config_map.dart';
 import 'package:clay_core/src/features/config/yaml_to_dart.dart';
+import 'package:dart_mappable/dart_mappable.dart';
 import 'package:meta/meta.dart';
 import 'package:yaml/yaml.dart';
 
@@ -57,8 +58,33 @@ Future<ClayConfig> loadClayConfig({
     if (error is ClayConfigException) {
       rethrow;
     }
+    final environmentMessage = _environmentErrorMessage(error);
+    if (environmentMessage != null) {
+      throw ClayConfigException(
+        'Invalid environment in clay.yaml at $configPath: '
+        '$environmentMessage',
+      );
+    }
     throw ClayConfigException(
       'Failed to parse clay.yaml at $configPath: $error',
     );
   }
+}
+
+String? _environmentErrorMessage(Object error) {
+  final message = switch (error) {
+    MapperException(:final message) => message,
+    _ => error.toString(),
+  };
+  if (!message.contains('environment')) {
+    return null;
+  }
+
+  const formatPrefix = 'FormatException: ';
+  final formatStart = message.indexOf(formatPrefix);
+  if (formatStart != -1) {
+    return message.substring(formatStart + formatPrefix.length);
+  }
+
+  return message;
 }
