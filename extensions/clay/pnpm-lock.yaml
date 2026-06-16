@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      semver:
+        specifier: ^7.8.4
+        version: 7.8.4
       yaml:
         specifier: ^2.9.0
         version: 2.9.0
@@ -15,6 +18,9 @@ importers:
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.20
+      '@types/semver':
+        specifier: ^7.7.1
+        version: 7.7.1
       '@types/vscode':
         specifier: 1.85.0
         version: 1.85.0
@@ -366,6 +372,9 @@ packages:
 
   '@types/sarif@2.1.7':
     resolution: {integrity: sha512-kRz0VEkJqWLf1LLVN4pT1cg1Z9wAuvI6L97V3m2f5B76Tg8d413ddvLBPTEHAZJlnn4XSvu0FkZtViCQGVyrXQ==}
+
+  '@types/semver@7.7.1':
+    resolution: {integrity: sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA==}
 
   '@types/vscode@1.85.0':
     resolution: {integrity: sha512-CF/RBon/GXwdfmnjZj0WTUMZN5H6YITOfBCP4iEZlOtVQXuzw6t7Le7+cR+7JzdMrnlm7Mfp49Oj2TuSXIWo3g==}
@@ -1396,8 +1405,8 @@ packages:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
 
-  semver@7.8.3:
-    resolution: {integrity: sha512-wnilbGyMxzbY7dNOl7jpKbLSjcfeweJWU5j4+u5qW+6/wuGD9KzIGOyZnQVSBM9E7DtWaaH3CyHkppYrKYoxwg==}
+  semver@7.8.4:
+    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -2028,6 +2037,8 @@ snapshots:
 
   '@types/sarif@2.1.7': {}
 
+  '@types/semver@7.7.1': {}
+
   '@types/vscode@1.85.0': {}
 
   '@typespec/ts-http-runtime@0.3.6':
@@ -2058,7 +2069,7 @@ snapshots:
       https-proxy-agent: 7.0.6
       jszip: 3.10.1
       ora: 8.2.0
-      semver: 7.8.3
+      semver: 7.8.4
     transitivePeerDependencies:
       - supports-color
 
@@ -2125,7 +2136,7 @@ snapshots:
       parse-semver: 1.1.1
       read: 1.0.7
       secretlint: 10.2.2
-      semver: 7.8.3
+      semver: 7.8.4
       tmp: 0.2.7
       typed-rest-client: 1.8.11
       url-join: 4.0.1
@@ -2762,7 +2773,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.8.3
+      semver: 7.8.4
 
   jszip@3.10.1:
     dependencies:
@@ -2840,7 +2851,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.8.3
+      semver: 7.8.4
 
   markdown-it@14.2.0:
     dependencies:
@@ -2924,7 +2935,7 @@ snapshots:
 
   node-abi@3.92.0:
     dependencies:
-      semver: 7.8.3
+      semver: 7.8.4
     optional: true
 
   node-addon-api@4.3.0:
@@ -2938,7 +2949,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.8.3
+      semver: 7.8.4
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -3167,7 +3178,7 @@ snapshots:
 
   semver@5.7.2: {}
 
-  semver@7.8.3: {}
+  semver@7.8.4: {}
 
   serialize-javascript@6.0.2:
     dependencies:
