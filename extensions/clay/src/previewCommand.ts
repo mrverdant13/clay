@@ -7,12 +7,17 @@ import { assertClayConfigCompatibleWithCli } from './clayCompatibility';
 import { findBrickScopeForFile } from './brickScope';
 import { loadBrickVariables } from './brickVariables';
 import { getClayCliVersion, resolveClayCli, type ClayCliInvocation } from './clayCli';
+export {
+  setClayCliExecFileForTests,
+  setClayCompatExecFileForTests,
+} from './clayCli';
 import { resolvePreviewVariables } from './previewFileVariables';
 import {
   loadSavedPreviewVariables,
   savePreviewVariables,
 } from './previewVariableState';
 import { runGeneratedPreview, runTemplatePreview } from './previewRunner';
+export { setPreviewRunnerExecFileForTests } from './previewRunner';
 import { isSupportedReferenceFile } from './supportedFiles';
 import { collectPreviewVariableValues } from './variableQuickPick';
 
