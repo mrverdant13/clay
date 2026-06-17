@@ -159,10 +159,10 @@ environment:
   assert.equal(config.environment.clay, '^0.0.1-dev.1');
 });
 
-test('parseClayConfig rejects invalid environment.clay constraints', () => {
+test('parseClayConfig rejects empty environment.clay values', () => {
   assert.throws(
-    () => parseClayConfig('environment:\n  clay: not-a-version\n'),
-    /environment\.clay must be a valid semver constraint/,
+    () => parseClayConfig('environment:\n  clay: ""\n'),
+    /environment\.clay must not be empty/,
   );
 });
 
