@@ -241,6 +241,12 @@ melos:
         - melos run pub-score.local --scope=clay_cli --no-select
         - melos publish --dry-run --scope=clay_cli --no-select
 
+    release.prepare:
+      description: >
+        Bump version and changelog for a package release. Pass melos version
+        flags after -- (e.g. --scope=clay_core --manual-version=clay_core:build)
+      run: melos version --no-git-tag-version --no-dependent-versions --preid=dev
+
 workspace:
   - packages/clay_core/
   - packages/clay_core/e2e/
