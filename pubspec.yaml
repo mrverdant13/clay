@@ -29,6 +29,7 @@ melos:
         sdk: ">=3.5.0 <4.0.0"
     version:
       branch: main
+      includeScopes: false
       updateGitTagRefs: false
       workspaceChangelog: false
       fetchTags: false
