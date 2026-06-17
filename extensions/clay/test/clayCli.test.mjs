@@ -16,7 +16,6 @@ const { CLAY_CLI_SCRIPT_RELATIVE_PATH, resolveWorkspaceClayScript } = require(
   './out/workspaceClayScript.cjs',
 );
 const {
-  getClayCliVersion,
   runClayCompat,
   setClayCliExecFileForTests,
   setClayCompatExecFileForTests,
@@ -58,20 +57,6 @@ test('resolveWorkspaceClayScript checks folders in order', () => {
     );
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
-  }
-});
-
-test('getClayCliVersion reads --version stdout from the CLI subprocess', async () => {
-  setClayCliExecFileForTests(async (_executable, args) => {
-    assert.deepEqual(args, ['--version']);
-    return { stdout: '0.0.1-dev.42\n', stderr: '' };
-  });
-
-  try {
-    const version = await getClayCliVersion({ executable: '/bin/clay', prefixArgs: [] });
-    assert.equal(version, '0.0.1-dev.42');
-  } finally {
-    setClayCliExecFileForTests();
   }
 });
 

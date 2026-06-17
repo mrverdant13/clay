@@ -116,24 +116,6 @@ export async function runClayCompat(
   }
 }
 
-/** Returns the Clay CLI version reported by `--version`. */
-export async function getClayCliVersion(
-  invocation: ClayCliInvocation,
-): Promise<string> {
-  const { stdout } = await clayCliExecFile(
-    invocation.executable,
-    [...invocation.prefixArgs, '--version'],
-    { timeout: 10_000 },
-  );
-
-  const version = stdout.trim();
-  if (version.length === 0) {
-    throw new Error('Clay CLI --version returned an empty string.');
-  }
-
-  return version;
-}
-
 function getCliCandidates(configured?: string): ClayCliInvocation[] {
   const candidates: ClayCliInvocation[] = [];
 
@@ -212,30 +194,13 @@ async function isClayCliAvailable(invocation: ClayCliInvocation): Promise<boolea
   try {
     await clayCliExecFile(
       invocation.executable,
-      [...invocation.prefixArgs, 'preview'],
+      [...invocation.prefixArgs, 'compat', '--help'],
       { timeout: 10_000 },
     );
     return true;
-  } catch (error) {
-    if (isCommandNotFound(error)) {
-      return false;
-    }
-
-    const stderr = readExecStderr(error);
-    return (
-      stderr.includes('Missing required --file') ||
-      stderr.includes('Missing value for --file')
-    );
+  } catch {
+    return false;
   }
-}
-
-function isCommandNotFound(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as NodeJS.ErrnoException).code === 'ENOENT'
-  );
 }
 
 function readExecStderr(error: unknown): string {
