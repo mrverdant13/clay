@@ -194,6 +194,7 @@ export function installVscodeMock(overrides = {}) {
   const registeredCommands = [];
   const subscriptions = [];
   const warningMessages = [];
+  const errorMessages = [];
   const executedCommands = [];
   const openedDocuments = [];
   const configuration = new Map();
@@ -217,7 +218,9 @@ export function installVscodeMock(overrides = {}) {
       showWarningMessage: (message) => {
         warningMessages.push(message);
       },
-      showErrorMessage: () => {},
+      showErrorMessage: (message) => {
+        errorMessages.push(message);
+      },
       withProgress: async (_options, task) => task(),
     },
     workspace: {
@@ -297,6 +300,7 @@ export function installVscodeMock(overrides = {}) {
     registeredCommands,
     subscriptions,
     warningMessages,
+    errorMessages,
     executedCommands,
     openedDocuments,
     configuration,

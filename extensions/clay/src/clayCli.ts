@@ -45,6 +45,24 @@ export async function resolveClayCli(): Promise<ClayCliInvocation> {
   throw new Error(`The clay CLI was not found.\n${INSTALL_HINT}`);
 }
 
+/** Returns the Clay CLI version reported by `--version`. */
+export async function getClayCliVersion(
+  invocation: ClayCliInvocation,
+): Promise<string> {
+  const { stdout } = await execFileAsync(
+    invocation.executable,
+    [...invocation.prefixArgs, '--version'],
+    { timeout: 10_000 },
+  );
+
+  const version = stdout.trim();
+  if (version.length === 0) {
+    throw new Error('Clay CLI --version returned an empty string.');
+  }
+
+  return version;
+}
+
 function getCliCandidates(configured?: string): ClayCliInvocation[] {
   const candidates: ClayCliInvocation[] = [];
 
