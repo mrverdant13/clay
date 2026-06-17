@@ -24,7 +24,11 @@ const {
 const require = createRequire(import.meta.url);
 const {
   setClayCliExecFileForTests,
+} = require('./out/clayCli.cjs');
+const {
   setPreviewRunnerExecFileForTests,
+} = require('./out/previewRunner.cjs');
+const {
   PREVIEW_GENERATED_COMMAND_ID,
   PREVIEW_TEMPLATE_COMMAND_ID,
   ensureWorkspaceTrustedForPreview,
