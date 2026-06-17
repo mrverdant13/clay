@@ -132,11 +132,12 @@ Path resolution order: CLI flag → `clay.yaml` field → built-in default (`ref
 
 ### Commands
 
-| Command    | Description                                                        |
-| ---------- | ------------------------------------------------------------------ |
-| `gen`      | Generate the template from the reference project (default command) |
-| `validate` | Validate annotation markers in the reference directory             |
-| `preview`  | Transform a single reference file and write result to stdout       |
+| Command    | Description                                                                 |
+| ---------- | --------------------------------------------------------------------------- |
+| `gen`      | Generate the template from the reference project (default command)          |
+| `validate` | Validate annotation markers in the reference directory                      |
+| `preview`  | Transform a single reference file and write result to stdout                |
+| `compat`   | Check whether the installed Clay version satisfies `environment.clay`       |
 
 #### `clay preview` flags
 
@@ -145,6 +146,25 @@ Path resolution order: CLI flag → `clay.yaml` field → built-in default (`ref
 | `--file <path>`    | **Required.** Path to a file under the reference directory      |
 | `--template-only`  | Apply config + annotations only; leave Mustache tags unresolved |
 | `--vars <k=v,...>` | Comma-separated Mason variables for full preview rendering      |
+
+#### `clay compat`
+
+Read-only probe that loads `clay.yaml` (via the same config discovery and `resolveProjectConfig` path as `gen`, `validate`, and `preview`) and checks whether the installed Clay version satisfies `environment.clay`. It performs no generation, validation, or preview work.
+
+| Exit code | Meaning |
+| --- | --- |
+| `0` | Compatible — empty stdout and stderr |
+| `64` | Usage error (invalid flags) — usage help on stderr |
+| `70` | Config or compatibility error — actionable message on stderr |
+
+On version mismatch, stderr matches the message printed by other commands:
+
+```text
+The current clay version is 0.0.1-dev.1.
+This project requires clay version ^0.2.0.
+```
+
+Missing config, invalid `environment.clay`, and other config errors also exit `70` with the same messages as `gen` / `validate` / `preview`. Use `clay compat` in scripts or editor integrations to delegate compatibility checks to the CLI instead of reimplementing semver rules locally.
 
 ---
 
@@ -173,7 +193,7 @@ The optional `environment` block declares which **Clay tool versions** a project
 
 When `environment` is omitted, or `environment.clay` is not set, Clay treats the constraint as **`any`** — existing projects without this field continue to work unchanged.
 
-Pin a constraint when you want `clay gen`, `clay validate`, and `clay preview` to fail fast if contributors or CI use an incompatible Clay version. For new projects after the first pub.dev preview, a practical starting point is:
+Pin a constraint when you want `clay gen`, `clay validate`, `clay preview`, and `clay compat` to fail fast if contributors or CI use an incompatible Clay version. For new projects after the first pub.dev preview, a practical starting point is:
 
 ```yaml
 environment:
@@ -227,7 +247,7 @@ The **Clay** extension lives in [`extensions/clay/`](extensions/clay/). It provi
 - Scope discovery via nearest `clay.yaml`
 - Configurable annotation colors via `clay.colors.*` settings
 
-The extension invokes the `clay` CLI (installed globally after pub.dev release, or `dart run` during development). See [`extensions/clay/README.md`](extensions/clay/README.md) for installation, settings, preview commands, and troubleshooting.
+The extension invokes the `clay` CLI (installed globally after pub.dev release, or `dart run` during development). Preview commands run `clay compat` before spawning `clay preview` so version checks use the same rules as the CLI — see [`extensions/clay/README.md`](extensions/clay/README.md) for installation, minimum CLI version, settings, preview commands, and troubleshooting.
 
 ---
 
