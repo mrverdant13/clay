@@ -11,8 +11,30 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  extension:
-    name: Build and test Clay extension
+  extension-unit:
+    name: Extension unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extensions/clay
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - name: Install extension dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run extension unit tests
+        run: pnpm test
+
+  extension-e2e:
+    name: Extension E2E tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,7 +57,5 @@ jobs:
         working-directory: packages/clay_cli
       - name: Install extension dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run extension unit tests
-        run: pnpm test
       - name: Run extension integration tests
         run: xvfb-run -a pnpm test:e2e
