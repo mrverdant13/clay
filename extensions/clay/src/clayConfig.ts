@@ -2,10 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
-import {
-  DEFAULT_CLAY_CONSTRAINT,
-  validateClayVersionConstraint,
-} from './clayCompatibility';
+/** Default `environment.clay` when omitted from `clay.yaml`. */
+export const DEFAULT_CLAY_CONSTRAINT = 'any';
 
 /** Filename for the Clay config at the project root. */
 export const CLAY_CONFIG_FILE_NAME = 'clay.yaml';
@@ -92,7 +90,10 @@ function readEnvironmentField(document: ClayConfigDocument): ClayEnvironment {
     throw new Error('environment.clay must be a string');
   }
 
-  validateClayVersionConstraint(clay);
+  if (clay.length === 0) {
+    throw new Error('environment.clay must not be empty');
+  }
+
   return { clay };
 }
 

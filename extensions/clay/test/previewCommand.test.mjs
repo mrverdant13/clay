@@ -24,6 +24,7 @@ const {
 const require = createRequire(import.meta.url);
 const {
   setClayCliExecFileForTests,
+  setClayCompatExecFileForTests,
 } = require('./out/clayCli.cjs');
 const {
   setPreviewRunnerExecFileForTests,
@@ -60,21 +61,25 @@ function resetMockState() {
 }
 
 function installMockClayCliSubprocesses({
-  version = '0.0.1-dev.1',
+  compatExitCode = 0,
+  compatStderr = '',
   previewStdout = 'void main() {\n}\n',
 } = {}) {
   setClayCliExecFileForTests(async (_executable, args) => {
-    if (args.includes('--version')) {
-      return { stdout: `${version}\n`, stderr: '' };
-    }
-
-    if (args.includes('preview')) {
-      const error = new Error('missing file');
-      error.stderr = 'Missing required --file';
-      throw error;
+    if (args.includes('compat') && args.includes('--help')) {
+      return { stdout: 'Usage: clay compat\n', stderr: '' };
     }
 
     throw new Error(`Unexpected clay CLI invocation: ${args.join(' ')}`);
+  });
+  setClayCompatExecFileForTests(async () => {
+    if (compatExitCode !== 0) {
+      const error = new Error('clay compat failed');
+      error.code = compatExitCode;
+      error.stderr = compatStderr;
+      throw error;
+    }
+    return { stdout: '', stderr: '' };
   });
   setPreviewRunnerExecFileForTests(async () => ({
     stdout: previewStdout,
@@ -84,6 +89,7 @@ function installMockClayCliSubprocesses({
 
 function resetMockClayCliSubprocesses() {
   setClayCliExecFileForTests();
+  setClayCompatExecFileForTests();
   setPreviewRunnerExecFileForTests();
 }
 
@@ -253,9 +259,14 @@ test('template preview opens a diff document on success', async () => {
   }
 });
 
-test('template preview blocks when environment.clay is not satisfied', async () => {
+test('template preview blocks when clay compat exits non-zero', async () => {
   resetMockState();
-  installMockClayCliSubprocesses({ version: '0.0.1-dev.1' });
+  installMockClayCliSubprocesses({
+    compatExitCode: 70,
+    compatStderr:
+      'The current clay version is 0.0.1-dev.1.\n' +
+      'This project requires clay version ^99.0.0.',
+  });
   configuration.set('clay.cliPath', '/bin/clay');
 
   const fixture = createPreviewFixture({
@@ -279,6 +290,36 @@ test('template preview blocks when environment.clay is not satisfied', async () 
     assert.equal(errorMessages.length, 1);
     assert.match(errorMessages[0], /The current clay version is/);
     assert.match(errorMessages[0], /requires clay version \^99\.0\.0/);
+    assert.equal(executedCommands.length, 0);
+  } finally {
+    resetMockClayCliSubprocesses();
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
+});
+
+test('template preview shows fallback when clay compat fails without stderr', async () => {
+  resetMockState();
+  installMockClayCliSubprocesses({
+    compatExitCode: 1,
+    compatStderr: '',
+  });
+  configuration.set('clay.cliPath', '/bin/clay');
+
+  const fixture = createPreviewFixture();
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      'void main() {}',
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 0);
+    assert.equal(errorMessages.length, 1);
+    assert.equal(
+      errorMessages[0],
+      'Clay compatibility check failed (exit code 1).',
+    );
     assert.equal(executedCommands.length, 0);
   } finally {
     resetMockClayCliSubprocesses();

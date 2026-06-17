@@ -1,0 +1,4 @@
+reference: reference
+target: brick/__brick__
+environment:
+  clay: ^99.0.0

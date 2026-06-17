@@ -2,11 +2,10 @@ import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { loadClayConfig, type ClayConfig } from './clayConfig';
-import { assertClayConfigCompatibleWithCli } from './clayCompatibility';
-import { findBrickScopeForFile } from './brickScope';
+import { loadClayConfig } from './clayConfig';
+import { findBrickScopeForFile, type BrickScopeInfo } from './brickScope';
 import { loadBrickVariables } from './brickVariables';
-import { getClayCliVersion, resolveClayCli, type ClayCliInvocation } from './clayCli';
+import { resolveClayCli, runClayCompat, type ClayCliInvocation } from './clayCli';
 import { resolvePreviewVariables } from './previewFileVariables';
 import {
   loadSavedPreviewVariables,
@@ -114,7 +113,7 @@ async function previewGeneratedOutput(
 
   await savePreviewVariables(context, scope.scopeName, selectedValues);
 
-  const cli = await resolveClayCliForPreview(config);
+  const cli = await resolveClayCliForPreview(scope);
   if (!cli) {
     return;
   }
@@ -171,16 +170,15 @@ async function previewTemplateOutput(uri?: vscode.Uri): Promise<void> {
     return;
   }
 
-  let config;
   try {
-    config = loadClayConfig(scope.configPath);
+    loadClayConfig(scope.configPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`Could not load Clay configuration: ${message}`);
     return;
   }
 
-  const cli = await resolveClayCliForPreview(config);
+  const cli = await resolveClayCliForPreview(scope);
   if (!cli) {
     return;
   }
@@ -241,7 +239,7 @@ async function ensureDocumentSaved(
 }
 
 async function resolveClayCliForPreview(
-  config: ClayConfig,
+  scope: BrickScopeInfo,
 ): Promise<ClayCliInvocation | undefined> {
   let cli: ClayCliInvocation;
   try {
@@ -252,11 +250,14 @@ async function resolveClayCliForPreview(
     return undefined;
   }
 
-  try {
-    const version = await getClayCliVersion(cli);
-    assertClayConfigCompatibleWithCli(config, version);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  const compat = await runClayCompat(cli, {
+    configPath: scope.configPath,
+    projectRoot: scope.projectRoot,
+  });
+  if (compat.exitCode !== 0) {
+    const message =
+      compat.stderr.trim() ||
+      `Clay compatibility check failed (exit code ${compat.exitCode}).`;
     void vscode.window.showErrorMessage(message);
     return undefined;
   }

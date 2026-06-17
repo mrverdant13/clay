@@ -8,6 +8,19 @@ const vscode = require('vscode');
 
 const { fixtureMainDart, fixtureRoot } = require('./helpers/paths.cjs');
 
+const incompatibleFixtureMainDart = join(
+  fixtureRoot,
+  'incompatible-preview',
+  'reference',
+  'lib',
+  'main.dart',
+);
+const incompatibleFixtureClayYaml = join(
+  fixtureRoot,
+  'incompatible-preview',
+  'clay.yaml',
+);
+
 function monorepoRoot() {
   const folders = vscode.workspace.workspaceFolders ?? [];
   const match = folders.find((folder) =>
@@ -183,5 +196,53 @@ suite('Preview command', () => {
     await expectPreviewDocument(async () => {
       await vscode.commands.executeCommand('clay.previewGenerated', uri);
     });
+  });
+
+  test('clay.previewTemplate blocks when clay compat reports a version mismatch', async function () {
+    this.timeout(90_000);
+
+    const root = monorepoRoot();
+    const clayScript = join(root, 'packages', 'clay_cli', 'bin', 'clay.dart');
+
+    let compatStderr = '';
+    try {
+      execFileSync(
+        'dart',
+        [
+          'run',
+          clayScript,
+          'compat',
+          '--config',
+          incompatibleFixtureClayYaml,
+          '--cwd',
+          join(fixtureRoot, 'incompatible-preview'),
+        ],
+        { encoding: 'utf8' },
+      );
+      assert.fail('expected clay compat to fail for incompatible environment.clay');
+    } catch (error) {
+      compatStderr = error.stderr?.toString() ?? '';
+      assert.match(compatStderr, /The current clay version is/);
+      assert.match(compatStderr, /requires clay version \^99\.0\.0/);
+    }
+
+    const uri = vscode.Uri.file(incompatibleFixtureMainDart);
+    const document = await vscode.workspace.openTextDocument(uri);
+    await vscode.window.showTextDocument(document, { preview: false });
+
+    let previewOpened = false;
+    const disposable = vscode.workspace.onDidOpenTextDocument((opened) => {
+      if (opened.isUntitled) {
+        previewOpened = true;
+      }
+    });
+
+    try {
+      await vscode.commands.executeCommand('clay.previewTemplate', uri);
+      await new Promise((resolve) => setTimeout(resolve, 3_000));
+      assert.equal(previewOpened, false, 'preview should not open when clay compat fails');
+    } finally {
+      disposable.dispose();
+    }
   });
 });
