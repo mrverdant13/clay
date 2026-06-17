@@ -1,4 +1,5 @@
 import 'package:clay_cli/src/commands/clay_command_runner.dart';
+import 'package:clay_cli/src/commands/compat_command.dart';
 import 'package:clay_cli/src/commands/gen_command.dart';
 import 'package:clay_cli/src/commands/preview_command.dart';
 import 'package:clay_cli/src/commands/validate_command.dart';
@@ -12,6 +13,7 @@ Future<int> clay({
   final runner = ClayCommandRunner(
     logger: logger,
   )
+    ..addCommand(CompatCommand())
     ..addCommand(GenCommand())
     ..addCommand(PreviewCommand())
     ..addCommand(ValidateCommand());

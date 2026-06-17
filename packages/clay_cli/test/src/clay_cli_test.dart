@@ -13,6 +13,7 @@ void main() {
 
     test('exports command types', () {
       expect(GenCommand, isA<Type>());
+      expect(CompatCommand, isA<Type>());
       expect(PreviewCommand, isA<Type>());
       expect(ValidateCommand, isA<Type>());
     });
