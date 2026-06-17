@@ -45,6 +45,67 @@ export async function resolveClayCli(): Promise<ClayCliInvocation> {
   throw new Error(`The clay CLI was not found.\n${INSTALL_HINT}`);
 }
 
+/** Result of a `clay compat` subprocess probe. */
+export interface ClayCompatResult {
+  exitCode: number;
+  stderr: string;
+}
+
+/** Options for invoking `clay compat` against a brick scope. */
+export interface RunClayCompatOptions {
+  configPath: string;
+  projectRoot: string;
+}
+
+type ClayCompatExecFile = (
+  executable: string,
+  args: string[],
+  options: { cwd: string; timeout: number },
+) => Promise<{ stdout: string; stderr: string }>;
+
+const defaultClayCompatExecFile: ClayCompatExecFile = async (
+  executable,
+  args,
+  options,
+) => execFileAsync(executable, args, options);
+
+let clayCompatExecFile: ClayCompatExecFile = defaultClayCompatExecFile;
+
+/** @internal Overrides subprocess execution for unit tests. */
+export function setClayCompatExecFileForTests(
+  override?: ClayCompatExecFile,
+): void {
+  clayCompatExecFile = override ?? defaultClayCompatExecFile;
+}
+
+/** Runs `clay compat` and returns exit code and stderr (no stdout). */
+export async function runClayCompat(
+  invocation: ClayCliInvocation,
+  options: RunClayCompatOptions,
+): Promise<ClayCompatResult> {
+  const args = [
+    ...invocation.prefixArgs,
+    'compat',
+    '--config',
+    options.configPath,
+    '--cwd',
+    options.projectRoot,
+  ];
+
+  try {
+    await clayCompatExecFile(invocation.executable, args, {
+      cwd: options.projectRoot,
+      timeout: 10_000,
+    });
+    return { exitCode: 0, stderr: '' };
+  } catch (error) {
+    return {
+      exitCode: readExecExitCode(error),
+      stderr: readExecStderr(error),
+    };
+  }
+}
+
 /** Returns the Clay CLI version reported by `--version`. */
 export async function getClayCliVersion(
   invocation: ClayCliInvocation,
@@ -176,4 +237,17 @@ function readExecStderr(error: unknown): string {
     return stderr;
   }
   return stderr?.toString() ?? '';
+}
+
+function readExecExitCode(error: unknown): number {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return 1;
+  }
+
+  const code = (error as NodeJS.ErrnoException).code;
+  if (typeof code === 'number') {
+    return code;
+  }
+
+  return 1;
 }

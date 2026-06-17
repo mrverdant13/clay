@@ -15,7 +15,11 @@ const require = createRequire(import.meta.url);
 const { CLAY_CLI_SCRIPT_RELATIVE_PATH, resolveWorkspaceClayScript } = require(
   './out/workspaceClayScript.cjs',
 );
-const { getClayCliVersion } = require('./out/clayCli.cjs');
+const {
+  getClayCliVersion,
+  runClayCompat,
+  setClayCompatExecFileForTests,
+} = require('./out/clayCli.cjs');
 
 const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = join(extensionRoot, '..', '..');
@@ -74,5 +78,101 @@ exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
     assert.match(version, /^0\.0\.1-dev\.\d+$/);
   } finally {
     rmSync(wrapperDir, { recursive: true, force: true });
+  }
+});
+
+test('runClayCompat invokes compat with --config and --cwd from brick scope', async () => {
+  /** @type {{ executable?: string; args?: string[]; options?: { cwd: string; timeout: number } } | null} */
+  let captured = null;
+
+  setClayCompatExecFileForTests(async (executable, args, options) => {
+    captured = { executable, args, options };
+    return { stdout: '', stderr: '' };
+  });
+
+  try {
+    const result = await runClayCompat(
+      { executable: '/bin/clay', prefixArgs: ['run', 'clay.dart'] },
+      { configPath: '/proj/clay.yaml', projectRoot: '/proj' },
+    );
+
+    assert.deepEqual(result, { exitCode: 0, stderr: '' });
+    assert.deepEqual(captured, {
+      executable: '/bin/clay',
+      args: [
+        'run',
+        'clay.dart',
+        'compat',
+        '--config',
+        '/proj/clay.yaml',
+        '--cwd',
+        '/proj',
+      ],
+      options: { cwd: '/proj', timeout: 10_000 },
+    });
+  } finally {
+    setClayCompatExecFileForTests();
+  }
+});
+
+test('runClayCompat maps non-zero exit code and stderr from subprocess failure', async () => {
+  setClayCompatExecFileForTests(async () => {
+    const error = new Error('clay compat failed');
+    error.code = 70;
+    error.stderr =
+      'The current clay version is 0.0.1-dev.1.\n' +
+      'This project requires clay version ^0.2.0.';
+    throw error;
+  });
+
+  try {
+    const result = await runClayCompat(
+      { executable: 'clay', prefixArgs: [] },
+      { configPath: '/brick/clay.yaml', projectRoot: '/brick' },
+    );
+
+    assert.equal(result.exitCode, 70);
+    assert.equal(
+      result.stderr,
+      'The current clay version is 0.0.1-dev.1.\n' +
+        'This project requires clay version ^0.2.0.',
+    );
+  } finally {
+    setClayCompatExecFileForTests();
+  }
+});
+
+test('runClayCompat runs compat against the workspace CLI for a compatible fixture', async () => {
+  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-compat-'));
+  const fixtureDir = mkdtempSync(join(tmpdir(), 'clay-compat-fixture-'));
+  const isWindows = process.platform === 'win32';
+  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
+  const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
+  const wrapperContent = isWindows
+    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
+    : `#!/usr/bin/env bash
+set -euo pipefail
+exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
+`;
+  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
+  writeFileSync(
+    join(fixtureDir, 'clay.yaml'),
+    'reference: reference\ntarget: brick/__brick__\n',
+  );
+
+  try {
+    const result = await runClayCompat(
+      { executable: wrapperPath, prefixArgs: [] },
+      {
+        configPath: join(fixtureDir, 'clay.yaml'),
+        projectRoot: fixtureDir,
+      },
+    );
+
+    assert.equal(result.exitCode, 0);
+    assert.equal(result.stderr, '');
+  } finally {
+    rmSync(wrapperDir, { recursive: true, force: true });
+    rmSync(fixtureDir, { recursive: true, force: true });
   }
 });
