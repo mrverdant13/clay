@@ -1,6 +1,6 @@
 // cspell:words LOCALAPPDATA
 
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileOptions } from 'node:child_process';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
@@ -60,7 +60,7 @@ export interface RunClayCompatOptions {
 type ClayCliExecFile = (
   executable: string,
   args: string[],
-  options: Record<string, unknown>,
+  options: ExecFileOptions,
 ) => Promise<{ stdout: string; stderr: string }>;
 
 const defaultClayCliExecFile: ClayCliExecFile = async (
