@@ -21,10 +21,24 @@ melos:
       - packages/clay_core
       - packages/clay_cli
 
+  repository: https://github.com/mrverdant13/clay
+
   command:
     bootstrap:
       environment:
         sdk: ">=3.5.0 <4.0.0"
+    version:
+      branch: main
+      includeScopes: false
+      updateGitTagRefs: false
+      workspaceChangelog: false
+      fetchTags: false
+      message: |
+        chore(release): publish packages
+
+        {new_package_versions}
+      hooks:
+        preCommit: dart run tool/sync_package_version.dart --package clay_core && dart run tool/sync_package_version.dart --package clay_cli && git add packages/clay_core/lib/src/version.dart packages/clay_cli/lib/src/version.dart
 
   scripts:
     format:
