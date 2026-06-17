@@ -45,7 +45,7 @@ int syncPackageVersion(PackageConfig config, Directory repoRoot) {
     return 1;
   }
 
-  final version = _readPubspecVersion(pubspecFile);
+  final version = readPubspecVersion(pubspecFile);
   final versionDartFile = File('${packageDir.path}/lib/src/version.dart');
   if (!versionDartFile.existsSync()) {
     stderr.writeln('Missing version.dart: ${versionDartFile.path}');
@@ -133,7 +133,10 @@ Directory _repoRoot() {
   return root;
 }
 
-String _readPubspecVersion(File pubspecFile) {
+/// Reads the `version:` field from [pubspecFile].
+///
+/// Exits the process with code 1 when the version cannot be read.
+String readPubspecVersion(File pubspecFile) {
   final match = _pubspecVersionPattern.firstMatch(
     pubspecFile.readAsStringSync(),
   );
