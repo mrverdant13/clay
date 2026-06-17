@@ -216,30 +216,14 @@ melos:
 
     release.check:
       description: >
-        Pre-publish gate — format, analyze, test, pub score, and publish
-        dry-run for all publishable packages
+        Pre-publish gate. Set MELOS_PACKAGES=<package> to scope Melos-driven
+        steps to one package; omit for all publishable packages.
       steps:
         - format.ci
         - analyze.ci
         - test.ci
         - pub-score.local
         - melos publish --dry-run --category publishable
-    release.check.core:
-      description: Pre-publish gate scoped to clay_core
-      steps:
-        - format.ci
-        - analyze.ci
-        - test.ci
-        - melos run pub-score.local --scope=clay_core
-        - melos publish --dry-run --scope=clay_core
-    release.check.cli:
-      description: Pre-publish gate scoped to clay_cli
-      steps:
-        - format.ci
-        - analyze.ci
-        - test.ci
-        - melos run pub-score.local --scope=clay_cli
-        - melos publish --dry-run --scope=clay_cli
 
     release.prepare:
       description: >
