@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:clay_core/clay.dart';
-import 'package:mason_logger/mason_logger.dart';
+import 'package:io/io.dart';
 import 'package:test/test.dart';
 
 import 'helpers/fixture_project.dart';

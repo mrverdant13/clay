@@ -175,7 +175,8 @@ environment:
     );
 
     test('returns a non-zero exit code when config is missing', () async {
-      final emptyDir = Directory.systemTemp.createTempSync('clay_compat_empty_');
+      final emptyDir =
+          Directory.systemTemp.createTempSync('clay_compat_empty_');
       try {
         final exitCode = await clay(
           args: ['compat', '--cwd', emptyDir.path],
