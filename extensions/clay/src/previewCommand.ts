@@ -170,9 +170,8 @@ async function previewTemplateOutput(uri?: vscode.Uri): Promise<void> {
     return;
   }
 
-  let config;
   try {
-    config = loadClayConfig(scope.configPath);
+    loadClayConfig(scope.configPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     void vscode.window.showErrorMessage(`Could not load Clay configuration: ${message}`);
