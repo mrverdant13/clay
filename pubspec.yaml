@@ -214,6 +214,33 @@ melos:
         category:
           - publishable
 
+    release.check:
+      description: >
+        Pre-publish gate — format, analyze, test, pub score, and publish
+        dry-run for all publishable packages
+      steps:
+        - format.ci
+        - analyze.ci
+        - test.ci
+        - pub-score.local
+        - melos publish --dry-run --category publishable --no-select
+    release.check.core:
+      description: Pre-publish gate scoped to clay_core
+      steps:
+        - format.ci
+        - analyze.ci
+        - test.ci
+        - melos run pub-score.local --scope=clay_core --no-select
+        - melos publish --dry-run --scope=clay_core --no-select
+    release.check.cli:
+      description: Pre-publish gate scoped to clay_cli
+      steps:
+        - format.ci
+        - analyze.ci
+        - test.ci
+        - melos run pub-score.local --scope=clay_cli --no-select
+        - melos publish --dry-run --scope=clay_cli --no-select
+
 workspace:
   - packages/clay_core/
   - packages/clay_core/e2e/
