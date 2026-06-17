@@ -26,6 +26,8 @@ jobs:
   check:
     name: Pre-publish checks (${{ inputs.package }})
     runs-on: ubuntu-latest
+    env:
+      MELOS_PACKAGES: ${{ inputs.package }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -37,23 +39,11 @@ jobs:
           package: melos 7.5.1
       - name: Bootstrap workspace
         run: melos bs
-      - name: Resolve release check script
-        id: config
-        run: |
-          case "${{ inputs.package }}" in
-            clay_core) echo "check=release.check.core" >> "$GITHUB_OUTPUT" ;;
-            clay_cli) echo "check=release.check.cli" >> "$GITHUB_OUTPUT" ;;
-            *)
-              echo "::error::Unsupported package: ${{ inputs.package }}"
-              exit 1
-              ;;
-          esac
-          echo "dir=packages/${{ inputs.package }}" >> "$GITHUB_OUTPUT"
       - name: Run pre-publish gate
-        run: melos run ${{ steps.config.outputs.check }}
+        run: melos run release.check
       - name: Dry-run publish
         if: inputs.dry_run
-        working-directory: ${{ steps.config.outputs.dir }}
+        working-directory: packages/${{ inputs.package }}
         run: dart pub publish --dry-run
 
   publish:
