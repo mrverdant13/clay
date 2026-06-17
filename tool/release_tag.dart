@@ -42,14 +42,10 @@ void main(List<String> arguments) {
 /// Describes the annotated git tag to create after a successful publish.
 class ReleaseTagPlan {
   const ReleaseTagPlan({
-    required this.packageName,
-    required this.version,
     required this.tagName,
     required this.tagMessage,
   });
 
-  final String packageName;
-  final String version;
   final String tagName;
   final String tagMessage;
 
@@ -87,8 +83,6 @@ class ReleaseTagPlan {
 
   return (
     plan: ReleaseTagPlan(
-      packageName: packageName,
-      version: version,
       tagName: tagName,
       tagMessage: '$packageName $version',
     ),
@@ -102,7 +96,6 @@ int runReleaseTagPlan(ReleaseTagPlan plan) {
     final result = Process.runSync(
       command.first,
       command.sublist(1),
-      runInShell: false,
     );
     if (result.exitCode != 0) {
       final stderrText = result.stderr.toString().trim();
