@@ -216,8 +216,8 @@ melos:
 
     release.check:
       description: >
-        Pre-publish gate — format, analyze, test, pub score, and publish
-        dry-run for all publishable packages
+        Pre-publish gate. Set MELOS_PACKAGES=<package> to scope Melos-driven
+        steps to one package; omit for all publishable packages.
       steps:
         - format.ci
         - analyze.ci
