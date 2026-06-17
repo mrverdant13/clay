@@ -51,3 +51,7 @@ jobs:
           echo "dir=packages/${{ inputs.package }}" >> "$GITHUB_OUTPUT"
       - name: Run pre-publish gate
         run: melos run ${{ steps.config.outputs.check }}
+      - name: Dry-run publish
+        if: inputs.dry_run
+        working-directory: ${{ steps.config.outputs.dir }}
+        run: dart pub publish --dry-run
