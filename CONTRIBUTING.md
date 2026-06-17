@@ -216,7 +216,7 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
    MELOS_PACKAGES=clay_cli melos run release.check
    ```
 
-   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`.
+   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`. Use `MELOS_PACKAGES` for single-package release PRs — see [Why `MELOS_PACKAGES` and not `--scope`?](#why-melos_packages-and-not---scope) below.
 
 5. **Merge the release PR**, then publish from the package directory on `main`:
 
@@ -237,6 +237,16 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
    Or run the equivalent git commands manually (see [Release tagging](#release-tagging) below). **Do not tag** if publish failed or the version is not yet visible on pub.dev.
 
 7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `MELOS_PACKAGES=clay_cli melos run release.check` and publishing.
+
+### Why `MELOS_PACKAGES` and not `--scope`?
+
+`release.check` is a composite Melos script: its `steps:` invoke nested `melos run` commands (`test.ci`, `pub-score.local`, publish dry-run, and others). Passing `--scope` on the outer `melos run release.check` filters only that top-level invocation — it does **not** propagate to those nested steps. Setting `MELOS_PACKAGES=<package>` in the environment scopes every Melos workspace resolution in the process, including nested `melos run` calls inside `steps:` scripts.
+
+Use `MELOS_PACKAGES` for single-package pre-publish checks. Reserve `--scope` for direct Melos commands (for example `melos run release.prepare -- --scope=clay_core …` or `melos run test.ci --scope=clay_core` when not going through a composite parent script).
+
+`format.ci` and `analyze.ci` inside `release.check` still validate the **whole workspace** (`dart format .` / `dart analyze .` at the repo root). Only Melos `exec` / filtered steps (`test.ci`, `pub-score.local`, publish dry-run) honor `MELOS_PACKAGES`.
+
+Further reading: [Melos environment variables — `MELOS_PACKAGES`](https://melos.invertase.dev/environment-variables#melos_packages).
 
 ### Version sync
 
