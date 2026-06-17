@@ -25,10 +25,9 @@ void main(List<String> arguments) {
 
   final config = packageConfigs[packageName];
   if (config == null) {
-    stderr.writeln('Unknown package: $packageName');
-    stderr.writeln(
-      'Supported packages: ${packageConfigs.keys.join(', ')}',
-    );
+    stderr
+      ..writeln('Unknown package: $packageName')
+      ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
     exit(1);
   }
 
@@ -157,11 +156,10 @@ String _readPubspecVersion(File pubspecFile) {
 }
 
 void _printUsage() {
-  stderr.writeln(
-    'Usage: dart run tool/sync_package_version.dart --package <name>',
-  );
-  stderr.writeln('');
-  stderr.writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
+  stderr
+    ..writeln('Usage: dart run tool/sync_package_version.dart --package <name>')
+    ..writeln()
+    ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
 }
 
 class PackageConfig {
