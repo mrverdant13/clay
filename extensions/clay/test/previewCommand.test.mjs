@@ -297,6 +297,36 @@ test('template preview blocks when clay compat exits non-zero', async () => {
   }
 });
 
+test('template preview shows fallback when clay compat fails without stderr', async () => {
+  resetMockState();
+  installMockClayCliSubprocesses({
+    compatExitCode: 1,
+    compatStderr: '',
+  });
+  configuration.set('clay.cliPath', '/bin/clay');
+
+  const fixture = createPreviewFixture();
+  try {
+    mockVscode.window.activeTextEditor = createMockEditor(
+      'void main() {}',
+      fixture.filePath,
+    );
+
+    await templateHandler();
+
+    assert.equal(warningMessages.length, 0);
+    assert.equal(errorMessages.length, 1);
+    assert.equal(
+      errorMessages[0],
+      'Clay compatibility check failed (exit code 1).',
+    );
+    assert.equal(executedCommands.length, 0);
+  } finally {
+    resetMockClayCliSubprocesses();
+    rmSync(fixture.tempDir, { recursive: true, force: true });
+  }
+});
+
 test('ensureWorkspaceTrustedForPreview returns false in Restricted Mode', () => {
   resetMockState();
   mockVscode.workspace.isTrusted = false;

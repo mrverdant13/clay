@@ -255,7 +255,10 @@ async function resolveClayCliForPreview(
     projectRoot: scope.projectRoot,
   });
   if (compat.exitCode !== 0) {
-    void vscode.window.showErrorMessage(compat.stderr.trim());
+    const message =
+      compat.stderr.trim() ||
+      `Clay compatibility check failed (exit code ${compat.exitCode}).`;
+    void vscode.window.showErrorMessage(message);
     return undefined;
   }
 
