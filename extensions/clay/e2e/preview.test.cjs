@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
-const { existsSync } = require('node:fs');
+const { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = require('node:fs');
+const { tmpdir } = require('node:os');
 const { join } = require('node:path');
 
 const vscode = require('vscode');
@@ -75,6 +76,89 @@ suite('Preview command', () => {
 
     assert.match(stdout, /void main\(\)/);
     assert.doesNotMatch(stdout, /remove-start/);
+  });
+
+  test('dart run clay preview --vars renders Mustache replacements', () => {
+    const root = monorepoRoot();
+    const clayScript = join(root, 'packages', 'clay_cli', 'bin', 'clay.dart');
+    const tempDir = mkdtempSync(join(tmpdir(), 'clay-preview-vars-e2e-'));
+    try {
+      const referenceDir = join(tempDir, 'reference', 'lib');
+      mkdirSync(referenceDir, { recursive: true });
+      writeFileSync(
+        join(tempDir, 'clay.yaml'),
+        [
+          'reference: reference',
+          'target: brick/__brick__',
+          'replacements:',
+          '  - from: Widget',
+          '    to: "{{#use_riverpod}}ConsumerWidget{{/use_riverpod}}{{^use_riverpod}}StatelessWidget{{/use_riverpod}}"',
+          '',
+        ].join('\n'),
+      );
+      const filePath = join(referenceDir, 'main.dart');
+      writeFileSync(filePath, 'class App extends Widget {}\n');
+
+      const stdout = execFileSync(
+        'dart',
+        [
+          'run',
+          clayScript,
+          'preview',
+          '--file',
+          filePath,
+          '--config',
+          join(tempDir, 'clay.yaml'),
+          '--cwd',
+          tempDir,
+          '--vars',
+          'use_riverpod=true',
+        ],
+        { cwd: tempDir, encoding: 'utf8' },
+      );
+
+      assert.match(stdout, /ConsumerWidget/);
+      assert.doesNotMatch(stdout, /StatelessWidget/);
+      assert.doesNotMatch(stdout, /use_riverpod/);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  test('dart run clay preview surfaces stderr for a missing reference file', () => {
+    const root = monorepoRoot();
+    const clayScript = join(root, 'packages', 'clay_cli', 'bin', 'clay.dart');
+    const tempDir = mkdtempSync(join(tmpdir(), 'clay-preview-missing-e2e-'));
+    try {
+      writeFileSync(
+        join(tempDir, 'clay.yaml'),
+        'reference: reference\ntarget: brick/__brick__\n',
+      );
+      mkdirSync(join(tempDir, 'reference'), { recursive: true });
+
+      assert.throws(
+        () =>
+          execFileSync(
+            'dart',
+            [
+              'run',
+              clayScript,
+              'preview',
+              '--file',
+              join(tempDir, 'reference', 'missing.dart'),
+              '--config',
+              join(tempDir, 'clay.yaml'),
+              '--cwd',
+              tempDir,
+              '--template-only',
+            ],
+            { cwd: tempDir, encoding: 'utf8' },
+          ),
+        /not found|outside|does not exist/i,
+      );
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 
   test('clay.previewTemplate opens a preview document for the fixture file', async function () {

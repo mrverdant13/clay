@@ -8,6 +8,27 @@ import type { PreviewVarValue } from './previewVariableState';
 
 const execFileAsync = promisify(execFile);
 
+type PreviewRunnerExecFile = (
+  executable: string,
+  args: string[],
+  options: { cwd: string; maxBuffer: number },
+) => Promise<{ stdout: string; stderr: string }>;
+
+const defaultPreviewRunnerExecFile: PreviewRunnerExecFile = async (
+  executable,
+  args,
+  options,
+) => execFileAsync(executable, args, options);
+
+let previewRunnerExecFile: PreviewRunnerExecFile = defaultPreviewRunnerExecFile;
+
+/** @internal Overrides subprocess execution for unit tests. */
+export function setPreviewRunnerExecFileForTests(
+  override?: PreviewRunnerExecFile,
+): void {
+  previewRunnerExecFile = override ?? defaultPreviewRunnerExecFile;
+}
+
 /** Shared options for preview CLI invocations. */
 export interface RunPreviewOptions {
   scope: BrickScopeInfo;
@@ -71,7 +92,7 @@ async function runPreview(
   }
 
   try {
-    const { stdout } = await execFileAsync(options.cli.executable, args, {
+    const { stdout } = await previewRunnerExecFile(options.cli.executable, args, {
       cwd: options.scope.projectRoot,
       maxBuffer: 16 * 1024 * 1024,
     });

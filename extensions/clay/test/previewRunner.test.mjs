@@ -2,18 +2,16 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { test } from 'node:test';
 
 const require = createRequire(import.meta.url);
 
-const { CLAY_CLI_SCRIPT_RELATIVE_PATH } = require('./out/workspaceClayScript.cjs');
-const { runGeneratedPreview, runTemplatePreview } = require('./out/previewRunner.cjs');
-
-const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const repoRoot = join(extensionRoot, '..', '..');
-const clayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
+const {
+  runGeneratedPreview,
+  runTemplatePreview,
+  setPreviewRunnerExecFileForTests,
+} = require('./out/previewRunner.cjs');
 
 function createScope(tempDir) {
   return {
@@ -65,24 +63,50 @@ ${replacementsYaml}`,
   return { tempDir, filePath };
 }
 
-test('runTemplatePreview transforms a reference file via workspace dart run', async () => {
+test('runTemplatePreview invokes preview with --template-only and returns stdout', async () => {
+  /** @type {{ executable?: string; args?: string[] } | null} */
+  let captured = null;
+
+  setPreviewRunnerExecFileForTests(async (executable, args) => {
+    captured = { executable, args };
+    return { stdout: 'void main() {\n}\n', stderr: '' };
+  });
+
   const fixture = createPreviewFixture();
   try {
     const output = await runTemplatePreview({
       scope: createScope(fixture.tempDir),
       filePath: fixture.filePath,
-      cli: { executable: 'dart', prefixArgs: ['run', clayScriptPath] },
+      cli: { executable: '/bin/clay', prefixArgs: [] },
     });
 
-    assert.match(output, /void main\(\) \{/);
-    assert.doesNotMatch(output, /remove-start/);
-    assert.doesNotMatch(output, /print\("scaffold"\)/);
+    assert.equal(output, 'void main() {\n}\n');
+    assert.deepEqual(captured, {
+      executable: '/bin/clay',
+      args: [
+        'preview',
+        '--file',
+        fixture.filePath,
+        '--config',
+        join(fixture.tempDir, 'clay.yaml'),
+        '--cwd',
+        fixture.tempDir,
+        '--template-only',
+      ],
+    });
   } finally {
+    setPreviewRunnerExecFileForTests();
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
 });
 
 test('runTemplatePreview surfaces CLI stderr on failure', async () => {
+  setPreviewRunnerExecFileForTests(async () => {
+    const error = new Error('preview failed');
+    error.stderr = 'Reference file does not exist.';
+    throw error;
+  });
+
   const fixture = createPreviewFixture();
   try {
     await assert.rejects(
@@ -90,16 +114,25 @@ test('runTemplatePreview surfaces CLI stderr on failure', async () => {
         runTemplatePreview({
           scope: createScope(fixture.tempDir),
           filePath: join(fixture.tempDir, 'reference', 'missing.dart'),
-          cli: { executable: 'dart', prefixArgs: ['run', clayScriptPath] },
+          cli: { executable: '/bin/clay', prefixArgs: [] },
         }),
-      /not found|outside|does not exist/i,
+      /Reference file does not exist/,
     );
   } finally {
+    setPreviewRunnerExecFileForTests();
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
 });
 
-test('runGeneratedPreview renders Mustache variables via workspace dart run', async () => {
+test('runGeneratedPreview invokes preview with --vars and returns stdout', async () => {
+  /** @type {{ executable?: string; args?: string[] } | null} */
+  let captured = null;
+
+  setPreviewRunnerExecFileForTests(async (executable, args) => {
+    captured = { executable, args };
+    return { stdout: 'class App extends ConsumerWidget {}\n', stderr: '' };
+  });
+
   const fixture = createPreviewFixture({
     replacements: [
       {
@@ -113,14 +146,17 @@ test('runGeneratedPreview renders Mustache variables via workspace dart run', as
     const output = await runGeneratedPreview({
       scope: createScope(fixture.tempDir),
       filePath: fixture.filePath,
-      cli: { executable: 'dart', prefixArgs: ['run', clayScriptPath] },
+      cli: { executable: '/bin/clay', prefixArgs: [] },
       vars: { use_riverpod: true },
     });
 
-    assert.match(output, /ConsumerWidget/);
-    assert.doesNotMatch(output, /StatelessWidget/);
-    assert.doesNotMatch(output, /use_riverpod/);
+    assert.equal(output, 'class App extends ConsumerWidget {}\n');
+    assert.equal(captured?.executable, '/bin/clay');
+    assert.ok(captured?.args.includes('preview'));
+    assert.ok(captured?.args.includes('--vars'));
+    assert.match(captured?.args.join(' ') ?? '', /use_riverpod/);
   } finally {
+    setPreviewRunnerExecFileForTests();
     rmSync(fixture.tempDir, { recursive: true, force: true });
   }
 });

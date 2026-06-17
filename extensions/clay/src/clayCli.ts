@@ -1,6 +1,6 @@
 // cspell:words LOCALAPPDATA
 
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileOptions } from 'node:child_process';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { promisify } from 'node:util';
@@ -57,25 +57,35 @@ export interface RunClayCompatOptions {
   projectRoot: string;
 }
 
-type ClayCompatExecFile = (
+type ClayCliExecFile = (
   executable: string,
   args: string[],
-  options: { cwd: string; timeout: number },
+  options: ExecFileOptions,
 ) => Promise<{ stdout: string; stderr: string }>;
 
-const defaultClayCompatExecFile: ClayCompatExecFile = async (
+const defaultClayCliExecFile: ClayCliExecFile = async (
   executable,
   args,
   options,
 ) => execFileAsync(executable, args, options);
 
-let clayCompatExecFile: ClayCompatExecFile = defaultClayCompatExecFile;
+let clayCliExecFile: ClayCliExecFile = defaultClayCliExecFile;
 
 /** @internal Overrides subprocess execution for unit tests. */
-export function setClayCompatExecFileForTests(
-  override?: ClayCompatExecFile,
-): void {
-  clayCompatExecFile = override ?? defaultClayCompatExecFile;
+export function setClayCliExecFileForTests(override?: ClayCliExecFile): void {
+  clayCliExecFile = override ?? defaultClayCliExecFile;
+}
+
+/** @internal Overrides `clay compat` subprocess execution for unit tests. */
+export function setClayCompatExecFileForTests(override?: ClayCliExecFile): void {
+  const compatExecFile = override ?? defaultClayCliExecFile;
+  setClayCompatExecFileOverride(compatExecFile);
+}
+
+let clayCompatExecFile: ClayCliExecFile = defaultClayCliExecFile;
+
+function setClayCompatExecFileOverride(override: ClayCliExecFile): void {
+  clayCompatExecFile = override;
 }
 
 /** Runs `clay compat` and returns exit code and stderr (no stdout). */
@@ -110,7 +120,7 @@ export async function runClayCompat(
 export async function getClayCliVersion(
   invocation: ClayCliInvocation,
 ): Promise<string> {
-  const { stdout } = await execFileAsync(
+  const { stdout } = await clayCliExecFile(
     invocation.executable,
     [...invocation.prefixArgs, '--version'],
     { timeout: 10_000 },
@@ -200,7 +210,7 @@ function getDefaultDartInstallExecutable(): string {
 
 async function isClayCliAvailable(invocation: ClayCliInvocation): Promise<boolean> {
   try {
-    await execFileAsync(
+    await clayCliExecFile(
       invocation.executable,
       [...invocation.prefixArgs, 'preview'],
       { timeout: 10_000 },

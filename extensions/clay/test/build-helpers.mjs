@@ -23,6 +23,7 @@ for (const moduleName of moduleNames) {
   const sourcePath = join(srcDir, `${moduleName}.ts`);
   const source = readFileSync(sourcePath, 'utf8');
   const external = usesVscodeRuntime(source) ? ['vscode'] : [];
+  const siblingModules = moduleNames.filter((name) => name !== moduleName);
 
   await esbuild.build({
     entryPoints: [sourcePath],
@@ -31,5 +32,21 @@ for (const moduleName of moduleNames) {
     format: 'cjs',
     platform: 'node',
     external,
+    plugins: [
+      {
+        name: 'externalize-sibling-modules',
+        setup(build) {
+          for (const sibling of siblingModules) {
+            build.onResolve(
+              { filter: new RegExp(`^\\.\\/${sibling}$`) },
+              () => ({
+                path: `./${sibling}.cjs`,
+                external: true,
+              }),
+            );
+          }
+        },
+      },
+    ],
   });
 }

@@ -22,7 +22,12 @@ const {
 } = installVscodeMock();
 
 const require = createRequire(import.meta.url);
-const { CLAY_CLI_SCRIPT_RELATIVE_PATH } = require('./out/workspaceClayScript.cjs');
+const {
+  setClayCliExecFileForTests,
+} = require('./out/clayCli.cjs');
+const {
+  setPreviewRunnerExecFileForTests,
+} = require('./out/previewRunner.cjs');
 const {
   PREVIEW_GENERATED_COMMAND_ID,
   PREVIEW_TEMPLATE_COMMAND_ID,
@@ -31,8 +36,6 @@ const {
 } = require('./out/previewCommand.cjs');
 
 const extensionRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
-const repoRoot = join(extensionRoot, '..', '..');
-const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
 
 registerPreviewCommands({ subscriptions: [] });
 
@@ -56,19 +59,32 @@ function resetMockState() {
   mockVscode.workspace.workspaceFolders = undefined;
 }
 
-/** Creates an executable wrapper that runs the workspace `clay.dart` script. */
-function createClayCliWrapper() {
-  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-wrapper-'));
-  const isWindows = process.platform === 'win32';
-  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
-  const wrapperContent = isWindows
-    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
-    : `#!/usr/bin/env bash
-set -euo pipefail
-exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
-`;
-  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
-  return { wrapperDir, wrapperPath };
+function installMockClayCliSubprocesses({
+  version = '0.0.1-dev.1',
+  previewStdout = 'void main() {\n}\n',
+} = {}) {
+  setClayCliExecFileForTests(async (_executable, args) => {
+    if (args.includes('--version')) {
+      return { stdout: `${version}\n`, stderr: '' };
+    }
+
+    if (args.includes('preview')) {
+      const error = new Error('missing file');
+      error.stderr = 'Missing required --file';
+      throw error;
+    }
+
+    throw new Error(`Unexpected clay CLI invocation: ${args.join(' ')}`);
+  });
+  setPreviewRunnerExecFileForTests(async () => ({
+    stdout: previewStdout,
+    stderr: '',
+  }));
+}
+
+function resetMockClayCliSubprocesses() {
+  setClayCliExecFileForTests();
+  setPreviewRunnerExecFileForTests();
 }
 
 function createPreviewFixture({
@@ -193,8 +209,14 @@ test('template preview warns when the workspace is not trusted', async () => {
 
 test('template preview opens a diff document on success', async () => {
   resetMockState();
-  const { wrapperDir, wrapperPath } = createClayCliWrapper();
-  configuration.set('clay.cliPath', wrapperPath);
+  installMockClayCliSubprocesses({
+    previewStdout: [
+      'void main() {',
+      '}',
+      '',
+    ].join('\n'),
+  });
+  configuration.set('clay.cliPath', '/bin/clay');
 
   const fileContent = [
     'void main() {',
@@ -226,15 +248,15 @@ test('template preview opens a diff document on success', async () => {
     assert.equal(diffCommand.args[1], previewDocumentEntry.document.uri);
     assert.match(String(diffCommand.args[2]), /Template preview: main\.dart/);
   } finally {
+    resetMockClayCliSubprocesses();
     rmSync(fixture.tempDir, { recursive: true, force: true });
-    rmSync(wrapperDir, { recursive: true, force: true });
   }
 });
 
 test('template preview blocks when environment.clay is not satisfied', async () => {
   resetMockState();
-  const { wrapperDir, wrapperPath } = createClayCliWrapper();
-  configuration.set('clay.cliPath', wrapperPath);
+  installMockClayCliSubprocesses({ version: '0.0.1-dev.1' });
+  configuration.set('clay.cliPath', '/bin/clay');
 
   const fixture = createPreviewFixture({
     clayYaml: [
@@ -259,8 +281,8 @@ test('template preview blocks when environment.clay is not satisfied', async () 
     assert.match(errorMessages[0], /requires clay version \^99\.0\.0/);
     assert.equal(executedCommands.length, 0);
   } finally {
+    resetMockClayCliSubprocesses();
     rmSync(fixture.tempDir, { recursive: true, force: true });
-    rmSync(wrapperDir, { recursive: true, force: true });
   }
 });
 
