@@ -246,6 +246,11 @@ melos:
         Bump version and changelog for a package release. Pass melos version
         flags after -- (e.g. --scope=clay_core --manual-version=clay_core:build)
       run: melos version --no-git-tag-version --no-dependent-versions --preid=dev
+    release.tag:
+      description: >
+        Print or create an annotated git tag after publish. Pass --package and
+        optional --execute to dart via -- (e.g. -- --package clay_core --execute)
+      run: dart run tool/release_tag.dart
 
 workspace:
   - packages/clay_core/
