@@ -212,8 +212,8 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
    melos run release.check
 
    # Scoped to the package you are releasing
-   melos run release.check.core
-   melos run release.check.cli
+   MELOS_PACKAGES=clay_core melos run release.check
+   MELOS_PACKAGES=clay_cli melos run release.check
    ```
 
    `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`.
@@ -236,7 +236,7 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
 
    Or run the equivalent git commands manually (see [Release tagging](#release-tagging) below). **Do not tag** if publish failed or the version is not yet visible on pub.dev.
 
-7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `release.check.cli` and publishing.
+7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `MELOS_PACKAGES=clay_cli melos run release.check` and publishing.
 
 ### Version sync
 
