@@ -7,7 +7,9 @@ Editor support for [Clay](https://github.com/mrverdant13/clay) annotation marker
 ## Prerequisites
 
 - **VS Code** 1.85 or newer
-- **`clay` CLI** — required for preview commands (see [CLI setup](#cli-setup) below)
+- **`clay` CLI** `0.0.1-dev.2` or newer — required for preview commands (see [CLI setup](#cli-setup) below)
+
+Preview compatibility checks delegate to the **`clay compat`** subcommand. Older CLI builds that predate `clay compat` are not supported for preview gating.
 
 For extension development only:
 
@@ -58,7 +60,9 @@ Open the **clay** monorepo in VS Code, then start the **Run Clay Extension** lau
 
 ## CLI setup
 
-Preview commands spawn the `clay` CLI. The extension resolves an executable in this order:
+Preview commands spawn the `clay` CLI. Before each preview, the extension runs **`clay compat`** against the discovered `clay.yaml` to verify `environment.clay`; only when that probe exits `0` does preview proceed. Non-zero stderr from `clay compat` is shown as an error and preview is not started.
+
+The extension resolves an executable in this order:
 
 1. **`clay.cliPath`** — when set in workspace or user settings, this path is tried first.
 2. **`clay`** on `PATH`.
@@ -68,7 +72,7 @@ Preview commands spawn the `clay` CLI. The extension resolves an executable in t
 
 During monorepo development, open the clay repository (or any workspace that includes `packages/clay_cli`) and preview commands work without extra configuration.
 
-After `clay_cli` is published to pub.dev:
+After `clay_cli` is published to pub.dev, install a build that includes `clay compat` (minimum **`0.0.1-dev.2`**):
 
 ```bash
 dart install clay_cli
@@ -76,12 +80,12 @@ dart install clay_cli
 
 Ensure the pub-cache `bin` directory is on your `PATH`, or set `clay.cliPath` to the absolute path of the `clay` executable.
 
-Verify the CLI is available:
+Verify the CLI is available and supports compatibility checks:
 
 ```bash
-clay preview --help
+clay compat --help
 # or, during development:
-dart run packages/clay_cli/bin/clay.dart preview --help
+dart run packages/clay_cli/bin/clay.dart compat --help
 ```
 
 ---
@@ -111,7 +115,7 @@ Three comment flavors are supported equivalently: C-style (`/* … */`), hash (`
 
 ### Preview commands
 
-Both commands are available from the editor context menu (right-click) and the Command Palette under the **Clay** category. The active file must be saved before a preview runs.
+Both commands are available from the editor context menu (right-click) and the Command Palette under the **Clay** category. The active file must be saved before a preview runs. Each command first runs `clay compat` for the current brick scope; version or config errors from the CLI block preview before `clay preview` is spawned.
 
 | Command                            | CLI equivalent                          | Description                                                                                                                                                  |
 | ---------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -165,7 +169,9 @@ Syntax highlighting colors for annotation markers are contributed via TextMate s
 
 | Symptom                                                        | Likely cause                                                  | What to try                                                                                                              |
 | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| "The clay CLI was not found"                                   | No executable on `PATH` and no workspace script               | Install or activate `clay_cli`, set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`.               |
+| "The clay CLI was not found"                                   | No executable on `PATH` and no workspace script               | Install or activate `clay_cli` (`0.0.1-dev.2`+), set `clay.cliPath`, or open a workspace that contains `packages/clay_cli`. |
+| Preview blocked with a Clay version message                    | Installed CLI does not satisfy `environment.clay` in `clay.yaml` | Update `environment.clay`, upgrade `clay_cli`, or align the CLI pointed to by `clay.cliPath`.                          |
+| "The clay CLI was not found" after a global install            | Installed build lacks `clay compat` (pre-`0.0.1-dev.2`)       | Upgrade to `clay_cli` **`0.0.1-dev.2`** or newer; confirm with `clay compat --help`.                                     |
 | "Could not find a brick scope"                                 | No `clay.yaml` above the file, or file is outside `reference` | Add or fix `clay.yaml`; ensure the open file is under the configured reference directory.                                |
 | "Clay preview is only available for supported reference files" | Unsupported language or extension                             | Open a file listed in [Supported file types](#supported-file-types).                                                     |
 | Preview shows stale output                                     | Unsaved editor buffer                                         | Save the file before running preview; the CLI reads from disk.                                                           |
