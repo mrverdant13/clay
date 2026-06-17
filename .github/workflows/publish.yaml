@@ -1,0 +1,88 @@
+# Manual pub.dev publish for clay_core and clay_cli.
+# Trigger via Actions → Publish Dart package. Defaults to dry-run.
+name: Publish Dart package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to publish
+        required: true
+        type: choice
+        options:
+          - clay_core
+          - clay_cli
+      dry_run:
+        description: Dry run only (no pub.dev publish or git tag)
+        required: true
+        type: boolean
+        default: true
+
+concurrency:
+  cancel-in-progress: false
+  group: publish-${{ inputs.package }}
+
+jobs:
+  check:
+    name: Pre-publish checks (${{ inputs.package }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        uses: ./.github/actions/install-dart-cli
+        with:
+          package: melos 7.5.1
+      - name: Bootstrap workspace
+        run: melos bs
+      - name: Resolve release check script
+        id: config
+        run: |
+          case "${{ inputs.package }}" in
+            clay_core) echo "check=release.check.core" >> "$GITHUB_OUTPUT" ;;
+            clay_cli) echo "check=release.check.cli" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::error::Unsupported package: ${{ inputs.package }}"
+              exit 1
+              ;;
+          esac
+          echo "dir=packages/${{ inputs.package }}" >> "$GITHUB_OUTPUT"
+      - name: Run pre-publish gate
+        run: melos run ${{ steps.config.outputs.check }}
+      - name: Dry-run publish
+        if: inputs.dry_run
+        working-directory: ${{ steps.config.outputs.dir }}
+        run: dart pub publish --dry-run
+
+  publish:
+    name: Publish and tag (${{ inputs.package }})
+    needs: check
+    if: inputs.dry_run == false
+    runs-on: ubuntu-latest
+    environment: pub-dev-publish
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        uses: ./.github/actions/install-dart-cli
+        with:
+          package: melos 7.5.1
+      - name: Bootstrap workspace
+        run: melos bs
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Publish to pub.dev
+        working-directory: packages/${{ inputs.package }}
+        env:
+          PUB_CREDENTIALS: ${{ secrets.PUB_CREDENTIALS }}
+        run: dart pub publish --force
+      - name: Create annotated release tag
+        run: dart run tool/release_tag.dart --package ${{ inputs.package }} --execute
