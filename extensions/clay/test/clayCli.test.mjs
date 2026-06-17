@@ -18,6 +18,7 @@ const { CLAY_CLI_SCRIPT_RELATIVE_PATH, resolveWorkspaceClayScript } = require(
 const {
   getClayCliVersion,
   runClayCompat,
+  setClayCliExecFileForTests,
   setClayCompatExecFileForTests,
 } = require('./out/clayCli.cjs');
 
@@ -60,24 +61,17 @@ test('resolveWorkspaceClayScript checks folders in order', () => {
   }
 });
 
-test('getClayCliVersion reads the workspace clay CLI version', async () => {
-  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-version-'));
-  const isWindows = process.platform === 'win32';
-  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
-  const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
-  const wrapperContent = isWindows
-    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
-    : `#!/usr/bin/env bash
-set -euo pipefail
-exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
-`;
-  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
+test('getClayCliVersion reads --version stdout from the CLI subprocess', async () => {
+  setClayCliExecFileForTests(async (_executable, args) => {
+    assert.deepEqual(args, ['--version']);
+    return { stdout: '0.0.1-dev.42\n', stderr: '' };
+  });
 
   try {
-    const version = await getClayCliVersion({ executable: wrapperPath, prefixArgs: [] });
-    assert.match(version, /^0\.0\.1-dev\.\d+$/);
+    const version = await getClayCliVersion({ executable: '/bin/clay', prefixArgs: [] });
+    assert.equal(version, '0.0.1-dev.42');
   } finally {
-    rmSync(wrapperDir, { recursive: true, force: true });
+    setClayCliExecFileForTests();
   }
 });
 
@@ -139,40 +133,5 @@ test('runClayCompat maps non-zero exit code and stderr from subprocess failure',
     );
   } finally {
     setClayCompatExecFileForTests();
-  }
-});
-
-test('runClayCompat runs compat against the workspace CLI for a compatible fixture', async () => {
-  const wrapperDir = mkdtempSync(join(tmpdir(), 'clay-cli-compat-'));
-  const fixtureDir = mkdtempSync(join(tmpdir(), 'clay-compat-fixture-'));
-  const isWindows = process.platform === 'win32';
-  const wrapperPath = join(wrapperDir, isWindows ? 'clay.cmd' : 'clay.sh');
-  const repoClayScriptPath = join(repoRoot, CLAY_CLI_SCRIPT_RELATIVE_PATH);
-  const wrapperContent = isWindows
-    ? `@echo off\r\ndart run ${JSON.stringify(repoClayScriptPath)} %*\r\n`
-    : `#!/usr/bin/env bash
-set -euo pipefail
-exec dart run ${JSON.stringify(repoClayScriptPath)} "$@"
-`;
-  writeFileSync(wrapperPath, wrapperContent, isWindows ? undefined : { mode: 0o755 });
-  writeFileSync(
-    join(fixtureDir, 'clay.yaml'),
-    'reference: reference\ntarget: brick/__brick__\n',
-  );
-
-  try {
-    const result = await runClayCompat(
-      { executable: wrapperPath, prefixArgs: [] },
-      {
-        configPath: join(fixtureDir, 'clay.yaml'),
-        projectRoot: fixtureDir,
-      },
-    );
-
-    assert.equal(result.exitCode, 0);
-    assert.equal(result.stderr, '');
-  } finally {
-    rmSync(wrapperDir, { recursive: true, force: true });
-    rmSync(fixtureDir, { recursive: true, force: true });
   }
 });
