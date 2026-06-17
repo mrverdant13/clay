@@ -20,7 +20,8 @@ Directory _packageRoot() {
     final parent = current.parent;
     if (parent.path == current.path) {
       fail(
-        'Could not locate clay_core package root from ${Directory.current.path}',
+        'Could not locate clay_core package root from '
+        '${Directory.current.path}',
       );
     }
     current = parent;
