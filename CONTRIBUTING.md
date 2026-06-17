@@ -172,6 +172,100 @@ docs: document clay.yaml fields in README
 
 ---
 
+## Dart package releases (`clay_core` and `clay_cli`)
+
+Both publishable packages ship to [pub.dev](https://pub.dev) with per-package changelogs. Each package exposes a compile-time version constant that must stay in sync with its `pubspec.yaml`:
+
+| Package | Manifest | Runtime constant |
+| --- | --- | --- |
+| `clay_core` | `packages/clay_core/pubspec.yaml` | `clayCoreVersion` in `lib/src/version.dart` |
+| `clay_cli` | `packages/clay_cli/pubspec.yaml` | `packageVersion` in `lib/src/version.dart` |
+
+**Release invariants:**
+
+- **One package per release PR** — a `clay_core` release touches only `packages/clay_core/**`; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
+- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds.
+- **Release order** — when both packages change, publish **`clay_core` first**, then **`clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
+
+### Step-by-step runbook
+
+1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so Melos can generate changelog entries.
+
+2. **Bump version and changelog** for the target package with `melos run release.prepare`. Pass Melos `version` flags after `--`:
+
+   ```bash
+   # Dev build bump (0.0.1-dev.1 → 0.0.1-dev.2)
+   melos run release.prepare -- --scope=clay_core --manual-version=clay_core:build
+
+   # Patch / minor / major when graduating beyond -dev.N
+   melos run release.prepare -- --scope=clay_cli --manual-version=clay_cli:patch
+   ```
+
+   `release.prepare` wraps `melos version` with `--no-git-tag-version`, `--no-dependent-versions`, and `--preid=dev`. A `preCommit` hook syncs `lib/src/version.dart` from each bumped `pubspec.yaml` (see [Version sync](#version-sync) below).
+
+3. **Open a release PR** titled with the package scope, for example `chore(clay_core): release 0.0.1-dev.2`. One package per PR — do not combine `clay_core` and `clay_cli` in the same release PR.
+
+4. **Run pre-publish checks** locally and confirm CI is green:
+
+   ```bash
+   # Full gate for all publishable packages
+   melos run release.check
+
+   # Scoped to the package you are releasing
+   melos run release.check.core
+   melos run release.check.cli
+   ```
+
+   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`.
+
+5. **Merge the release PR**, then publish from the package directory on `main`:
+
+   ```bash
+   cd packages/clay_core   # or packages/clay_cli
+   dart pub publish
+   ```
+
+   Alternatively, use `melos publish` without `--dry-run` from the repo root when publishing multiple packages in sequence (still one package at a time, `clay_core` before `clay_cli`).
+
+6. **Tag only after pub.dev confirms the version is live.** Use the release tag helper (dry-run prints commands; `--execute` creates and pushes the tag):
+
+   ```bash
+   melos run release.tag -- --package clay_core
+   melos run release.tag -- --package clay_core --execute
+   ```
+
+   Or run the equivalent git commands manually (see [Release tagging](#release-tagging) below). **Do not tag** if publish failed or the version is not yet visible on pub.dev.
+
+7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `release.check.cli` and publishing.
+
+### Version sync
+
+Melos `version` and the sync script keep `pubspec.yaml` and `version.dart` aligned:
+
+```bash
+dart run tool/sync_package_version.dart --package clay_core
+dart run tool/sync_package_version.dart --package clay_cli
+```
+
+Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `melos version`.
+
+### Melos version flags
+
+`release.prepare` passes flags required for **independent** dev releases in this monorepo:
+
+| Flag | Why |
+| --- | --- |
+| `--no-git-tag-version` | [Release tagging](#release-tagging) requires tags **after** a successful publish, not when Melos commits the version bump. |
+| `--no-dependent-versions` | Bumping `clay_core` must not auto-bump `clay_cli` when only core is releasing. Bump the CLI in its own release PR when ready. |
+| `--preid=dev` | Pre-1.0 preview releases use `-dev.N` build identifiers. |
+| `--manual-version=…` | Select `build`, `patch`, `minor`, `major`, or an exact version per package. |
+
+Melos also keeps `--dependent-constraints` enabled by default so a `clay_cli` release can update its `clay_core:` minimum when needed.
+
+Further reading: [Melos `version` command](https://melos.invertase.dev/commands/version), [Melos automated releases guide](https://melos.invertase.dev/guides/automated-releases).
+
+---
+
 ## Release tagging
 
 Published packages in this monorepo are tagged **independently** — one git tag per package release, created **after** the artifact is live (pub.dev or Visual Studio Marketplace).
@@ -209,6 +303,8 @@ After `clay_core` `0.0.1-dev.1` is live on pub.dev:
 git tag -a clay_core/0.0.1-dev.1 -m "clay_core 0.0.1-dev.1"
 git push origin clay_core/0.0.1-dev.1
 ```
+
+Or use `melos run release.tag -- --package clay_core --execute` (see [Dart package releases](#dart-package-releases-clay_core-and-clay_cli)).
 
 List tags for a package:
 
