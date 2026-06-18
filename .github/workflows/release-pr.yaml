@@ -27,7 +27,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "$PR_TITLE" =~ ^chore\((clay_core|clay_cli)\):\ release\ (.+)$ ]]; then
+          if [[ "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
             echo "matched=true" >> "$GITHUB_OUTPUT"
             echo "package=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
             echo "version=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
@@ -52,6 +52,14 @@ jobs:
           TITLE_PACKAGE: ${{ needs.parse-title.outputs.package }}
         run: |
           set -euo pipefail
+
+          case "$TITLE_PACKAGE" in
+            clay_core|clay_cli) ;;
+            *)
+              echo "::error::Unknown publishable package '$TITLE_PACKAGE'. Expected clay_core or clay_cli."
+              exit 1
+              ;;
+          esac
 
           core_changed=false
           cli_changed=false
