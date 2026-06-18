@@ -55,9 +55,17 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
           TITLE_PACKAGE: ${{ needs.parse-title.outputs.package }}
+          TITLE_VERSION: ${{ needs.parse-title.outputs.version }}
         run: |
           set -euo pipefail
+
+          expected_branch="${TITLE_PACKAGE}/chore/release-${TITLE_VERSION}"
+          if [[ "$PR_BRANCH" != "$expected_branch" ]]; then
+            echo "::error::Release PR branch must be named '$expected_branch' (got '$PR_BRANCH')."
+            exit 1
+          fi
 
           mapfile -t publishable_packages < <(melos list --category=publishable)
 
