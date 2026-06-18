@@ -57,3 +57,21 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version and changelog
+        run: |
+          melos run release.prepare -- \
+            --scope=${{ inputs.package }} \
+            --manual-version=${{ inputs.package }}:${{ inputs.bump }}
+
+      - name: Read release version
+        id: version
+        run: |
+          set -euo pipefail
+          version=$(grep '^version:' "packages/${{ inputs.package }}/pubspec.yaml" | awk '{print $2}')
+          if [[ -z "$version" ]]; then
+            echo "::error::Could not read version from packages/${{ inputs.package }}/pubspec.yaml"
+            exit 1
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "branch=${{ inputs.package }}/chore/release-${version}" >> "$GITHUB_OUTPUT"
