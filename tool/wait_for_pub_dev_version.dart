@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,6 +8,7 @@ const defaultPollTimeout = Duration(minutes: 10);
 const defaultPollInterval = Duration(seconds: 20);
 const pubDevPackageApiBase = 'https://pub.dev/api/packages';
 const maxFetchAttempts = 3;
+const pubDevRequestTimeout = Duration(seconds: 30);
 
 void main(List<String> arguments) async {
   final options = _readOptions(arguments);
@@ -121,40 +123,39 @@ Future<int> waitForPubDevVersion({
 }
 
 Future<String> _fetchPubDevPackage(String packageName) async {
-  final client = HttpClient();
+  final client = HttpClient()
+    ..connectionTimeout = pubDevRequestTimeout
+    ..idleTimeout = pubDevRequestTimeout;
   try {
     for (var attempt = 1; attempt <= maxFetchAttempts; attempt++) {
       try {
-        final request = await client.getUrl(
-          Uri.parse('$pubDevPackageApiBase/$packageName'),
-        );
-        final response = await request.close();
-        final responseBody = await response.transform(utf8.decoder).join();
-
-        if (response.statusCode == HttpStatus.notFound) {
-          throw PubDevPackageNotFoundException(
-            'Package not found on pub.dev: $packageName',
-          );
-        }
-
-        if (response.statusCode != HttpStatus.ok) {
-          final isLastAttempt = attempt == maxFetchAttempts;
-          if (isLastAttempt) {
-            throw PubDevFetchException(
-              'pub.dev API returned HTTP ${response.statusCode} for '
-              '$packageName after $maxFetchAttempts attempts.',
-            );
-          }
-
-          await Future<void>.delayed(Duration(seconds: attempt));
-          continue;
-        }
+        final responseBody = await _fetchPubDevPackageAttempt(
+          client,
+          packageName,
+        ).timeout(pubDevRequestTimeout);
 
         return responseBody;
       } on PubDevPackageNotFoundException {
         rethrow;
-      } on PubDevFetchException {
-        rethrow;
+      } on PubDevFetchException catch (error) {
+        final isLastAttempt = attempt == maxFetchAttempts;
+        if (isLastAttempt) {
+          throw PubDevFetchException(
+            '${error.message} after $maxFetchAttempts attempts.',
+          );
+        }
+
+        await Future<void>.delayed(Duration(seconds: attempt));
+      } on TimeoutException catch (error) {
+        final isLastAttempt = attempt == maxFetchAttempts;
+        if (isLastAttempt) {
+          throw PubDevFetchException(
+            'Timed out fetching pub.dev package metadata for $packageName '
+            'after $maxFetchAttempts attempts: $error',
+          );
+        }
+
+        await Future<void>.delayed(Duration(seconds: attempt));
       } on Object catch (error) {
         final isLastAttempt = attempt == maxFetchAttempts;
         if (isLastAttempt) {
@@ -174,6 +175,31 @@ Future<String> _fetchPubDevPackage(String packageName) async {
   } finally {
     client.close(force: true);
   }
+}
+
+Future<String> _fetchPubDevPackageAttempt(
+  HttpClient client,
+  String packageName,
+) async {
+  final request = await client.getUrl(
+    Uri.parse('$pubDevPackageApiBase/$packageName'),
+  );
+  final response = await request.close();
+  final responseBody = await response.transform(utf8.decoder).join();
+
+  if (response.statusCode == HttpStatus.notFound) {
+    throw PubDevPackageNotFoundException(
+      'Package not found on pub.dev: $packageName',
+    );
+  }
+
+  if (response.statusCode != HttpStatus.ok) {
+    throw PubDevFetchException(
+      'pub.dev API returned HTTP ${response.statusCode} for $packageName',
+    );
+  }
+
+  return responseBody;
 }
 
 class PubDevPackageNotFoundException implements Exception {
