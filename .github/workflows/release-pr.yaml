@@ -18,7 +18,7 @@ jobs:
       package: ${{ steps.parse.outputs.package }}
       version: ${{ steps.parse.outputs.version }}
     steps:
-      - name: Parse chore(<package>): release <version> title
+      - name: "Parse chore(<package>): release <version> title"
         id: parse
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
