@@ -318,7 +318,9 @@ Further reading: [Melos `version` command](https://melos.invertase.dev/commands/
 
 ## Release tagging
 
-Published packages in this monorepo are tagged **independently** — one git tag per package release, created **after** the artifact is live (pub.dev or Visual Studio Marketplace).
+Published packages in this monorepo are tagged **independently** — one git tag per package release, created **after** the artifact is live on pub.dev (or the Visual Studio Marketplace for the extension).
+
+When publishing through [**Publish Dart package**](.github/workflows/publish.yaml) with `dry_run: false`, the workflow creates and pushes the annotated tag after [`tool/wait_for_pub_dev_version.dart`](tool/wait_for_pub_dev_version.dart) confirms the version on pub.dev. Use the manual commands below if CI tagging failed (for example poll timeout) or you published locally.
 
 ### Format
 
@@ -343,6 +345,7 @@ clay_vsc_extension/0.1.2
 - The tag version must match the published artifact version exactly.
 - Create an **annotated** tag with a short message naming the package and version.
 - Do not tag before a successful publish — failed publishes should not leave orphan tags.
+- Do not tag until pub.dev lists the version — CI enforces this via a pub.dev poll before tagging; manual tags must verify the same.
 - One package per release PR; only tag the package that was published in that PR.
 
 ### Commands
