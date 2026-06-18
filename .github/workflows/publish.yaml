@@ -1,5 +1,7 @@
 # Manual pub.dev publish for clay_core and clay_cli.
-# Trigger via Actions → Publish Dart package. Defaults to dry-run.
+# Trigger via Actions → Publish Dart package.
+# dry_run: true (default) runs the full pre-publish gate (release.check) only —
+# no pub.dev publish, no git tag. dry_run: false publishes, polls pub.dev, then tags.
 name: Publish Dart package
 
 on:
@@ -13,7 +15,7 @@ on:
           - clay_core
           - clay_cli
       dry_run:
-        description: Dry run only (no pub.dev publish or git tag)
+        description: Pre-publish gate only via release.check (no pub.dev publish or git tag)
         required: true
         type: boolean
         default: true
@@ -41,10 +43,6 @@ jobs:
         run: melos bs
       - name: Run pre-publish gate
         run: melos run release.check
-      - name: Dry-run publish
-        if: inputs.dry_run
-        working-directory: packages/${{ inputs.package }}
-        run: dart pub publish --dry-run
 
   publish:
     name: Publish and tag (${{ inputs.package }})
