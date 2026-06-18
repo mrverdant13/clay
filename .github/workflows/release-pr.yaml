@@ -12,25 +12,44 @@ on:
       - packages/clay_cli/CHANGELOG.md
 
 jobs:
+  parse-title:
+    name: Parse release PR title
+    runs-on: ubuntu-latest
+    outputs:
+      matched: ${{ steps.parse.outputs.matched }}
+      package: ${{ steps.parse.outputs.package }}
+      version: ${{ steps.parse.outputs.version }}
+    steps:
+      - name: Parse chore(<package>): release <version> title
+        id: parse
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$PR_TITLE" =~ ^chore\((clay_core|clay_cli)\):\ release\ (.+)$ ]]; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+            echo "package=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "version=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+
   resolve-package:
     name: Resolve release package
+    needs: parse-title
+    if: needs.parse-title.outputs.matched == 'true'
     runs-on: ubuntu-latest
-    if: |
-      startsWith(github.event.pull_request.title, 'chore(clay_core): release') ||
-      startsWith(github.event.pull_request.title, 'chore(clay_cli): release')
-    outputs:
-      package: ${{ steps.resolve.outputs.package }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Resolve scoped publishable package
-        id: resolve
+      - name: Verify release manifest changes match title
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
+          TITLE_PACKAGE: ${{ needs.parse-title.outputs.package }}
         run: |
           set -euo pipefail
 
@@ -54,40 +73,26 @@ jobs:
           fi
 
           if [[ "$core_changed" == true ]]; then
-            package=clay_core
+            changed_package=clay_core
           elif [[ "$cli_changed" == true ]]; then
-            package=clay_cli
+            changed_package=clay_cli
           else
             echo "::error::No release manifest changes detected in this pull request."
             exit 1
           fi
 
-          case "$PR_TITLE" in
-            "chore(clay_core): release"*)
-              title_package=clay_core
-              ;;
-            "chore(clay_cli): release"*)
-              title_package=clay_cli
-              ;;
-            *)
-              echo "::error::PR title must start with 'chore(clay_core): release' or 'chore(clay_cli): release'."
-              exit 1
-              ;;
-          esac
-
-          if [[ "$package" != "$title_package" ]]; then
-            echo "::error::Release manifest changes target $package but the PR title indicates $title_package."
+          if [[ "$changed_package" != "$TITLE_PACKAGE" ]]; then
+            echo "::error::Release manifest changes target $changed_package but the PR title indicates $TITLE_PACKAGE."
             exit 1
           fi
 
-          echo "package=$package" >> "$GITHUB_OUTPUT"
-
   release-check:
-    name: release.check (${{ needs.resolve-package.outputs.package }})
-    needs: resolve-package
+    name: release.check (${{ needs.parse-title.outputs.package }} ${{ needs.parse-title.outputs.version }})
+    needs: [parse-title, resolve-package]
+    if: needs.parse-title.outputs.matched == 'true'
     runs-on: ubuntu-latest
     env:
-      MELOS_PACKAGES: ${{ needs.resolve-package.outputs.package }}
+      MELOS_PACKAGES: ${{ needs.parse-title.outputs.package }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
