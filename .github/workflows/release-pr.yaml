@@ -6,10 +6,8 @@ on:
     branches:
       - main
     paths:
-      - packages/clay_core/pubspec.yaml
-      - packages/clay_core/CHANGELOG.md
-      - packages/clay_cli/pubspec.yaml
-      - packages/clay_cli/CHANGELOG.md
+      - packages/*/pubspec.yaml
+      - packages/*/CHANGELOG.md
 
 jobs:
   parse-title:
