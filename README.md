@@ -301,7 +301,7 @@ Downstream tools should call these APIs rather than duplicating transform logic.
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for local setup, Melos commands, testing expectations, commit conventions, PR guidelines, and the [Dart package release runbook](CONTRIBUTING.md#dart-package-releases-clay_core-and-clay_cli) for maintainers publishing `clay_core` or `clay_cli` to pub.dev.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for local setup, Melos commands, testing expectations, commit conventions, PR guidelines, and the [Dart package release runbook](CONTRIBUTING.md#dart-package-releases-clay_core-and-clay_cli) — including [CI release workflows](CONTRIBUTING.md#ci-release-workflows) for maintainers publishing `clay_core` or `clay_cli` to pub.dev.
 
 ---
 
