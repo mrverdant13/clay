@@ -45,6 +45,14 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+      - name: Install melos
+        uses: ./.github/actions/install-dart-cli
+        with:
+          package: melos 7.5.1
+      - name: Bootstrap workspace
+        run: melos bs
       - name: Verify release manifest changes match title
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -53,41 +61,47 @@ jobs:
         run: |
           set -euo pipefail
 
-          case "$TITLE_PACKAGE" in
-            clay_core|clay_cli) ;;
-            *)
-              echo "::error::Unknown publishable package '$TITLE_PACKAGE'. Expected clay_core or clay_cli."
-              exit 1
-              ;;
-          esac
+          mapfile -t publishable_packages < <(melos list --category=publishable)
 
-          core_changed=false
-          cli_changed=false
+          is_publishable() {
+            local candidate="$1"
+            for package in "${publishable_packages[@]}"; do
+              if [[ "$package" == "$candidate" ]]; then
+                return 0
+              fi
+            done
+            return 1
+          }
 
-          while IFS= read -r file; do
-            case "$file" in
-              packages/clay_core/pubspec.yaml|packages/clay_core/CHANGELOG.md)
-                core_changed=true
-                ;;
-              packages/clay_cli/pubspec.yaml|packages/clay_cli/CHANGELOG.md)
-                cli_changed=true
-                ;;
-            esac
-          done < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-
-          if [[ "$core_changed" == true && "$cli_changed" == true ]]; then
-            echo "::error::Release PRs must change exactly one publishable package. Both clay_core and clay_cli release manifests were modified. Split into separate release PRs — see CONTRIBUTING.md."
+          if ! is_publishable "$TITLE_PACKAGE"; then
+            echo "::error::Unknown publishable package '$TITLE_PACKAGE'. Expected one of: ${publishable_packages[*]}"
             exit 1
           fi
 
-          if [[ "$core_changed" == true ]]; then
-            changed_package=clay_core
-          elif [[ "$cli_changed" == true ]]; then
-            changed_package=clay_cli
-          else
+          declare -A changed_packages=()
+
+          while IFS= read -r file; do
+            if [[ "$file" =~ ^packages/([^/]+)/(pubspec\.yaml|CHANGELOG\.md)$ ]]; then
+              package="${BASH_REMATCH[1]}"
+              if is_publishable "$package"; then
+                changed_packages["$package"]=1
+              fi
+            fi
+          done < <(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+
+          if [[ "${#changed_packages[@]}" -eq 0 ]]; then
             echo "::error::No release manifest changes detected in this pull request."
             exit 1
           fi
+
+          if [[ "${#changed_packages[@]}" -gt 1 ]]; then
+            packages_list="$(printf '%s, ' "${!changed_packages[@]}")"
+            packages_list="${packages_list%, }"
+            echo "::error::Release PRs must change exactly one publishable package. Multiple packages were modified: $packages_list. Split into separate release PRs — see CONTRIBUTING.md."
+            exit 1
+          fi
+
+          changed_package="${!changed_packages[@]}"
 
           if [[ "$changed_package" != "$TITLE_PACKAGE" ]]; then
             echo "::error::Release manifest changes target $changed_package but the PR title indicates $TITLE_PACKAGE."
