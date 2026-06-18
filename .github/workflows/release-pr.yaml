@@ -110,7 +110,9 @@ jobs:
 
   release-check:
     name: release.check (${{ needs.parse-title.outputs.package }} ${{ needs.parse-title.outputs.version }})
-    needs: [parse-title, resolve-package]
+    needs:
+      - parse-title
+      - resolve-package
     if: needs.parse-title.outputs.matched == 'true'
     runs-on: ubuntu-latest
     env:
