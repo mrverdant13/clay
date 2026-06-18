@@ -27,7 +27,7 @@ void main(List<String> arguments) async {
     version: options.version,
     timeout: options.timeout,
     interval: options.interval,
-    fetchPackage: (packageName) => _fetchPubDevPackage(packageName),
+    fetchPackage: _fetchPubDevPackage,
     log: stdout.writeln,
     errorLog: stderr.writeln,
   );
@@ -55,7 +55,8 @@ bool versionListedInPubDevResponse(String responseBody, String version) {
   return false;
 }
 
-/// Polls pub.dev until [version] is listed for [packageName], or [timeout] elapses.
+/// Polls pub.dev until [version] is listed for [packageName], or [timeout]
+/// elapses.
 ///
 /// Returns `0` when the version is found and a non-zero exit code on failure.
 Future<int> waitForPubDevVersion({
@@ -196,8 +197,8 @@ class _WaitOptions {
 _WaitOptions? _readOptions(List<String> arguments) {
   String? packageName;
   String? version;
-  Duration timeout = defaultPollTimeout;
-  Duration interval = defaultPollInterval;
+  var timeout = defaultPollTimeout;
+  var interval = defaultPollInterval;
 
   for (var index = 0; index < arguments.length; index++) {
     final argument = arguments[index];
