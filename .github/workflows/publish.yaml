@@ -74,5 +74,12 @@ jobs:
         env:
           PUB_CREDENTIALS: ${{ secrets.PUB_CREDENTIALS }}
         run: dart pub publish --force
+      - name: Wait for pub.dev to list the published version
+        working-directory: packages/${{ inputs.package }}
+        run: |
+          version=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+          dart run ../../tool/wait_for_pub_dev_version.dart \
+            --package ${{ inputs.package }} \
+            --version "$version"
       - name: Create annotated release tag
         run: dart run tool/release_tag.dart --package ${{ inputs.package }} --execute
