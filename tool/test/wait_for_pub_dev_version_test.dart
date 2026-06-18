@@ -78,7 +78,8 @@ void main() {
       expect(exitCode, 1);
     });
 
-    test('returns 1 immediately when the package is missing on pub.dev', () async {
+    test('returns 1 immediately when the package is missing on pub.dev',
+        () async {
       final exitCode = await waitForPubDevVersion(
         packageName: 'clay_core',
         version: '0.0.1-dev.1',
