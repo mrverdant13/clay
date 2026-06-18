@@ -1,0 +1,59 @@
+# Opens a version-bump release PR for clay_core or clay_cli via workflow_dispatch.
+# Runs melos release.prepare, pushes <package>/chore/release-<version>, and opens a PR.
+# Does not publish to pub.dev or create git tags.
+name: Prepare Dart package release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to prepare for release
+        required: true
+        type: choice
+        options:
+          - clay_core
+          - clay_cli
+      bump:
+        description: Version bump type (maps to melos --manual-version)
+        required: true
+        type: choice
+        options:
+          - build
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  cancel-in-progress: false
+  group: prepare-release-${{ inputs.package }}
+
+jobs:
+  prepare:
+    name: Prepare release (${{ inputs.package }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Install melos
+        uses: ./.github/actions/install-dart-cli
+        with:
+          package: melos 7.5.1
+
+      - name: Bootstrap workspace
+        run: melos bs
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
