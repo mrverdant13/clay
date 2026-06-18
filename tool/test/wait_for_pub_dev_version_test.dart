@@ -37,8 +37,8 @@ void main() {
 
     test('returns false for invalid JSON', () {
       expect(
-        () => versionListedInPubDevResponse('not-json', '0.0.1-dev.1'),
-        throwsFormatException,
+        versionListedInPubDevResponse('not-json', '0.0.1-dev.1'),
+        isFalse,
       );
     });
   });
@@ -88,6 +88,24 @@ void main() {
         fetchPackage: (_) async => throw PubDevPackageNotFoundException(
           'Package not found on pub.dev: clay_core',
         ),
+      );
+
+      expect(exitCode, 1);
+    });
+
+    test('returns 1 when fetch returns invalid JSON before timeout', () async {
+      var now = DateTime.utc(2026, 1, 1, 12);
+
+      final exitCode = await waitForPubDevVersion(
+        packageName: 'clay_core',
+        version: '0.0.1-dev.1',
+        timeout: const Duration(seconds: 1),
+        interval: const Duration(milliseconds: 200),
+        now: () => now,
+        sleep: (_) async {
+          now = now.add(const Duration(milliseconds: 500));
+        },
+        fetchPackage: (_) async => 'not-json',
       );
 
       expect(exitCode, 1);

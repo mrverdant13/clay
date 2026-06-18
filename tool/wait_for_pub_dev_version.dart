@@ -35,8 +35,16 @@ void main(List<String> arguments) async {
 }
 
 /// Returns `true` when [responseBody] lists [version] in its `versions` array.
+///
+/// Returns `false` for malformed JSON or unexpected response shapes.
 bool versionListedInPubDevResponse(String responseBody, String version) {
-  final decoded = jsonDecode(responseBody);
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(responseBody);
+  } on FormatException {
+    return false;
+  }
+
   if (decoded is! Map) {
     return false;
   }
