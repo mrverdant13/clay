@@ -184,8 +184,33 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
 **Release invariants:**
 
 - **One package per release PR** — a `clay_core` release touches only `packages/clay_core/**`; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
-- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds.
+- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds **and** pub.dev lists the version.
 - **Release order** — when both packages change, publish **`clay_core` first**, then **`clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
+- **Explicit publish opt-in** — live pub.dev publishes require a manual **Publish Dart package** workflow dispatch with `dry_run: false`; nothing publishes automatically on merge to `main`.
+
+### CI release workflows
+
+Maintainers can run most of the release path from GitHub Actions. Regular [Dart CI](.github/workflows/ci.yaml) still runs format, analyze, and tests on every PR — it does not run `release.check` or publish.
+
+| Workflow | Trigger | Purpose |
+| --- | --- | --- |
+| [**Prepare Dart package release**](.github/workflows/prepare-release.yaml) | `workflow_dispatch` — choose `clay_core` or `clay_cli` | Runs scoped `release.prepare`, pushes `<package>/chore/release-<version>`, and opens a release PR |
+| [**Dart release PR check**](.github/workflows/release-pr.yaml) | Pull request to `main` when release manifests change | Runs `MELOS_PACKAGES`-scoped `release.check` when the PR title and branch match the release pattern |
+| [**Publish Dart package**](.github/workflows/publish.yaml) | `workflow_dispatch` — choose package and `dry_run` | Pre-publish gate (`dry_run: true`) or live publish + pub.dev poll + annotated tag (`dry_run: false`) |
+
+**Prepare release** (`prepare-release.yaml`) checks out `main`, runs `melos run release.prepare -- --scope=<package>` (Melos derives the next `-dev.N` bump from conventional commits), and opens a PR titled `chore(<package>): release <version>` on branch `<package>/chore/release-<version>`. It does not publish or tag. For `clay_cli` releases after a new `clay_core`, ensure the `clay_core:` constraint is updated on the release branch before merge — the prepare workflow does not auto-bump dependent packages.
+
+**Release PR CI** (`release-pr.yaml`) runs only when **all** of the following hold:
+
+1. The PR changes `packages/*/pubspec.yaml` or `packages/*/CHANGELOG.md` for a publishable package.
+2. The PR title matches `chore(<package>): release <version>`.
+3. The head branch is named `<package>/chore/release-<version>`.
+
+CI fails if more than one publishable package's release manifests change in the same PR. When the guards pass, the workflow sets `MELOS_PACKAGES` and runs `melos run release.check`.
+
+**Publish** (`publish.yaml`) always runs `release.check` in a `check` job. With `dry_run: true` (the default), the workflow stops there — no pub.dev publish, no git tag. With `dry_run: false`, a second job publishes via `dart pub publish --force`, waits for the version to appear on pub.dev ([`tool/wait_for_pub_dev_version.dart`](tool/wait_for_pub_dev_version.dart) polls the [pub.dev package API](https://pub.dev/api/packages/<name>)), then creates and pushes an annotated tag via [`tool/release_tag.dart`](tool/release_tag.dart). If the poll times out, the job fails **without** creating a tag.
+
+Live publishes use the **`pub-dev-publish`** GitHub environment. Configure [environment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules) (for example required reviewers) and store [`PUB_CREDENTIALS`](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system) as an environment secret. See [Dart publishing from CI](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system) for credential setup.
 
 ### Step-by-step runbook
 
