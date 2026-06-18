@@ -84,14 +84,4 @@ jobs:
           ## Release PR
 
           Automated version bump for \`${package}\` via the **Prepare Dart package release** workflow (scoped \`release.prepare\` with conventional-commit versioning and \`--preid=dev\`).
-
-          ### Maintainer checklist
-
-          Follow the [Dart package releases runbook](https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md#dart-package-releases-clay_core-and-clay_cli):
-
-          - [ ] Review changelog entries and version bump
-          - [ ] For \`clay_cli\`: confirm \`clay_core:\` constraint is updated if a new core version was published (see runbook step 7)
-          - [ ] Wait for CI \`release.check\` on this PR to pass
-          - [ ] Merge, then publish via **Publish Dart package** (\`dry_run: false\`) or local \`dart pub publish\`
-          - [ ] Tag is created automatically by the publish workflow after pub.dev lists the version
           EOF
