@@ -216,21 +216,25 @@ Live publishes use the **`pub-dev-publish`** GitHub environment. Configure [envi
 
 1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so Melos can generate changelog entries.
 
-2. **Bump version and changelog** for the target package with `melos run release.prepare`. Pass Melos `version` flags after `--`:
+2. **Bump version and changelog** for the target package. Use **either** path:
+
+   **Option A — locally:**
 
    ```bash
-   # Dev build bump (0.0.1-dev.1 → 0.0.1-dev.2)
-   melos run release.prepare -- --scope=clay_core --manual-version=clay_core:build
+   # Dev build bump (Melos derives the next -dev.N from conventional commits)
+   melos run release.prepare -- --scope=clay_core
 
    # Patch / minor / major when graduating beyond -dev.N
    melos run release.prepare -- --scope=clay_cli --manual-version=clay_cli:patch
    ```
 
+   **Option B — GitHub Actions:** run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow commits the version bump, pushes `<package>/chore/release-<version>`, and opens the release PR.
+
    `release.prepare` wraps `melos version` with `--no-git-tag-version`, `--no-dependent-versions`, and `--preid=dev`. A `preCommit` hook syncs `lib/src/version.dart` from each bumped `pubspec.yaml` (see [Version sync](#version-sync) below).
 
-3. **Open a release PR** titled with the package scope, for example `chore(clay_core): release 0.0.1-dev.2`. One package per PR — do not combine `clay_core` and `clay_cli` in the same release PR.
+3. **Open or review the release PR.** The PR title must be `chore(<package>): release <version>` and the head branch `<package>/chore/release-<version>`. One package per PR — do not combine `clay_core` and `clay_cli` in the same release PR.
 
-4. **Run pre-publish checks** locally and confirm CI is green:
+4. **Pre-publish checks.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` automatically when the PR matches the release title and branch pattern. Optionally run the gate locally before pushing:
 
    ```bash
    # Full gate for all publishable packages
@@ -241,9 +245,20 @@ Live publishes use the **`pub-dev-publish`** GitHub environment. Configure [envi
    MELOS_PACKAGES=clay_cli melos run release.check
    ```
 
-   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`. Use `MELOS_PACKAGES` for single-package release PRs — see [Why `MELOS_PACKAGES` and not `--scope`?](#why-melos_packages-and-not---scope) below.
+   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`. Use `MELOS_PACKAGES` for single-package release PRs — see [Why `MELOS_PACKAGES` and not `--scope`?](#why-melos_packages-and-not---scope) below. Regular PR CI still runs format, analyze, and tests; it does not replace `release.check` on non-release PRs.
 
-5. **Merge the release PR**, then publish from the package directory on `main`:
+   You can also dispatch **Publish Dart package** with `dry_run: true` to run the same gate outside a release PR.
+
+5. **Merge the release PR** into `main`.
+
+6. **Publish to pub.dev.** Prefer **Actions → Publish Dart package** with `dry_run: false` and the target package over a local publish:
+
+   ```bash
+   # CI path (recommended): workflow_dispatch with dry_run: false
+   # Requires pub-dev-publish environment approval and PUB_CREDENTIALS secret
+   ```
+
+   Local fallback from the package directory on `main`:
 
    ```bash
    cd packages/clay_core   # or packages/clay_cli
@@ -252,7 +267,7 @@ Live publishes use the **`pub-dev-publish`** GitHub environment. Configure [envi
 
    Alternatively, use `melos publish` without `--dry-run` from the repo root when publishing multiple packages in sequence (still one package at a time, `clay_core` before `clay_cli`).
 
-6. **Tag only after pub.dev confirms the version is live.** Use the release tag helper (dry-run prints commands; `--execute` creates and pushes the tag):
+7. **Tag after pub.dev confirms the version.** When publishing via **Publish Dart package** with `dry_run: false`, CI polls pub.dev and creates the annotated tag automatically. Manual fallback:
 
    ```bash
    melos run release.tag -- --package clay_core
@@ -261,7 +276,7 @@ Live publishes use the **`pub-dev-publish`** GitHub environment. Configure [envi
 
    Or run the equivalent git commands manually (see [Release tagging](#release-tagging) below). **Do not tag** if publish failed or the version is not yet visible on pub.dev.
 
-7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `MELOS_PACKAGES=clay_cli melos run release.check` and publishing.
+8. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before merge and `MELOS_PACKAGES=clay_cli melos run release.check`.
 
 ### Why `MELOS_PACKAGES` and not `--scope`?
 
