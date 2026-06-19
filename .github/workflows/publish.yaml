@@ -40,6 +40,22 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+      - name: Require release tag ref for live publish
+        if: inputs.dry_run == false
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref_type }}" != "tag" ]]; then
+            echo "::error::Live publish must be dispatched on the release tag ref, not a branch. Merge the release PR, wait for the release-tag workflow to finish, then re-run this workflow and select tag \`${PACKAGE}/<version>\` (Use workflow from: Tags)."
+            exit 1
+          fi
+          version=$(grep '^version:' "packages/${PACKAGE}/pubspec.yaml" | awk '{print $2}')
+          expected_tag="${PACKAGE}/${version}"
+          if [[ "${{ github.ref_name }}" != "$expected_tag" ]]; then
+            echo "::error::Selected tag ref \`${{ github.ref_name }}\` does not match \`${expected_tag}\` from packages/${PACKAGE}/pubspec.yaml."
+            exit 1
+          fi
       - name: Install Dart
         uses: dart-lang/setup-dart@v1
       - name: Install melos
@@ -52,7 +68,7 @@ jobs:
         run: melos run release.check
 
   publish:
-    name: Publish and tag (${{ inputs.package }})
+    name: Publish (${{ inputs.package }})
     needs: check
     if: inputs.dry_run == false
     runs-on: ubuntu-latest
@@ -62,6 +78,21 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+      - name: Require release tag ref for live publish
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.ref_type }}" != "tag" ]]; then
+            echo "::error::Live publish must be dispatched on the release tag ref, not a branch. Merge the release PR, wait for the release-tag workflow to finish, then re-run this workflow and select tag \`${PACKAGE}/<version>\` (Use workflow from: Tags)."
+            exit 1
+          fi
+          version=$(grep '^version:' "packages/${PACKAGE}/pubspec.yaml" | awk '{print $2}')
+          expected_tag="${PACKAGE}/${version}"
+          if [[ "${{ github.ref_name }}" != "$expected_tag" ]]; then
+            echo "::error::Selected tag ref \`${{ github.ref_name }}\` does not match \`${expected_tag}\` from packages/${PACKAGE}/pubspec.yaml."
+            exit 1
+          fi
       - name: Install Dart
         uses: dart-lang/setup-dart@v1
       - name: Install melos
