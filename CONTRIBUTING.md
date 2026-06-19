@@ -191,14 +191,16 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
 
 **Release invariants:**
 
-- **One package per release PR** — a `clay_core` release touches only `packages/clay_core/`**; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
-- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds **and** pub.dev lists the version.
-- **Release order** — when both packages change, publish `**clay_core` first**, then `**clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
-- **Explicit publish opt-in** — live pub.dev publishes require a manual **Publish Dart package** workflow dispatch with `dry_run: false`; nothing publishes automatically on merge to `main`.
+- **One package per release PR** — a `clay_core` release touches only `packages/clay_core/**`; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
+- **Tag before OIDC publish** — merging a release PR automatically pushes annotated tag `<package>/<version>` on the merge commit via [Release tag on merge](.github/workflows/release-tag.yaml). Live pub.dev publishes dispatch manually on that **tag ref** (OIDC requires a tag, not a branch).
+- **Poll after publish** — the publish workflow polls pub.dev until the version appears before the job succeeds.
+- **No permanent tag for failed publishes** — if publish or the pub.dev poll fails, the publish workflow deletes the release tag; recreate it with [Release tag on merge](.github/workflows/release-tag.yaml) (`workflow_dispatch` fallback) before retrying publish.
+- **Release order** — when both packages change, publish **`clay_core` first**, then **`clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
+- **Explicit publish opt-in** — live pub.dev publishes require a manual **Publish Dart package** workflow dispatch with `dry_run: false` on the matching tag ref; nothing publishes automatically on merge to `main`.
 
 ### pub.dev automated publishing setup (maintainers)
 
-Before Clay migrates live publishes from long-lived `PUB_CREDENTIALS` to **GitHub OIDC** via [`dart-lang/setup-dart@v1`](https://github.com/dart-lang/setup-dart), complete this one-time setup **for each publishable package** on [pub.dev](https://pub.dev) → **Admin** → **Automated publishing**. See [Dart automated publishing — configuring on pub.dev](https://dart.dev/tools/pub/automated-publishing#configuring-automated-publishing-from-github-actions-on-pubdev).
+Live pub.dev publishes use **GitHub OIDC** via [`dart-lang/setup-dart@v1`](https://github.com/dart-lang/setup-dart) — no long-lived publish tokens. Complete this one-time setup **for each publishable package** on [pub.dev](https://pub.dev) → **Admin** → **Automated publishing** before the first OIDC publish. See [Dart automated publishing — configuring on pub.dev](https://dart.dev/tools/pub/automated-publishing#configuring-automated-publishing-from-github-actions-on-pubdev).
 
 | Package     | pub.dev package | Tag pattern on pub.dev |
 | ----------- | --------------- | ---------------------- |
@@ -213,9 +215,9 @@ For **each** row above, on that package's pub.dev admin page:
 4. Enable **Publishing from `workflow_dispatch` events** — required because live publishes are dispatched manually on a **tag ref** after [Release tag on merge](.github/workflows/release-tag.yaml) pushes `<package>/<version>` on the merge commit (pub.dev rejects branch-based OIDC; see [pub-dev #8507](https://github.com/dart-lang/pub-dev/issues/8507)).
 5. Optionally enable **Require GitHub Actions environment** and name it `pub-dev-publish` to align with the existing GitHub environment protection rules on the publish workflow.
 
-**Transition:** Until the publish workflow migrates to OIDC, keep `PUB_CREDENTIALS` in the `pub-dev-publish` GitHub environment. After the first successful OIDC publish, remove that secret — OIDC short-lived tokens replace it. Do **not** merge or run the OIDC publish workflow changes until both packages show automated publishing configured on pub.dev.
+**Prerequisite:** Both packages must show automated publishing configured on pub.dev before dispatching a live OIDC publish. After the first successful OIDC publish, remove the legacy `PUB_CREDENTIALS` secret from the `pub-dev-publish` GitHub environment if it is still present — OIDC short-lived tokens replace it.
 
-Further reading: [Dart automated publishing](https://dart.dev/tools/pub/automated-publishing), [GitHub Actions — manually running a workflow on a tag ref](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow).
+Further reading: [Dart automated publishing](https://dart.dev/tools/pub/automated-publishing), [Dart publishing from CI](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system), [GitHub Actions — manually running a workflow on a tag ref](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow).
 
 ### CI release workflows
 
