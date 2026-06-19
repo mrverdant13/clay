@@ -1,0 +1,100 @@
+# Creates annotated release tags when Dart package release PRs merge to main.
+# Live pub.dev publish is a separate manual workflow_dispatch on the tag ref (OIDC).
+# Tags pushed from this workflow cannot trigger the publish workflow via push:tags.
+name: Release tag on merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  resolve:
+    name: Resolve release target
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.resolve.outputs.should_run }}
+      package: ${{ steps.resolve.outputs.package }}
+      version: ${{ steps.resolve.outputs.version }}
+      checkout_ref: ${{ steps.resolve.outputs.checkout_ref }}
+    steps:
+      - name: Resolve merged release pull request
+        id: resolve
+        env:
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$PR_MERGED" != "true" ]]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ ! "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          package="${BASH_REMATCH[1]}"
+          version="${BASH_REMATCH[2]}"
+          expected_branch="${package}/chore/release-${version}"
+
+          if [[ "$PR_BRANCH" != "$expected_branch" ]]; then
+            echo "::error::Release PR branch must be named '$expected_branch' (got '$PR_BRANCH')."
+            exit 1
+          fi
+
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "checkout_ref=$MERGE_COMMIT_SHA" >> "$GITHUB_OUTPUT"
+
+  tag:
+    name: Tag release (${{ needs.resolve.outputs.package }} ${{ needs.resolve.outputs.version }})
+    needs: resolve
+    if: needs.resolve.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    concurrency:
+      cancel-in-progress: false
+      group: release-tag-${{ needs.resolve.outputs.package }}
+    steps:
+      - name: Check out merge commit
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.resolve.outputs.checkout_ref }}
+          fetch-depth: 0
+
+      - name: Validate release version on merge commit
+        env:
+          PACKAGE: ${{ needs.resolve.outputs.package }}
+          EXPECTED_VERSION: ${{ needs.resolve.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          pubspec_version=$(grep '^version:' "packages/${PACKAGE}/pubspec.yaml" | awk '{print $2}')
+          if [[ -z "$pubspec_version" ]]; then
+            echo "::error::Could not read version from packages/${PACKAGE}/pubspec.yaml"
+            exit 1
+          fi
+
+          if [[ "$pubspec_version" != "$EXPECTED_VERSION" ]]; then
+            echo "::error::packages/${PACKAGE}/pubspec.yaml version is $pubspec_version but the release PR title indicates $EXPECTED_VERSION."
+            exit 1
+          fi
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Create annotated release tag
+        run: dart run tool/release_tag.dart --package "${{ needs.resolve.outputs.package }}" --execute
