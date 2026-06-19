@@ -7,6 +7,15 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to recreate release tag for on main
+        required: true
+        type: choice
+        options:
+          - clay_core
+          - clay_cli
 
 permissions:
   contents: write
@@ -21,42 +30,51 @@ jobs:
       version: ${{ steps.resolve.outputs.version }}
       checkout_ref: ${{ steps.resolve.outputs.checkout_ref }}
     steps:
-      - name: Resolve merged release pull request
+      - name: Resolve release target
         id: resolve
         env:
+          EVENT_NAME: ${{ github.event_name }}
           PR_MERGED: ${{ github.event.pull_request.merged }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BRANCH: ${{ github.event.pull_request.head.ref }}
           MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          DISPATCH_PACKAGE: ${{ inputs.package }}
         run: |
           set -euo pipefail
 
-          if [[ "$PR_MERGED" != "true" ]]; then
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            if [[ "$PR_MERGED" != "true" ]]; then
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [[ ! "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            package="${BASH_REMATCH[1]}"
+            version="${BASH_REMATCH[2]}"
+            expected_branch="${package}/chore/release-${version}"
+
+            if [[ "$PR_BRANCH" != "$expected_branch" ]]; then
+              echo "::error::Release PR branch must be named '$expected_branch' (got '$PR_BRANCH')."
+              exit 1
+            fi
+
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "package=$package" >> "$GITHUB_OUTPUT"
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "checkout_ref=$MERGE_COMMIT_SHA" >> "$GITHUB_OUTPUT"
             exit 0
-          fi
-
-          if [[ ! "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          package="${BASH_REMATCH[1]}"
-          version="${BASH_REMATCH[2]}"
-          expected_branch="${package}/chore/release-${version}"
-
-          if [[ "$PR_BRANCH" != "$expected_branch" ]]; then
-            echo "::error::Release PR branch must be named '$expected_branch' (got '$PR_BRANCH')."
-            exit 1
           fi
 
           echo "should_run=true" >> "$GITHUB_OUTPUT"
-          echo "package=$package" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "checkout_ref=$MERGE_COMMIT_SHA" >> "$GITHUB_OUTPUT"
+          echo "package=$DISPATCH_PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "checkout_ref=main" >> "$GITHUB_OUTPUT"
 
   tag:
-    name: Tag release (${{ needs.resolve.outputs.package }} ${{ needs.resolve.outputs.version }})
+    name: Tag release (${{ needs.resolve.outputs.package }})
     needs: resolve
     if: needs.resolve.outputs.should_run == 'true'
     runs-on: ubuntu-latest
@@ -64,16 +82,18 @@ jobs:
       cancel-in-progress: false
       group: release-tag-${{ needs.resolve.outputs.package }}
     steps:
-      - name: Check out merge commit
+      - name: Check out release commit
         uses: actions/checkout@v6
         with:
           ref: ${{ needs.resolve.outputs.checkout_ref }}
           fetch-depth: 0
 
-      - name: Validate release version on merge commit
+      - name: Validate release version
+        id: version
         env:
           PACKAGE: ${{ needs.resolve.outputs.package }}
           EXPECTED_VERSION: ${{ needs.resolve.outputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
 
@@ -83,18 +103,44 @@ jobs:
             exit 1
           fi
 
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "value=$pubspec_version" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           if [[ "$pubspec_version" != "$EXPECTED_VERSION" ]]; then
             echo "::error::packages/${PACKAGE}/pubspec.yaml version is $pubspec_version but the release PR title indicates $EXPECTED_VERSION."
             exit 1
           fi
 
+          echo "value=$pubspec_version" >> "$GITHUB_OUTPUT"
+
+      - name: Skip when release tag already exists
+        id: skip
+        env:
+          PACKAGE: ${{ needs.resolve.outputs.package }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          tag_name="${PACKAGE}/${VERSION}"
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag_name}" >/dev/null 2>&1; then
+            echo "Tag ${tag_name} already exists on origin; skipping tag creation."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure git author
+        if: steps.skip.outputs.skip != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Install Dart
+        if: steps.skip.outputs.skip != 'true'
         uses: dart-lang/setup-dart@v1
 
       - name: Create annotated release tag
+        if: steps.skip.outputs.skip != 'true'
         run: dart run tool/release_tag.dart --package "${{ needs.resolve.outputs.package }}" --execute
