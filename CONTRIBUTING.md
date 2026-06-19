@@ -210,8 +210,12 @@ For **each** row above, on that package's pub.dev admin page:
 1. Enable **Publishing from GitHub Actions**.
 2. Set **Repository** to `mrverdant13/clay` (this monorepo).
 3. Set **Tag pattern** to the exact pattern in the table — Clay uses `<package>/<version>` tags (for example `clay_core/0.0.1-dev.2`), **not** `v{{version}}`.
-4. Enable **Publishing from `workflow_dispatch` events** — required because live publishes are dispatched manually on a **tag ref** after the release-tag workflow creates the tag on merge (pub.dev rejects branch-based OIDC; see [pub-dev #8507](https://github.com/dart-lang/pub-dev/issues/8507)).
+4. Enable **Publishing from `workflow_dispatch` events** — required because live publishes are dispatched manually on a **tag ref** after [Release tag on merge](.github/workflows/release-tag.yaml) pushes `<package>/<version>` on the merge commit (pub.dev rejects branch-based OIDC; see [pub-dev #8507](https://github.com/dart-lang/pub-dev/issues/8507)).
 5. Optionally enable **Require GitHub Actions environment** and name it `pub-dev-publish` to align with the existing GitHub environment protection rules on the publish workflow.
+
+**Transition:** Until the publish workflow migrates to OIDC, keep `PUB_CREDENTIALS` in the `pub-dev-publish` GitHub environment. After the first successful OIDC publish, remove that secret — OIDC short-lived tokens replace it. Do **not** merge or run the OIDC publish workflow changes until both packages show automated publishing configured on pub.dev.
+
+Further reading: [Dart automated publishing](https://dart.dev/tools/pub/automated-publishing), [GitHub Actions — manually running a workflow on a tag ref](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow).
 
 ### CI release workflows
 
