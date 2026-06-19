@@ -240,10 +240,11 @@ Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authen
 2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `melos run release.prepare -- --scope=<package>` (Melos derives the next `-dev.N` bump from conventional commits), commits the version bump and changelog, pushes `<package>/chore/release-<version>`, and opens a PR titled `chore(<package>): release <version>`.
 3. **Review the release PR.** One package per PR — do not combine `clay_core` and `clay_cli`. For `clay_cli` releases after a new `clay_core`, push a follow-up commit on the release branch updating the `clay_core:` minimum constraint (for example `clay_core: ^0.0.1-dev.2`) before merge — the prepare workflow does not auto-bump dependent packages.
 4. **Wait for release PR CI.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` when the PR title, branch name, and changed release manifests all match. CI fails if more than one publishable package's manifests change in the same PR.
-5. **Merge the release PR** into `main`.
-6. **Publish to pub.dev.** Run **Actions → Publish Dart package**, choose the target package, set `dry_run: false`, and approve the `pub-dev-publish` environment. The workflow runs `release.check`, publishes via `dart pub publish --force`, polls pub.dev until the version appears (`[tool/wait_for_pub_dev_version.dart](tool/wait_for_pub_dev_version.dart)`), then creates and pushes an annotated tag via `[tool/release_tag.dart](tool/release_tag.dart)`. If the poll times out, the job fails without creating a tag — re-dispatch once pub.dev lists the version.
-  To run the pre-publish gate outside a release PR, dispatch the same workflow with `dry_run: true` (the default). That runs `release.check` only — no pub.dev publish or git tag.
-7. **Release order.** When both packages release, prepare and publish `**clay_core` first**, then `**clay_cli`**.
+5. **Merge the release PR** into `main`. [Release tag on merge](.github/workflows/release-tag.yaml) automatically creates and pushes annotated tag `<package>/<version>` on the merge commit.
+6. **Publish to pub.dev.** Run **Actions → Publish Dart package**, choose **Use workflow from: Tags**, select tag ref `<package>/<version>`, choose the target package, set `dry_run: false`, and approve the `pub-dev-publish` environment. The workflow verifies the release tag on `HEAD`, publishes via OIDC (`dart pub publish --force`), polls pub.dev until the version appears ([`tool/wait_for_pub_dev_version.dart`](tool/wait_for_pub_dev_version.dart)), and confirms the tag is still on `HEAD` — it does **not** create a new tag.
+   - **Failure recovery:** If publish or the pub.dev poll fails, the workflow deletes the release tag. Fix the issue, run **Actions → Release tag on merge** with `workflow_dispatch` to recreate the tag on `main`, then dispatch publish again on that tag ref.
+   - **Pre-publish gate:** To run `release.check` outside a release PR, dispatch the same workflow with `dry_run: true` (the default) from `main` or a tag ref. That runs `release.check` only — no pub.dev publish.
+7. **Release order.** When both packages release, prepare and publish **`clay_core` first**, then **`clay_cli`**.
 
 ### How CI scopes `release.check`
 
@@ -271,7 +272,7 @@ Unit tests in each package fail CI when the manifest and constant diverge. Run t
 
 | Flag                      | Why                                                                                                                           |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `--no-git-tag-version`    | [Release tagging](#release-tagging) requires tags **after** a successful publish, not when Melos commits the version bump.    |
+| `--no-git-tag-version`    | [Release tagging](#release-tagging) creates tags when the release PR merges — not when Melos commits the version bump. |
 | `--no-dependent-versions` | Bumping `clay_core` must not auto-bump `clay_cli` when only core is releasing. Bump the CLI in its own release PR when ready. |
 | `--preid=dev`             | Pre-1.0 preview releases use `-dev.N` build identifiers.                                                                      |
 | `--manual-version=…`      | Select `build`, `patch`, `minor`, `major`, or an exact version per package.                                                   |
@@ -285,7 +286,7 @@ Further reading: [Melos `version` command](https://melos.invertase.dev/commands/
 
 ## Release tagging
 
-Published packages in this monorepo are tagged **independently** — one git tag per package release. **[Publish Dart package](.github/workflows/publish.yaml)** creates and pushes an annotated tag after `[tool/wait_for_pub_dev_version.dart](tool/wait_for_pub_dev_version.dart)` confirms the version on pub.dev.
+Published packages in this monorepo are tagged **independently** — one git tag per package release. **[Release tag on merge](.github/workflows/release-tag.yaml)** creates and pushes an annotated tag when a release PR merges to `main`. **[Publish Dart package](.github/workflows/publish.yaml)** verifies that tag on `HEAD` before and after OIDC publish; it does not create tags.
 
 ### Format
 
@@ -293,8 +294,8 @@ Published packages in this monorepo are tagged **independently** — one git tag
 <scope>/<version>
 ```
 
-- `**<scope>**` — same scope names as [commit conventions](#scopes) (`clay_core`, `clay_cli`, `clay_vsc_extension`).
-- `**<version>**` — exact version string from the package manifest (`pubspec.yaml` or `extensions/clay/package.json`). No `v` prefix.
+- **`<scope>`** — same scope names as [commit conventions](#scopes) (`clay_core`, `clay_cli`, `clay_vsc_extension`).
+- **`<version>`** — exact version string from the package manifest (`pubspec.yaml` or `extensions/clay/package.json`). No `v` prefix.
 
 ### Examples
 
@@ -306,12 +307,19 @@ clay_vsc_extension/0.1.2
 
 ### Rules
 
-- Tag the merge commit that contains the version bump for that package.
+- Tag the merge commit that contains the version bump for that package — [Release tag on merge](.github/workflows/release-tag.yaml) does this automatically when a release PR merges.
 - The tag version must match the published artifact version exactly.
 - Create an **annotated** tag with a short message naming the package and version.
-- Do not tag before a successful publish — failed publishes should not leave orphan tags.
-- Do not tag until pub.dev lists the version — the publish workflow polls pub.dev before tagging.
-- One package per release PR; only tag the package that was published in that PR.
+- Tags mark the release commit **before** OIDC publish — dispatch **Publish Dart package** on that tag ref for live pub.dev uploads.
+- The publish workflow polls pub.dev before the job succeeds — a successful publish confirms the version is listed on pub.dev.
+- If publish or the poll fails, the publish workflow deletes the release tag — recreate it via [Release tag on merge](.github/workflows/release-tag.yaml) (`workflow_dispatch` on `main`) before retrying.
+- One package per release PR; only tag the package released in that PR.
+
+Manual fallback (for example local recovery):
+
+```bash
+melos run release.tag -- --package clay_core --execute
+```
 
 List tags for a package:
 
