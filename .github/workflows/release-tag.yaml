@@ -5,8 +5,10 @@ name: Release tag on merge
 
 on:
   pull_request:
-    types: [closed]
-    branches: [main]
+    types:
+      - closed
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       package:
@@ -137,10 +139,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Install Dart
+      - name: Create and push annotated release tag
         if: steps.skip.outputs.skip != 'true'
-        uses: dart-lang/setup-dart@v1
-
-      - name: Create annotated release tag
-        if: steps.skip.outputs.skip != 'true'
-        run: dart run tool/release_tag.dart --package "${{ needs.resolve.outputs.package }}" --execute
+        env:
+          PACKAGE: ${{ needs.resolve.outputs.package }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          tag_name="${PACKAGE}/${VERSION}"
+          git tag -a "$tag_name" -m "${PACKAGE} ${VERSION}"
+          git push origin "$tag_name"
