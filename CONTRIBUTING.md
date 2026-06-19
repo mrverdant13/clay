@@ -196,6 +196,23 @@ Both publishable packages ship to [pub.dev](https://pub.dev) with per-package ch
 - **Release order** — when both packages change, publish `**clay_core` first**, then `**clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
 - **Explicit publish opt-in** — live pub.dev publishes require a manual **Publish Dart package** workflow dispatch with `dry_run: false`; nothing publishes automatically on merge to `main`.
 
+### pub.dev automated publishing setup (maintainers)
+
+Before Clay migrates live publishes from long-lived `PUB_CREDENTIALS` to **GitHub OIDC** via [`dart-lang/setup-dart@v1`](https://github.com/dart-lang/setup-dart), complete this one-time setup **for each publishable package** on [pub.dev](https://pub.dev) → **Admin** → **Automated publishing**. See [Dart automated publishing — configuring on pub.dev](https://dart.dev/tools/pub/automated-publishing#configuring-automated-publishing-from-github-actions-on-pubdev).
+
+| Package     | pub.dev package | Tag pattern on pub.dev |
+| ----------- | --------------- | ---------------------- |
+| `clay_core` | `clay_core`     | `clay_core/{{version}}` |
+| `clay_cli`  | `clay_cli`      | `clay_cli/{{version}}` |
+
+For **each** row above, on that package's pub.dev admin page:
+
+1. Enable **Publishing from GitHub Actions**.
+2. Set **Repository** to `mrverdant13/clay` (this monorepo).
+3. Set **Tag pattern** to the exact pattern in the table — Clay uses `<package>/<version>` tags (for example `clay_core/0.0.1-dev.2`), **not** `v{{version}}`.
+4. Enable **Publishing from `workflow_dispatch` events** — required because live publishes are dispatched manually on a **tag ref** after the release-tag workflow creates the tag on merge (pub.dev rejects branch-based OIDC; see [pub-dev #8507](https://github.com/dart-lang/pub-dev/issues/8507)).
+5. Optionally enable **Require GitHub Actions environment** and name it `pub-dev-publish` to align with the existing GitHub environment protection rules on the publish workflow.
+
 ### CI release workflows
 
 Regular [Dart CI](.github/workflows/ci.yaml) runs format, analyze, and tests on every PR — it does not run `release.check` or publish. Release automation uses three dedicated workflows:
