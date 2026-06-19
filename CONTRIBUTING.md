@@ -221,17 +221,18 @@ Further reading: [Dart automated publishing](https://dart.dev/tools/pub/automate
 
 ### CI release workflows
 
-Regular [Dart CI](.github/workflows/ci.yaml) runs format, analyze, and tests on every PR — it does not run `release.check` or publish. Release automation uses three dedicated workflows:
+Regular [Dart CI](.github/workflows/ci.yaml) runs format, analyze, and tests on every PR — it does not run `release.check` or publish. Release automation uses four dedicated workflows:
 
 
 | Workflow                                                                   | Trigger                                                | Purpose                                                                                              |
 | -------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | **[Prepare Dart package release](.github/workflows/prepare-release.yaml)** | `workflow_dispatch` — choose `clay_core` or `clay_cli` | Runs scoped `release.prepare`, pushes `<package>/chore/release-<version>`, and opens a release PR    |
 | **[Dart release PR check](.github/workflows/release-pr.yaml)**             | Pull request to `main` when release manifests change   | Runs `MELOS_PACKAGES`-scoped `release.check` when the PR title and branch match the release pattern  |
-| **[Publish Dart package](.github/workflows/publish.yaml)**                 | `workflow_dispatch` — choose package and `dry_run`     | Pre-publish gate (`dry_run: true`) or live publish + pub.dev poll + annotated tag (`dry_run: false`) |
+| **[Release tag on merge](.github/workflows/release-tag.yaml)**             | Merged release PR to `main`; optional `workflow_dispatch` | Creates and pushes annotated tag `<package>/<version>` on the merge commit (or recreates a missing tag on `main`) |
+| **[Publish Dart package](.github/workflows/publish.yaml)**                 | `workflow_dispatch` — choose package and `dry_run`     | Pre-publish gate (`dry_run: true`) or OIDC live publish + pub.dev poll + tag verify (`dry_run: false` on the matching tag ref) |
 
 
-Live publishes use the `**pub-dev-publish`** GitHub environment. Configure [environment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules) (for example required reviewers) and store `[PUB_CREDENTIALS](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system)` as an environment secret. See [Dart publishing from CI](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system) for credential setup.
+Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authentication via [`dart-lang/setup-dart@v1`](https://github.com/dart-lang/setup-dart). Configure [environment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules) (for example required reviewers). See [Dart automated publishing](https://dart.dev/tools/pub/automated-publishing) for pub.dev admin setup and [pub.dev automated publishing setup (maintainers)](#pubdev-automated-publishing-setup-maintainers) above.
 
 ### Release runbook
 
