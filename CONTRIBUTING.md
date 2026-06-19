@@ -91,15 +91,17 @@ The Clay VS Code extension should invoke `dart run` against the workspace packag
 
 All behavior changes should include or update tests.
 
-| Layer | Location | Notes |
-| --- | --- | --- |
-| Unit tests | `packages/clay_core/test/` | Annotation transforms, config parsing, `ignore` matching |
-| Command tests | `packages/clay_cli/test/` | Args parsing, exit codes, stderr formatting |
+
+| Layer         | Location                                           | Notes                                                          |
+| ------------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| Unit tests    | `packages/clay_core/test/`                         | Annotation transforms, config parsing, `ignore` matching       |
+| Command tests | `packages/clay_cli/test/`                          | Args parsing, exit codes, stderr formatting                    |
 | Fixture tests | `packages/clay_cli/test/` or dedicated fixture dir | Golden `clay gen` output for representative reference projects |
-| E2E | `packages/clay_core/e2e/` | Public API integration (gen, validate, preview) |
-| E2E | `packages/clay_cli/e2e/` | Full CLI invocations |
-| Unit | `extensions/clay/test/` | Fast mocked module tests (`pnpm test`) |
-| E2E | `extensions/clay/e2e/` | Extension Development Host integration (`pnpm test:e2e`) |
+| E2E           | `packages/clay_core/e2e/`                          | Public API integration (gen, validate, preview)                |
+| E2E           | `packages/clay_cli/e2e/`                           | Full CLI invocations                                           |
+| Unit          | `extensions/clay/test/`                            | Fast mocked module tests (`pnpm test`)                         |
+| E2E           | `extensions/clay/e2e/`                             | Extension Development Host integration (`pnpm test:e2e`)       |
+
 
 ---
 
@@ -119,25 +121,29 @@ PR titles follow the same format as commit messages.
 
 ### Allowed types
 
-| Type | Use for |
-| --- | --- |
-| `chore` | Setup, infrastructure, maintenance |
-| `ci` | CI/CD workflow changes |
-| `docs` | Documentation-only changes |
-| `feat` | New user-facing functionality |
-| `fix` | Bug fixes |
+
+| Type       | Use for                                        |
+| ---------- | ---------------------------------------------- |
+| `chore`    | Setup, infrastructure, maintenance             |
+| `ci`       | CI/CD workflow changes                         |
+| `docs`     | Documentation-only changes                     |
+| `feat`     | New user-facing functionality                  |
+| `fix`      | Bug fixes                                      |
 | `refactor` | Internal code changes without behavior changes |
-| `test` | Test additions or updates |
+| `test`     | Test additions or updates                      |
+
 
 ### Scopes
 
 Use scopes for changes tied to a specific package or area:
 
-| Scope | Area |
-| --- | --- |
-| `clay_core` | Core library (`packages/clay_core`) |
-| `clay_cli` | Dart CLI and library (`packages/clay_cli`) |
-| `clay_vsc_extension` | VS Code extension (`extensions/clay`) |
+
+| Scope                | Area                                       |
+| -------------------- | ------------------------------------------ |
+| `clay_core`          | Core library (`packages/clay_core`)        |
+| `clay_cli`           | Dart CLI and library (`packages/clay_cli`) |
+| `clay_vsc_extension` | VS Code extension (`extensions/clay`)      |
+
 
 For cross-cutting setup or CI-only changes, omit the scope: `chore: …`, `ci: …`, `docs: …`.
 
@@ -176,77 +182,52 @@ docs: document clay.yaml fields in README
 
 Both publishable packages ship to [pub.dev](https://pub.dev) with per-package changelogs. Each package exposes a compile-time version constant that must stay in sync with its `pubspec.yaml`:
 
-| Package | Manifest | Runtime constant |
-| --- | --- | --- |
+
+| Package     | Manifest                          | Runtime constant                            |
+| ----------- | --------------------------------- | ------------------------------------------- |
 | `clay_core` | `packages/clay_core/pubspec.yaml` | `clayCoreVersion` in `lib/src/version.dart` |
-| `clay_cli` | `packages/clay_cli/pubspec.yaml` | `packageVersion` in `lib/src/version.dart` |
+| `clay_cli`  | `packages/clay_cli/pubspec.yaml`  | `packageVersion` in `lib/src/version.dart`  |
+
 
 **Release invariants:**
 
-- **One package per release PR** — a `clay_core` release touches only `packages/clay_core/**`; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
-- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds.
-- **Release order** — when both packages change, publish **`clay_core` first**, then **`clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
+- **One package per release PR** — a `clay_core` release touches only `packages/clay_core/`**; a `clay_cli` release touches only `packages/clay_cli/**` (plus any `clay_core:` constraint update in that same package's `pubspec.yaml`).
+- **Tag after publish** — never create `clay_core/<version>` or `clay_cli/<version>` tags until `dart pub publish` succeeds **and** pub.dev lists the version.
+- **Release order** — when both packages change, publish `**clay_core` first**, then `**clay_cli`** (the CLI depends on core at runtime and in `pubspec.yaml`).
+- **Explicit publish opt-in** — live pub.dev publishes require a manual **Publish Dart package** workflow dispatch with `dry_run: false`; nothing publishes automatically on merge to `main`.
 
-### Step-by-step runbook
+### CI release workflows
+
+Regular [Dart CI](.github/workflows/ci.yaml) runs format, analyze, and tests on every PR — it does not run `release.check` or publish. Release automation uses three dedicated workflows:
+
+
+| Workflow                                                                   | Trigger                                                | Purpose                                                                                              |
+| -------------------------------------------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| **[Prepare Dart package release](.github/workflows/prepare-release.yaml)** | `workflow_dispatch` — choose `clay_core` or `clay_cli` | Runs scoped `release.prepare`, pushes `<package>/chore/release-<version>`, and opens a release PR    |
+| **[Dart release PR check](.github/workflows/release-pr.yaml)**             | Pull request to `main` when release manifests change   | Runs `MELOS_PACKAGES`-scoped `release.check` when the PR title and branch match the release pattern  |
+| **[Publish Dart package](.github/workflows/publish.yaml)**                 | `workflow_dispatch` — choose package and `dry_run`     | Pre-publish gate (`dry_run: true`) or live publish + pub.dev poll + annotated tag (`dry_run: false`) |
+
+
+Live publishes use the `**pub-dev-publish`** GitHub environment. Configure [environment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules) (for example required reviewers) and store `[PUB_CREDENTIALS](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system)` as an environment secret. See [Dart publishing from CI](https://dart.dev/tools/pub/publishing#publishing-from-a-ci-system) for credential setup.
+
+### Release runbook
 
 1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so Melos can generate changelog entries.
+2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `melos run release.prepare -- --scope=<package>` (Melos derives the next `-dev.N` bump from conventional commits), commits the version bump and changelog, pushes `<package>/chore/release-<version>`, and opens a PR titled `chore(<package>): release <version>`.
+3. **Review the release PR.** One package per PR — do not combine `clay_core` and `clay_cli`. For `clay_cli` releases after a new `clay_core`, push a follow-up commit on the release branch updating the `clay_core:` minimum constraint (for example `clay_core: ^0.0.1-dev.2`) before merge — the prepare workflow does not auto-bump dependent packages.
+4. **Wait for release PR CI.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` when the PR title, branch name, and changed release manifests all match. CI fails if more than one publishable package's manifests change in the same PR.
+5. **Merge the release PR** into `main`.
+6. **Publish to pub.dev.** Run **Actions → Publish Dart package**, choose the target package, set `dry_run: false`, and approve the `pub-dev-publish` environment. The workflow runs `release.check`, publishes via `dart pub publish --force`, polls pub.dev until the version appears (`[tool/wait_for_pub_dev_version.dart](tool/wait_for_pub_dev_version.dart)`), then creates and pushes an annotated tag via `[tool/release_tag.dart](tool/release_tag.dart)`. If the poll times out, the job fails without creating a tag — re-dispatch once pub.dev lists the version.
+  To run the pre-publish gate outside a release PR, dispatch the same workflow with `dry_run: true` (the default). That runs `release.check` only — no pub.dev publish or git tag.
+7. **Release order.** When both packages release, prepare and publish `**clay_core` first**, then `**clay_cli`**.
 
-2. **Bump version and changelog** for the target package with `melos run release.prepare`. Pass Melos `version` flags after `--`:
+### How CI scopes `release.check`
 
-   ```bash
-   # Dev build bump (0.0.1-dev.1 → 0.0.1-dev.2)
-   melos run release.prepare -- --scope=clay_core --manual-version=clay_core:build
-
-   # Patch / minor / major when graduating beyond -dev.N
-   melos run release.prepare -- --scope=clay_cli --manual-version=clay_cli:patch
-   ```
-
-   `release.prepare` wraps `melos version` with `--no-git-tag-version`, `--no-dependent-versions`, and `--preid=dev`. A `preCommit` hook syncs `lib/src/version.dart` from each bumped `pubspec.yaml` (see [Version sync](#version-sync) below).
-
-3. **Open a release PR** titled with the package scope, for example `chore(clay_core): release 0.0.1-dev.2`. One package per PR — do not combine `clay_core` and `clay_cli` in the same release PR.
-
-4. **Run pre-publish checks** locally and confirm CI is green:
-
-   ```bash
-   # Full gate for all publishable packages
-   melos run release.check
-
-   # Scoped to the package you are releasing
-   MELOS_PACKAGES=clay_core melos run release.check
-   MELOS_PACKAGES=clay_cli melos run release.check
-   ```
-
-   `release.check` runs format, analyze, test, pub score, and `melos publish --dry-run`. Use `MELOS_PACKAGES` for single-package release PRs — see [Why `MELOS_PACKAGES` and not `--scope`?](#why-melos_packages-and-not---scope) below.
-
-5. **Merge the release PR**, then publish from the package directory on `main`:
-
-   ```bash
-   cd packages/clay_core   # or packages/clay_cli
-   dart pub publish
-   ```
-
-   Alternatively, use `melos publish` without `--dry-run` from the repo root when publishing multiple packages in sequence (still one package at a time, `clay_core` before `clay_cli`).
-
-6. **Tag only after pub.dev confirms the version is live.** Use the release tag helper (dry-run prints commands; `--execute` creates and pushes the tag):
-
-   ```bash
-   melos run release.tag -- --package clay_core
-   melos run release.tag -- --package clay_core --execute
-   ```
-
-   Or run the equivalent git commands manually (see [Release tagging](#release-tagging) below). **Do not tag** if publish failed or the version is not yet visible on pub.dev.
-
-7. **When releasing `clay_cli` after a new `clay_core`**, bump the `clay_core:` minimum constraint in the same `clay_cli` release PR (for example `clay_core: ^0.0.1-dev.2`) before running `MELOS_PACKAGES=clay_cli melos run release.check` and publishing.
-
-### Why `MELOS_PACKAGES` and not `--scope`?
-
-`release.check` is a composite Melos script: its `steps:` invoke nested `melos run` commands (`test.ci`, `pub-score.local`, publish dry-run, and others). Passing `--scope` on the outer `melos run release.check` filters only that top-level invocation — it does **not** propagate to those nested steps. Setting `MELOS_PACKAGES=<package>` in the environment scopes every Melos workspace resolution in the process, including nested `melos run` calls inside `steps:` scripts.
-
-Use `MELOS_PACKAGES` for single-package pre-publish checks. Reserve `--scope` for direct Melos commands (for example `melos run release.prepare -- --scope=clay_core …` or `melos run test.ci --scope=clay_core` when not going through a composite parent script).
+`release.check` is a composite Melos script: its `steps:` invoke nested `melos run` commands (`test.ci`, `pub-score.local`, publish dry-run, and others). CI sets `MELOS_PACKAGES=<package>` on the job environment so every nested Melos step scopes to the releasing package. Passing `--scope` on the outer command would **not** propagate to those nested steps.
 
 `format.ci` and `analyze.ci` inside `release.check` still validate the **whole workspace** (`dart format .` / `dart analyze .` at the repo root). Only Melos `exec` / filtered steps (`test.ci`, `pub-score.local`, publish dry-run) honor `MELOS_PACKAGES`.
 
-Further reading: [Melos environment variables — `MELOS_PACKAGES`](https://melos.invertase.dev/environment-variables#melos_packages).
+Further reading: [Melos environment variables — `MELOS_PACKAGES](https://melos.invertase.dev/environment-variables#melos_packages)`.
 
 ### Version sync
 
@@ -263,12 +244,14 @@ Unit tests in each package fail CI when the manifest and constant diverge. Run t
 
 `release.prepare` passes flags required for **independent** dev releases in this monorepo:
 
-| Flag | Why |
-| --- | --- |
-| `--no-git-tag-version` | [Release tagging](#release-tagging) requires tags **after** a successful publish, not when Melos commits the version bump. |
+
+| Flag                      | Why                                                                                                                           |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `--no-git-tag-version`    | [Release tagging](#release-tagging) requires tags **after** a successful publish, not when Melos commits the version bump.    |
 | `--no-dependent-versions` | Bumping `clay_core` must not auto-bump `clay_cli` when only core is releasing. Bump the CLI in its own release PR when ready. |
-| `--preid=dev` | Pre-1.0 preview releases use `-dev.N` build identifiers. |
-| `--manual-version=…` | Select `build`, `patch`, `minor`, `major`, or an exact version per package. |
+| `--preid=dev`             | Pre-1.0 preview releases use `-dev.N` build identifiers.                                                                      |
+| `--manual-version=…`      | Select `build`, `patch`, `minor`, `major`, or an exact version per package.                                                   |
+
 
 Melos also keeps `--dependent-constraints` enabled by default so a `clay_cli` release can update its `clay_core:` minimum when needed.
 
@@ -278,7 +261,7 @@ Further reading: [Melos `version` command](https://melos.invertase.dev/commands/
 
 ## Release tagging
 
-Published packages in this monorepo are tagged **independently** — one git tag per package release, created **after** the artifact is live (pub.dev or Visual Studio Marketplace).
+Published packages in this monorepo are tagged **independently** — one git tag per package release. **[Publish Dart package](.github/workflows/publish.yaml)** creates and pushes an annotated tag after `[tool/wait_for_pub_dev_version.dart](tool/wait_for_pub_dev_version.dart)` confirms the version on pub.dev.
 
 ### Format
 
@@ -286,8 +269,8 @@ Published packages in this monorepo are tagged **independently** — one git tag
 <scope>/<version>
 ```
 
-- **`<scope>`** — same scope names as [commit conventions](#scopes) (`clay_core`, `clay_cli`, `clay_vsc_extension`).
-- **`<version>`** — exact version string from the package manifest (`pubspec.yaml` or `extensions/clay/package.json`). No `v` prefix.
+- `**<scope>**` — same scope names as [commit conventions](#scopes) (`clay_core`, `clay_cli`, `clay_vsc_extension`).
+- `**<version>**` — exact version string from the package manifest (`pubspec.yaml` or `extensions/clay/package.json`). No `v` prefix.
 
 ### Examples
 
@@ -303,18 +286,8 @@ clay_vsc_extension/0.1.2
 - The tag version must match the published artifact version exactly.
 - Create an **annotated** tag with a short message naming the package and version.
 - Do not tag before a successful publish — failed publishes should not leave orphan tags.
+- Do not tag until pub.dev lists the version — the publish workflow polls pub.dev before tagging.
 - One package per release PR; only tag the package that was published in that PR.
-
-### Commands
-
-After `clay_core` `0.0.1-dev.1` is live on pub.dev:
-
-```bash
-git tag -a clay_core/0.0.1-dev.1 -m "clay_core 0.0.1-dev.1"
-git push origin clay_core/0.0.1-dev.1
-```
-
-Or use `melos run release.tag -- --package clay_core --execute` (see [Dart package releases](#dart-package-releases-clay_core-and-clay_cli)).
 
 List tags for a package:
 
@@ -354,14 +327,16 @@ git checkout clay_core/0.0.1-dev.1
 
 ## Documentation
 
-| Artifact | Audience | Status |
-| --- | --- | --- |
-| [`README.md`](README.md) | Users — install, quick start, CLI reference | This repo |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contributors — this guide | This repo |
-| [`doc/annotations.md`](doc/annotations.md) | Reference authors — marker syntax | Available |
-| [`doc/clay.schema.json`](doc/clay.schema.json) | Tooling — JSON schema for `clay.yaml` | Available |
-| `extensions/clay/README.md` | Extension users — setup and settings | Available |
-| `CHANGELOG.md` | Release notes | Planned |
+
+| Artifact                                       | Audience                                    | Status    |
+| ---------------------------------------------- | ------------------------------------------- | --------- |
+| `[README.md](README.md)`                       | Users — install, quick start, CLI reference | This repo |
+| `[CONTRIBUTING.md](CONTRIBUTING.md)`           | Contributors — this guide                   | This repo |
+| `[doc/annotations.md](doc/annotations.md)`     | Reference authors — marker syntax           | Available |
+| `[doc/clay.schema.json](doc/clay.schema.json)` | Tooling — JSON schema for `clay.yaml`       | Available |
+| `extensions/clay/README.md`                    | Extension users — setup and settings        | Available |
+| `CHANGELOG.md`                                 | Release notes                               | Planned   |
+
 
 When adding user-facing behavior, update `README.md` and plan corresponding entries in `doc/` or package changelogs.
 
