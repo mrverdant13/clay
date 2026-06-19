@@ -1,7 +1,14 @@
-# Manual pub.dev publish for clay_core and clay_cli.
+# Manual pub.dev publish for clay_core and clay_cli (OIDC via setup-dart).
 # Trigger via Actions → Publish Dart package.
-# dry_run: true (default) runs the full pre-publish gate (release.check) only —
-# no pub.dev publish, no git tag. dry_run: false publishes, polls pub.dev, then tags.
+#
+# Option C two-step flow:
+# 1. Merge the release PR — release-tag.yaml pushes <package>/<version> on the merge commit.
+# 2. Dispatch this workflow on that tag ref with dry_run: false (Use workflow from: Tags).
+#    OIDC auth succeeds on tag refs; publish runs, pub.dev is polled, the release tag is verified.
+#    On failure, the release tag is deleted so unpublished versions are not permanently tagged.
+#
+# dry_run: true (default) runs release.check only — dispatch from main or a tag ref.
+# dry_run: false publishes via OIDC — must dispatch on the matching release tag ref.
 name: Publish Dart package
 
 on:
@@ -15,7 +22,7 @@ on:
           - clay_core
           - clay_cli
       dry_run:
-        description: Pre-publish gate only via release.check (no pub.dev publish or git tag)
+        description: Pre-publish gate only via release.check (no pub.dev publish)
         required: true
         type: boolean
         default: true
