@@ -18,13 +18,30 @@ void main(List<String> arguments) {
   }
 
   final execute = arguments.contains('--execute');
-  final planResult = buildReleaseTagPlan(packageName, config, _repoRoot());
+  final verify = arguments.contains('--verify');
+  if (execute && verify) {
+    stderr.writeln('Cannot pass both --execute and --verify');
+    exit(64);
+  }
+
+  final repoRoot = _repoRoot();
+  final planResult = buildReleaseTagPlan(packageName, config, repoRoot);
   if (planResult.errorMessage != null) {
     stderr.writeln(planResult.errorMessage);
     exit(1);
   }
 
   final plan = planResult.plan!;
+
+  if (verify) {
+    final errorMessage = verifyReleaseTagPlan(plan, repoRoot);
+    if (errorMessage != null) {
+      stderr.writeln(errorMessage);
+      exit(1);
+    }
+    stdout.writeln('Verified annotated tag ${plan.tagName} on HEAD.');
+    exit(0);
+  }
 
   if (!execute) {
     stdout
@@ -90,6 +107,56 @@ class ReleaseTagPlan {
   );
 }
 
+/// Validates that [plan]'s tag exists, is annotated, and points at HEAD.
+///
+/// Returns an actionable error message on failure, or `null` when verification
+/// succeeds.
+String? verifyReleaseTagPlan(ReleaseTagPlan plan, Directory repoRoot) {
+  final headResult = _runGit(repoRoot, ['rev-parse', 'HEAD']);
+  if (headResult.exitCode != 0) {
+    return _gitCommandFailure('git rev-parse HEAD', headResult);
+  }
+
+  final headCommit = headResult.stdout.toString().trim();
+  final tagRef = 'refs/tags/${plan.tagName}';
+  final tagTypeResult = _runGit(repoRoot, ['cat-file', '-t', tagRef]);
+  if (tagTypeResult.exitCode != 0) {
+    return 'Release tag ${plan.tagName} is missing on this checkout.';
+  }
+
+  final tagObjectType = tagTypeResult.stdout.toString().trim();
+  final tagCommitResult = _runGit(repoRoot, ['rev-list', '-n', '1', plan.tagName]);
+  if (tagCommitResult.exitCode != 0) {
+    return _gitCommandFailure('git rev-list -n 1 ${plan.tagName}', tagCommitResult);
+  }
+
+  final tagCommit = tagCommitResult.stdout.toString().trim();
+  return verifyTagAtHead(
+    tagName: plan.tagName,
+    headCommit: headCommit,
+    tagCommit: tagCommit,
+    tagObjectType: tagObjectType,
+  );
+}
+
+/// Pure validation for release-tag verification logic.
+String? verifyTagAtHead({
+  required String tagName,
+  required String headCommit,
+  required String tagCommit,
+  required String tagObjectType,
+}) {
+  if (tagObjectType != 'tag') {
+    return 'Release tag $tagName exists but is not annotated.';
+  }
+
+  if (tagCommit != headCommit) {
+    return 'Release tag $tagName points at $tagCommit but HEAD is $headCommit.';
+  }
+
+  return null;
+}
+
 /// Runs [plan]'s git commands. Returns the first non-zero exit code, or 0.
 int runReleaseTagPlan(ReleaseTagPlan plan) {
   for (final command in plan.gitCommands) {
@@ -120,10 +187,27 @@ String _shellQuote(String argument) {
   return "'${argument.replaceAll("'", r"'\''")}'";
 }
 
+ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
+  return Process.runSync(
+    'git',
+    arguments,
+    workingDirectory: repoRoot.path,
+  );
+}
+
+String _gitCommandFailure(String command, ProcessResult result) {
+  final stderrText = result.stderr.toString().trim();
+  if (stderrText.isEmpty) {
+    return '$command failed with exit code ${result.exitCode}.';
+  }
+
+  return '$command failed: $stderrText';
+}
+
 String? _readPackageArgument(List<String> arguments) {
   for (var index = 0; index < arguments.length; index++) {
     final argument = arguments[index];
-    if (argument == '--execute') {
+    if (argument == '--execute' || argument == '--verify') {
       continue;
     }
 
@@ -177,11 +261,13 @@ Directory _repoRoot() {
 void _printUsage() {
   stderr
     ..writeln(
-      'Usage: dart run tool/release_tag.dart --package <name> [--execute]',
+      'Usage: dart run tool/release_tag.dart --package <name> '
+      '[--execute | --verify]',
     )
     ..writeln()
     ..writeln('Creates an annotated tag after a successful pub.dev publish.')
-    ..writeln('Without --execute, prints the git commands only.')
+    ..writeln('With --verify, checks that the expected annotated tag is on HEAD.')
+    ..writeln('Without --execute or --verify, prints the git commands only.')
     ..writeln()
     ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
 }
