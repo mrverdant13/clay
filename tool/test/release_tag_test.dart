@@ -61,6 +61,33 @@ git push origin clay_core/0.0.1-dev.2''',
     );
   });
 
+  group('validateReleaseTagFlags', () {
+    test('accepts --package and --verify', () {
+      expect(
+        validateReleaseTagFlags(['--package', 'clay_core', '--verify']),
+        isNull,
+      );
+      expect(
+        validateReleaseTagFlags(['--package=clay_core']),
+        isNull,
+      );
+    });
+
+    test('rejects --execute', () {
+      expect(
+        validateReleaseTagFlags(['--package', 'clay_core', '--execute']),
+        'Unknown flag: --execute',
+      );
+    });
+
+    test('rejects other unknown flags', () {
+      expect(
+        validateReleaseTagFlags(['--package', 'clay_core', '--dry-run']),
+        'Unknown flag: --dry-run',
+      );
+    });
+  });
+
   group('verifyTagAtHead', () {
     test('accepts an annotated tag on HEAD', () {
       expect(
