@@ -315,10 +315,20 @@ clay_vsc_extension/0.1.2
 - If publish or the poll fails, the publish workflow deletes the release tag — recreate it via [Release tag on merge](.github/workflows/release-tag.yaml) (`workflow_dispatch` on `main`) before retrying.
 - One package per release PR; only tag the package released in that PR.
 
-Manual fallback (for example local recovery):
+### Manual recovery
+
+When a release tag is missing and must be recreated on `main`:
+
+**Primary — workflow dispatch.** Run **Actions → [Release tag on merge](.github/workflows/release-tag.yaml)** → **Run workflow** on branch `main`, select `clay_core` or `clay_cli`. This creates annotated tag `<package>/<version>` on the current `main` commit, where `<version>` comes from that package's `pubspec.yaml`.
+
+**Optional — local verify or dry-run** (does not create tags):
 
 ```bash
-melos run release.tag -- --package clay_core --execute
+# Same annotated-tag-on-HEAD check the publish workflow runs
+dart run tool/release_tag.dart --package clay_core --verify
+
+# Print planned git tag / git push commands without mutating git
+dart run tool/release_tag.dart --package clay_core
 ```
 
 List tags for a package:
