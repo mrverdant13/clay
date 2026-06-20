@@ -321,6 +321,16 @@ When a release tag is missing and must be recreated on `main`:
 
 **Primary — workflow dispatch.** Run **Actions → [Release tag on merge](.github/workflows/release-tag.yaml)** → **Run workflow** on branch `main`, select `clay_core` or `clay_cli`. This creates annotated tag `<package>/<version>` on the current `main` commit, where `<version>` comes from that package's `pubspec.yaml`.
 
+**Optional — local verify or dry-run** (does not create tags):
+
+```bash
+# Same annotated-tag-on-HEAD check the publish workflow runs
+dart run tool/release_tag.dart --package clay_core --verify
+
+# Print planned git tag / git push commands without mutating git
+dart run tool/release_tag.dart --package clay_core
+```
+
 List tags for a package:
 
 ```bash
