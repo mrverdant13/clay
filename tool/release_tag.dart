@@ -3,6 +3,13 @@ import 'dart:io';
 import 'sync_package_version.dart';
 
 void main(List<String> arguments) {
+  final flagError = validateReleaseTagFlags(arguments);
+  if (flagError != null) {
+    stderr.writeln(flagError);
+    _printUsage();
+    exit(64);
+  }
+
   final packageName = _readPackageArgument(arguments);
   if (packageName == null) {
     _printUsage();
@@ -40,11 +47,42 @@ void main(List<String> arguments) {
 
   stdout
     ..writeln(
-      'Dry run — pass --execute to create and push the annotated tag.',
+      'Dry run — tag creation is handled by the Release tag on merge workflow '
+      '(.github/workflows/release-tag.yaml); use its workflow_dispatch to '
+      'recover a missing tag.',
     )
     ..writeln()
     ..writeln(plan.printCommands());
   exit(0);
+}
+
+/// Returns an error message when [arguments] contains unsupported flags.
+String? validateReleaseTagFlags(List<String> arguments) {
+  for (var index = 0; index < arguments.length; index++) {
+    final argument = arguments[index];
+    if (argument == '--verify') {
+      continue;
+    }
+
+    if (argument == '--package') {
+      if (index + 1 >= arguments.length) {
+        continue;
+      }
+      index++;
+      continue;
+    }
+
+    const prefix = '--package=';
+    if (argument.startsWith(prefix)) {
+      continue;
+    }
+
+    if (argument.startsWith('--')) {
+      return 'Unknown flag: $argument';
+    }
+  }
+
+  return null;
 }
 
 /// Describes the annotated git tag to create after a successful publish.
@@ -180,7 +218,7 @@ String _gitCommandFailure(String command, ProcessResult result) {
 String? _readPackageArgument(List<String> arguments) {
   for (var index = 0; index < arguments.length; index++) {
     final argument = arguments[index];
-    if (argument == '--execute' || argument == '--verify') {
+    if (argument == '--verify') {
       continue;
     }
 
@@ -234,13 +272,17 @@ Directory _repoRoot() {
 void _printUsage() {
   stderr
     ..writeln(
-      'Usage: dart run tool/release_tag.dart --package <name> '
-      '[--execute | --verify]',
+      'Usage: dart run tool/release_tag.dart --package <name> [--verify]',
     )
     ..writeln()
-    ..writeln('Creates an annotated tag after a successful pub.dev publish.')
+    ..writeln(
+      'Verifies or dry-runs release tags after a successful pub.dev publish.',
+    )
     ..writeln('With --verify, checks that the expected annotated tag is on HEAD.')
-    ..writeln('Without --execute or --verify, prints the git commands only.')
+    ..writeln(
+      'Without --verify, prints the planned git tag/push commands only. '
+      'Tag creation is handled by .github/workflows/release-tag.yaml.',
+    )
     ..writeln()
     ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
 }
