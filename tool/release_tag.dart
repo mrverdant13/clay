@@ -17,12 +17,7 @@ void main(List<String> arguments) {
     exit(1);
   }
 
-  final execute = arguments.contains('--execute');
   final verify = arguments.contains('--verify');
-  if (execute && verify) {
-    stderr.writeln('Cannot pass both --execute and --verify');
-    exit(64);
-  }
 
   final repoRoot = _repoRoot();
   final planResult = buildReleaseTagPlan(packageName, config, repoRoot);
@@ -43,17 +38,13 @@ void main(List<String> arguments) {
     exit(0);
   }
 
-  if (!execute) {
-    stdout
-      ..writeln(
-        'Dry run — pass --execute to create and push the annotated tag.',
-      )
-      ..writeln()
-      ..writeln(plan.printCommands());
-    exit(0);
-  }
-
-  exit(runReleaseTagPlan(plan));
+  stdout
+    ..writeln(
+      'Dry run — pass --execute to create and push the annotated tag.',
+    )
+    ..writeln()
+    ..writeln(plan.printCommands());
+  exit(0);
 }
 
 /// Describes the annotated git tag to create after a successful publish.
@@ -155,24 +146,6 @@ String? verifyTagAtHead({
   }
 
   return null;
-}
-
-/// Runs [plan]'s git commands. Returns the first non-zero exit code, or 0.
-int runReleaseTagPlan(ReleaseTagPlan plan) {
-  for (final command in plan.gitCommands) {
-    final result = Process.runSync(
-      command.first,
-      command.sublist(1),
-    );
-    if (result.exitCode != 0) {
-      final stderrText = result.stderr.toString().trim();
-      if (stderrText.isNotEmpty) {
-        stderr.writeln(stderrText);
-      }
-      return result.exitCode;
-    }
-  }
-  return 0;
 }
 
 String formatShellCommand(List<String> command) {
