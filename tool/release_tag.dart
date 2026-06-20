@@ -158,7 +158,9 @@ String? verifyReleaseTagPlan(ReleaseTagPlan plan, Directory repoRoot) {
       _runGit(repoRoot, ['rev-list', '-n', '1', plan.tagName]);
   if (tagCommitResult.exitCode != 0) {
     return _gitCommandFailure(
-        'git rev-list -n 1 ${plan.tagName}', tagCommitResult);
+      'git rev-list -n 1 ${plan.tagName}',
+      tagCommitResult,
+    );
   }
 
   final tagCommit = tagCommitResult.stdout.toString().trim();
@@ -281,7 +283,8 @@ void _printUsage() {
       'Verifies or dry-runs release tags after a successful pub.dev publish.',
     )
     ..writeln(
-        'With --verify, checks that the expected annotated tag is on HEAD.')
+      'With --verify, checks that the expected annotated tag is on HEAD.',
+    )
     ..writeln(
       'Without --verify, prints the planned git tag/push commands only. '
       'Tag creation is handled by .github/workflows/release-tag.yaml.',
