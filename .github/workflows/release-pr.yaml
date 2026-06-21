@@ -25,7 +25,8 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
+          pattern='^chore\(([^)]+)\): release (.+)$'
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
             echo "matched=true" >> "$GITHUB_OUTPUT"
             echo "package=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
             echo "version=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
@@ -86,8 +87,9 @@ jobs:
 
           declare -A changed_packages=()
 
+          file_pattern='^packages/([^/]+)/(pubspec\.yaml|CHANGELOG\.md)$'
           while IFS= read -r file; do
-            if [[ "$file" =~ ^packages/([^/]+)/(pubspec\.yaml|CHANGELOG\.md)$ ]]; then
+            if [[ "$file" =~ $file_pattern ]]; then
               package="${BASH_REMATCH[1]}"
               if is_publishable "$package"; then
                 changed_packages["$package"]=1
