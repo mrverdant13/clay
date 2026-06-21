@@ -19,6 +19,110 @@ with three commands:
 Clay discovers `clay.yaml` by walking up from the working directory (or
 `--cwd`). Use `--config` to load an explicit config file instead.
 
+## Annotation markers
+
+Annotate reference files with **comment-based markers** to control what appears
+in the generated Mason template. Three comment flavors are equivalent — use the
+one that matches each file:
+
+| Flavor | Delimiters | Typical files |
+| --- | --- | --- |
+| C-style | `/* … */` | `.dart`, `.js`, `.ts` |
+| Hash | `# … #` | `.sh`, `.yaml`, `.gitignore` |
+| HTML | `<!-- … -->` | `.html`, `.md`, `.xml` |
+
+| Marker | Purpose |
+| --- | --- |
+| `drop` | Remove from marker to end of file |
+| `remove-start` / `remove-end` | Remove a content block |
+| `replace-start` / `with` / `replace-end` | Replace scaffold with template lines |
+| `insert-start` / `insert-end` | Insert template lines at a position |
+| `{{…}}` in a comment | Unwrap Mustache tags for Mason |
+| `w <actions> w` | Expand newlines (`Nv`) and spaces (`N>`) |
+| `partial v <name>` / `partial ^ <name>` | Extract a Mason partial |
+
+**Example** — remove, replace, and Mustache markers in a `pubspec.yaml` reference file.
+
+`clay.yaml`:
+
+```yaml
+reference: reference
+target: brick/__brick__
+replacements:
+  - from: my_package
+    to: "{{package_name.snakeCase()}}"
+  - from: A Dart package scaffold.
+    to: "{{package_description}}"
+```
+
+Reference (`reference/my_package/pubspec.yaml`):
+
+```yaml
+name: my_package
+description: A Dart package scaffold.
+publish_to: none
+#x-remove-start#
+resolution: workspace
+#remove-end#
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  shared_utils:
+    #replace-start#
+    path: ../../../workspace/shared_utils/
+    #with#
+    # path: ../shared_utils/
+    #replace-end#
+
+dev_dependencies:
+  #{{#use_code_generation}}x#
+  build_runner: ^2.10.5
+  #{{/use_code_generation}}x#
+  #remove-start#
+  coverde: ^0.3.0
+  #remove-end-x#
+  test: ^1.31.1
+```
+
+Template output (`brick/__brick__/my_package/pubspec.yaml`, after `clay gen`):
+
+```yaml
+name: {{package_name.snakeCase()}}
+description: {{package_description}}
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  shared_utils:
+    path: ../shared_utils/
+
+dev_dependencies:
+  {{#use_code_generation}}build_runner: ^2.10.5
+  {{/use_code_generation}}test: ^1.31.1
+```
+
+Try it on one file before generating the full tree:
+
+```bash
+clay validate
+clay preview --file my_package/pubspec.yaml --template-only
+clay gen
+```
+
+**Workflow:**
+
+1. Add markers to files under the configured `reference` directory.
+2. Run `clay validate` to check marker pairing and block structure.
+3. Run `clay preview --file <path> --template-only` to inspect one file.
+4. Run `clay gen` to write the full template tree.
+
+Full syntax, whitespace flags, and examples:
+[Annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md).
+
 ## Installation
 
 Install the CLI globally with [`dart install`](https://dart.dev/tools/dart-install):
@@ -142,10 +246,11 @@ root** (the directory containing `clay.yaml`).
 
 ## Resources
 
+- [Annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md) — marker syntax for reference authors
 - [Repository](https://github.com/mrverdant13/clay/tree/main/packages/clay_cli)
 - [Issue tracker](https://github.com/mrverdant13/clay/issues)
 - [Changelog](CHANGELOG.md)
-- [`clay_core` library](https://pub.dev/packages/clay_core) — embed Clay in Dart tools ([`packages/clay_core/`](../clay_core/))
+- [`clay_core` library](https://pub.dev/packages/clay_core) — embed Clay in Dart tools
 
 ## License
 
