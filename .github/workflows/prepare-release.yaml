@@ -50,7 +50,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Bump version and changelog
-        run: melos run release.prepare -- --scope=${{ inputs.package }}
+        run: MELOS_PACKAGES=${{ inputs.package }} melos run release.prepare
 
       - name: Read release version
         id: version
