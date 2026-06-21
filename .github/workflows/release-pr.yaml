@@ -136,3 +136,11 @@ jobs:
         run: melos bs
       - name: Run pre-publish gate
         run: melos run release.check
+      - name: Set step summary
+        if: always()
+        run: |
+          report="packages/${MELOS_PACKAGES}/.dart_tool/local_pub_score.md"
+          if [[ -f "$report" ]]; then
+            echo "### ${MELOS_PACKAGES}" >> "$GITHUB_STEP_SUMMARY"
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          fi
