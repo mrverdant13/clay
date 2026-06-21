@@ -231,7 +231,7 @@ melos:
         - analyze.ci
         - test.ci
         - pub-score.local
-        - melos publish --dry-run --category publishable
+        - melos publish --dry-run --category publishable --yes
 
     release.prepare:
       description: >
