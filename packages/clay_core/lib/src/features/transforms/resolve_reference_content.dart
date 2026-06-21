@@ -16,6 +16,10 @@ import 'package:clay_core/src/features/transforms/skip_content_transforms.dart';
 /// remotions → replace blocks → insert blocks → Mustache tag unwrapping →
 /// spacing groups → partials.
 ///
+/// Annotation markers use comment delimiters (`/* */`, `# #`, or `<!-- -->`)
+/// with fixed keywords such as `remove-start`, `with`, and `partial v`.
+/// See the [annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md).
+///
 /// Binary extensions (`.png`, `.webp`) are returned unchanged.
 String resolveReferenceContent({
   required String content,
