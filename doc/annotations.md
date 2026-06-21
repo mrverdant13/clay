@@ -6,21 +6,77 @@ This guide documents every supported marker type, the three equivalent comment f
 
 ---
 
+## Syntax patterns
+
+Every marker is a **comment** whose inner text follows a fixed keyword pattern. Clay never parses bare keywords in source code — only text inside a recognized comment delimiter.
+
+| Pattern | Meaning |
+| --- | --- |
+| `<open><keyword><close>` | Single-token marker (e.g. `drop`, Mustache unwrap, spacing group) |
+| `<open><keyword><close>` … `<open><keyword><close>` | Paired start/end block (remove, insert, partial) |
+| `<open>replace-start<close>` … `<open>with[ iN]<close>` … `<open>replace-end<close>` | Three-part replace block |
+
+General forms (substitute delimiters per flavor):
+
+```
+/*<marker>*/                    # single-token marker
+/*<start>*/ … /*<end>*/         # paired block
+/*replace-start*/ … /*with iN*/ … /*replace-end*/
+```
+
+**Rules that apply to all markers:**
+
+- Marker keywords are **case-sensitive** and use **hyphenated** names (`remove-start`, not `removeStart`).
+- Start and end markers in a block must use the **same comment flavor** (`/* */` with `/* */`, not `/* */` with `# #`).
+- Markers are removed from template output; only the transformed content remains.
+- Use `clay validate` to check structural pairing before generation, and `clay preview --file <path>` to inspect a single file's output.
+
+---
+
 ## Comment flavors
 
 The same marker semantics work in three comment styles. Pick the flavor that matches the file you are editing.
 
 | Flavor | Opening | Closing | Typical files |
 | --- | --- | --- | --- |
-| C-style | `/*` | `*/` | Dart, C, C++, Java, JavaScript, TypeScript |
-| Hash | `#` | `#` | Shell, YAML, Ruby, Python (shebang-adjacent) |
-| HTML | `<!--` | `-->` | HTML, XML, Markdown |
+| C-style | `/*` | `*/` | `.dart`, `.js`, `.ts`, `.java`, `.c`, `.cpp` |
+| Hash | `#` | `#` | `.sh`, `.yaml`, `.yml`, `.py`, `.rb`, `.gitignore` |
+| HTML | `<!--` | `-->` | `.html`, `.xml`, `.md`, `.markdown` |
 
 Marker names are identical across flavors — only the comment delimiters change. The tables below use **C-style** syntax; substitute `#` or `<!-- -->` delimiters for other flavors.
 
 | C-style | Hash | HTML |
 | --- | --- | --- |
 | `/*marker*/` | `#marker#` | `<!--marker-->` |
+
+**Per-flavor examples for `remove-start` / `remove-end`:**
+
+| Flavor | Start | End |
+| --- | --- | --- |
+| C-style | `/*remove-start*/` | `/*remove-end*/` |
+| Hash | `#remove-start#` | `#remove-end#` |
+| HTML | `<!--remove-start-->` | `<!--remove-end-->` |
+
+---
+
+## Marker cheat sheet
+
+All markers below are shown in C-style form. See [Comment flavors](#comment-flavors) to translate delimiters.
+
+| Marker | Kind | Purpose |
+| --- | --- | --- |
+| `drop` | Single | Remove from marker through end of file |
+| `remove-start` / `remove-end` | Paired | Remove a content block |
+| `x-remove-start` / `remove-end-x` | Paired + flags | Remove block and adjacent whitespace |
+| `replace-start` / `with` / `replace-end` | Triple | Replace scaffold with template lines |
+| `with iN` | Modifier | Indent replacement lines by `N` spaces |
+| `insert-start` / `insert-end` | Paired | Insert template lines at a position |
+| `{{…}}` in comment | Single | Unwrap Mustache tag for Mason |
+| `x` beside `{{…}}` | Flag | Drop whitespace before/after tag |
+| `w <actions> w` | Single | Expand `Nv` newlines and `N>` spaces |
+| `partial v <name>` / `partial ^ <name>` | Paired | Extract content into a `.partial` file |
+
+Replace and insert blocks emit lines prefixed with the matching comment opener plus a space (`// `, `# `, or `<!-- `). See [Replace blocks](#replace-blocks) and [Insert blocks](#insert-blocks).
 
 ---
 
