@@ -102,16 +102,111 @@ Preview commands and scope-dependent features require a valid brick scope. If a 
 
 Annotation highlighting, folding, shading, and preview commands apply to:
 
-| Kind         | Extensions / names            |
-| ------------ | ----------------------------- |
-| Dart         | `.dart`                       |
-| Shell        | `.sh`                         |
-| YAML         | `.yaml`, `.yml`               |
-| HTML / XML   | `.html`, `.htm`, `.xml`       |
-| Markdown     | `.md`, `.markdown`            |
-| Ignore files | `.gitignore`, `.dockerignore` |
+| Kind         | Extensions / names            | Comment flavor |
+| ------------ | ----------------------------- | -------------- |
+| Dart         | `.dart`                       | C-style `/* … */` |
+| Shell        | `.sh`                         | Hash `# … #` |
+| YAML         | `.yaml`, `.yml`               | Hash `# … #` |
+| HTML / XML   | `.html`, `.htm`, `.xml`       | HTML `<!-- … -->` |
+| Markdown     | `.md`, `.markdown`            | HTML `<!-- … -->` |
+| Ignore files | `.gitignore`, `.dockerignore` | Hash `# … #` |
 
-Three comment flavors are supported equivalently: C-style (`/* … */`), hash (`# … #`), and HTML (`<!-- … -->`). See [`doc/annotations.md`](../../doc/annotations.md) for marker syntax.
+Use the comment flavor that matches the file. The same marker **keywords** work in every flavor — only the delimiters change.
+
+### Annotation marker syntax
+
+Markers are comment tokens that Clay resolves during `clay gen`. The extension highlights, shades, and folds the same marker set the CLI understands.
+
+| Marker (C-style) | What it does | Editor treatment |
+| --- | --- | --- |
+| `drop` | Remove from marker to EOF | Red marker; content below shaded as removed |
+| `remove-start` / `remove-end` | Remove a block | Red markers; block content shaded as removed |
+| `replace-start` / `with` / `replace-end` | Replace scaffold with template lines | Orange boundaries; `with` in teal; scaffold vs replacement shading |
+| `insert-start` / `insert-end` | Insert template lines | Purple markers; inserted content shaded |
+| `{{…}}` in comment | Unwrap Mustache tag | Purple tag; optional `x` drop flags in red |
+| `w <actions> w` | Expand `Nv` newlines / `N>` spaces | Gray marker highlight |
+| `partial v <name>` / `partial ^ <name>` | Extract Mason partial | Blue markers; payload shaded |
+
+**Flavor equivalents** for `remove-start` / `remove-end`:
+
+```
+/*remove-start*/ … /*remove-end*/       # Dart, JS, TS, …
+#remove-start# … #remove-end#           # Shell, YAML, gitignore, …
+<!--remove-start--> … <!--remove-end--> # HTML, Markdown, XML
+```
+
+Replace and insert blocks emit template lines with a comment prefix plus a space (`// `, `# `, or `<!-- `). The prefix is stripped at generation time.
+
+**Example** — remove, replace, and Mustache markers in a `pubspec.yaml` reference file.
+
+`clay.yaml`:
+
+```yaml
+reference: reference
+target: brick/__brick__
+replacements:
+  - from: my_package
+    to: "{{package_name.snakeCase()}}"
+  - from: A Dart package scaffold.
+    to: "{{package_description}}"
+```
+
+Reference (`reference/my_package/pubspec.yaml`):
+
+```yaml
+name: my_package
+description: A Dart package scaffold.
+publish_to: none
+#x-remove-start#
+resolution: workspace
+#remove-end#
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  shared_utils:
+    #replace-start#
+    path: ../../../workspace/shared_utils/
+    #with#
+    # path: ../shared_utils/
+    #replace-end#
+
+dev_dependencies:
+  #{{#use_code_generation}}x#
+  build_runner: ^2.10.5
+  #{{/use_code_generation}}x#
+  #remove-start#
+  coverde: ^0.3.0
+  #remove-end-x#
+  test: ^1.31.1
+```
+
+Template output (`brick/__brick__/my_package/pubspec.yaml`, after `clay gen`):
+
+```yaml
+name: {{package_name.snakeCase()}}
+description: {{package_description}}
+publish_to: none
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  shared_utils:
+    path: ../shared_utils/
+
+dev_dependencies:
+  {{#use_code_generation}}build_runner: ^2.10.5
+  {{/use_code_generation}}test: ^1.31.1
+```
+
+In the editor, hash remove markers (`#remove-start#`, `#x-remove-start#`) appear in red with shaded removed content; replace blocks use orange boundaries with a teal `with` marker and distinct scaffold vs replacement shading; Mustache sections inside `# … #` comments are highlighted in purple. **Clay: Preview template output** resolves markers the same way `clay preview --template-only` does — leaving `{{package_name.snakeCase()}}` and `{{#use_code_generation}}` sections for Mason.
+
+**Validate before generating** — run `clay validate` (or use preview commands, which also run `clay compat`) to catch unmatched markers. Structural rules cover remove, insert, replace, and partial blocks.
+
+Full syntax, whitespace flags (`x-`, `-x`, `with iN`), and worked examples:
+[Annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md).
 
 ### Preview commands
 
@@ -178,7 +273,7 @@ Syntax highlighting colors for annotation markers are contributed via TextMate s
 | Generated preview missing variables                            | No `brick.yaml` next to the target directory                  | Ensure Mason `brick.yaml` exists adjacent to the template output path declared in `clay.yaml`.                           |
 | Colors do not update                                           | Settings cached by VS Code                                    | Change any `clay.colors.*` value; the extension listens for configuration changes and refreshes decorations immediately. |
 
-For CLI behavior, flags, and `clay.yaml` fields, see the [root README](../../README.md) and [`doc/annotations.md`](../../doc/annotations.md).
+For CLI behavior, flags, and `clay.yaml` fields, see the [Clay README](https://github.com/mrverdant13/clay/blob/main/README.md) and [Annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md).
 
 ---
 
