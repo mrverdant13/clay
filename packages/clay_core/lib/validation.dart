@@ -8,5 +8,7 @@
 /// [annotation reference](https://github.com/mrverdant13/clay/blob/main/doc/annotations.md).
 library;
 
+import 'package:clay_core/src/features/validation/validation.dart';
+
 export 'src/features/validation/validate_annotations.dart';
 export 'src/features/validation/validation_exception.dart';
