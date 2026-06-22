@@ -30,23 +30,23 @@ Reference files use **comment-based markers** to express what should change at
 generation time. Clay supports three equivalent comment flavors — pick the one
 that matches the file type:
 
-| Flavor | Delimiters | Example |
-| --- | --- | --- |
-| C-style | `/* … */` | `/*remove-start*/` … `/*remove-end*/` |
-| Hash | `# … #` | `#remove-start#` … `#remove-end#` |
-| HTML | `<!-- … -->` | `<!--remove-start-->` … `<!--remove-end-->` |
+| Flavor  | Delimiters   | Example                                     |
+| ------- | ------------ | ------------------------------------------- |
+| C-style | `/* … */`    | `/*remove-start*/` … `/*remove-end*/`       |
+| Hash    | `# … #`      | `#remove-start#` … `#remove-end#`           |
+| HTML    | `<!-- … -->` | `<!--remove-start-->` … `<!--remove-end-->` |
 
 Common markers (C-style shown; keywords are the same in every flavor):
 
-| Marker | Purpose |
-| --- | --- |
-| `drop` | Remove from marker to end of file |
-| `remove-start` / `remove-end` | Remove a content block |
-| `replace-start` / `with` / `replace-end` | Replace scaffold with template lines |
-| `insert-start` / `insert-end` | Insert template lines at a position |
-| `/*{{name}}*/` | Unwrap a Mustache tag for Mason |
-| `w <actions> w` | Expand newlines (`Nv`) and spaces (`N>`) |
-| `partial v <name>` / `partial ^ <name>` | Extract a Mason partial |
+| Marker                                   | Purpose                                  |
+| ---------------------------------------- | ---------------------------------------- |
+| `drop`                                   | Remove from marker to end of file        |
+| `remove-start` / `remove-end`            | Remove a content block                   |
+| `replace-start` / `with` / `replace-end` | Replace scaffold with template lines     |
+| `insert-start` / `insert-end`            | Insert template lines at a position      |
+| `/*{{name}}*/`                           | Unwrap a Mustache tag for Mason          |
+| `w <actions> w`                          | Expand newlines (`Nv`) and spaces (`N>`) |
+| `partial v <name>` / `partial ^ <name>`  | Extract a Mason partial                  |
 
 **Example** — remove, replace, and Mustache markers in a `pubspec.yaml` reference file.
 
@@ -125,7 +125,7 @@ Add `clay_core` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  clay_core: ^0.0.1-dev.1
+  clay_core: ^0.0.1-dev.2
 ```
 
 Requires Dart SDK `>=3.5.0 <4.0.0`.
@@ -184,12 +184,12 @@ final output = await previewReferenceFile(
 Import `package:clay_core/clay.dart`, or narrower libraries such as `config.dart`,
 `generation.dart`, `preview.dart`, `transforms.dart`, and `validation.dart`.
 
-| Area       | Key symbols                                                                 |
-| ---------- | --------------------------------------------------------------------------- |
+| Area       | Key symbols                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------- |
 | Config     | `discoverClayConfig`, `loadClayConfig`, `ClayConfig`, `resolveReferencePath`, `resolveTargetPath` |
-| Generation | `generateTemplate`                                                          |
-| Validation | `validateAnnotations`, `AnnotationIssue`                                    |
-| Preview    | `previewReferenceFile`, `parsePreviewVars`                                  |
+| Generation | `generateTemplate`                                                                                |
+| Validation | `validateAnnotations`, `AnnotationIssue`                                                          |
+| Preview    | `previewReferenceFile`, `parsePreviewVars`                                                        |
 
 ## Resources
 

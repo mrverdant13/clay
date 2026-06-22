@@ -1,3 +1,9 @@
+## 0.0.1-dev.2
+
+ - **FEAT**: add clay version compatibility check ([#96](https://github.com/mrverdant13/clay/issues/96)). ([064db6ab](https://github.com/mrverdant13/clay/commit/064db6abefeb57ffceb101caca786fd31d9f3efd))
+ - **FEAT**: add environment block to ClayConfig ([#95](https://github.com/mrverdant13/clay/issues/95)). ([0591c2ae](https://github.com/mrverdant13/clay/commit/0591c2aea7ee1617c91e9133006c72952f573c4b))
+ - **DOCS**: document marker syntax in README and dartdoc ([#131](https://github.com/mrverdant13/clay/issues/131)). ([ad0e8274](https://github.com/mrverdant13/clay/commit/ad0e82745278ecb9f98cb28904ffdd52c40a173a))
+
 ## 0.0.1-dev.1
 
 - **FEAT**: copy binary assets unchanged during template generation (#45).
