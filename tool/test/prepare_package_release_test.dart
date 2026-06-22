@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 import '../prepare_package_release.dart';
@@ -267,6 +268,68 @@ void main() {
       expect(
         tagGlobForFormat(format: 'v{version}', name: 'ignored'),
         'v*',
+      );
+    });
+  });
+
+  group('parseVersionFromTag', () {
+    test('parses clay monorepo tag', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        Version.parse('0.0.1-dev.2'),
+      );
+    });
+
+    test('parses single-package tag', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'v1.0.0',
+          format: 'v{version}',
+          name: 'my_pkg',
+        ),
+        Version.parse('1.0.0'),
+      );
+    });
+
+    test('ignores tags that do not match the full template', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/extra/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
+      );
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_cli/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
+      );
+      expect(
+        parseVersionFromTag(
+          tag: 'v1.0.0-beta',
+          format: 'v{version}',
+          name: 'my_pkg',
+        ),
+        Version.parse('1.0.0-beta'),
+      );
+    });
+
+    test('ignores tags with unparseable version segments', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/not-a-version',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
       );
     });
   });

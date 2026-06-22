@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:pub_semver/pub_semver.dart';
+
 final _pubspecNamePattern = RegExp(
   r'^name:\s+(\S+)\s*$',
   multiLine: true,
@@ -168,6 +170,10 @@ class PackageContext {
 const _versionPlaceholder = '{version}';
 const _namePlaceholder = '{name}';
 
+/// Semver-shaped segment captured from a tag via [parseVersionFromTag].
+final _semverCapturePattern =
+    r'([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)';
+
 /// Characters that are invalid in git ref/tag literal segments.
 final _invalidGitRefLiteralPattern = RegExp(
   r'[\x00-\x1f\x7f ~^:?*[\]\\]|@{|\.\.',
@@ -218,4 +224,54 @@ String tagGlobForFormat({
   return format
       .replaceAll(_namePlaceholder, name)
       .replaceAll(_versionPlaceholder, '*');
+}
+
+/// Parses the semver from [tag] using [format] and [name].
+///
+/// Returns `null` when [tag] does not match the full template.
+Version? parseVersionFromTag({
+  required String tag,
+  required String format,
+  required String name,
+}) {
+  final pattern = _tagFormatToRegExp(format: format, name: name);
+  final match = pattern.firstMatch(tag);
+  if (match == null) {
+    return null;
+  }
+
+  final versionText = match.group(1);
+  if (versionText == null || versionText.isEmpty) {
+    return null;
+  }
+
+  try {
+    return Version.parse(versionText);
+  } on FormatException {
+    return null;
+  }
+}
+
+RegExp _tagFormatToRegExp({
+  required String format,
+  required String name,
+}) {
+  final buffer = StringBuffer('^');
+  var index = 0;
+  while (index < format.length) {
+    if (format.startsWith(_namePlaceholder, index)) {
+      buffer.write(RegExp.escape(name));
+      index += _namePlaceholder.length;
+      continue;
+    }
+    if (format.startsWith(_versionPlaceholder, index)) {
+      buffer.write(_semverCapturePattern);
+      index += _versionPlaceholder.length;
+      continue;
+    }
+    buffer.write(RegExp.escape(format[index]));
+    index++;
+  }
+  buffer.write(r'$');
+  return RegExp(buffer.toString());
 }
