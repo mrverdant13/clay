@@ -50,7 +50,8 @@ jobs:
               exit 0
             fi
 
-            if [[ ! "$PR_TITLE" =~ ^chore\(([^)]+)\):\ release\ (.+)$ ]]; then
+            release_title_re='^chore\(([^)]+)\): release (.+)$'
+            if [[ ! "$PR_TITLE" =~ $release_title_re ]]; then
               echo "should_run=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
