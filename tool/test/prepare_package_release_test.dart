@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:pub_semver/pub_semver.dart';
 import 'package:test/test.dart';
 
 import '../prepare_package_release.dart';
@@ -199,6 +200,206 @@ void main() {
       expect(result.errorMessage, contains('Not a git repository'));
     });
   });
+
+  group('validateTagFormat', () {
+    test('accepts clay monorepo format', () {
+      expect(validateTagFormat('{name}/{version}'), isNull);
+    });
+
+    test('accepts single-package format', () {
+      expect(validateTagFormat('v{version}'), isNull);
+    });
+
+    test('rejects template without version placeholder', () {
+      expect(
+        validateTagFormat('{name}/release'),
+        contains('{version} exactly once'),
+      );
+    });
+
+    test('rejects template with multiple version placeholders', () {
+      expect(
+        validateTagFormat('v{version}-{version}'),
+        contains('{version} exactly once'),
+      );
+    });
+
+    test('rejects invalid git ref literal characters', () {
+      expect(
+        validateTagFormat('release?{version}'),
+        contains('invalid git ref characters'),
+      );
+    });
+  });
+
+  group('renderTagFormat', () {
+    test('renders clay monorepo tag', () {
+      expect(
+        renderTagFormat(
+          format: '{name}/{version}',
+          name: 'clay_core',
+          version: '0.0.1-dev.2',
+        ),
+        'clay_core/0.0.1-dev.2',
+      );
+    });
+
+    test('renders single-package tag', () {
+      expect(
+        renderTagFormat(
+          format: 'v{version}',
+          name: 'ignored',
+          version: '1.0.0',
+        ),
+        'v1.0.0',
+      );
+    });
+  });
+
+  group('tagGlobForFormat', () {
+    test('builds clay monorepo glob', () {
+      expect(
+        tagGlobForFormat(format: '{name}/{version}', name: 'clay_core'),
+        'clay_core/*',
+      );
+    });
+
+    test('builds single-package glob', () {
+      expect(
+        tagGlobForFormat(format: 'v{version}', name: 'ignored'),
+        'v*',
+      );
+    });
+  });
+
+  group('parseVersionFromTag', () {
+    test('parses clay monorepo tag', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        Version.parse('0.0.1-dev.2'),
+      );
+    });
+
+    test('parses single-package tag', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'v1.0.0',
+          format: 'v{version}',
+          name: 'my_pkg',
+        ),
+        Version.parse('1.0.0'),
+      );
+    });
+
+    test('ignores tags that do not match the full template', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/extra/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
+      );
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_cli/0.0.1-dev.2',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
+      );
+      expect(
+        parseVersionFromTag(
+          tag: 'v1.0.0-beta',
+          format: 'v{version}',
+          name: 'my_pkg',
+        ),
+        Version.parse('1.0.0-beta'),
+      );
+    });
+
+    test('ignores tags with unparseable version segments', () {
+      expect(
+        parseVersionFromTag(
+          tag: 'clay_core/not-a-version',
+          format: '{name}/{version}',
+          name: 'clay_core',
+        ),
+        isNull,
+      );
+    });
+  });
+
+  group('resolveLatestTag', () {
+    test('returns highest semver among matching annotated tags', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.1');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.3');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.2');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_cli/0.0.1-dev.9');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/not-a-version');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.2-extra');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: '{name}/{version}',
+        packageName: 'clay_core',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, 'clay_core/0.0.1-dev.3');
+      expect(result.version, Version.parse('0.0.1-dev.3'));
+    });
+
+    test('supports single-package tag format', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'v0.9.0');
+      _gitCreateAnnotatedTag(tempRoot, 'v1.0.0');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: 'v{version}',
+        packageName: 'my_pkg',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, 'v1.0.0');
+      expect(result.version, Version.parse('1.0.0'));
+    });
+
+    test('returns null tag when no matching tags exist', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'clay_cli/0.0.1-dev.1');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: '{name}/{version}',
+        packageName: 'clay_core',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, isNull);
+      expect(result.version, isNull);
+    });
+
+    test('rejects invalid tag format', () {
+      _initGitRepo(tempRoot);
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: 'release',
+        packageName: 'clay_core',
+      );
+
+      expect(result.tag, isNull);
+      expect(result.version, isNull);
+      expect(result.errorMessage, contains('{version} exactly once'));
+    });
+  });
 }
 
 File _writePubspec({
@@ -230,9 +431,19 @@ void _initGitRepo(Directory repoRoot) {
   _runGit(repoRoot, ['config', 'user.name', 'Test User']);
 }
 
+void _initGitRepoWithCommit(Directory repoRoot) {
+  _initGitRepo(repoRoot);
+  File('${repoRoot.path}/README.md').writeAsStringSync('# test repo\n');
+  _gitCommitAll(repoRoot, message: 'init');
+}
+
 void _gitCommitAll(Directory repoRoot, {required String message}) {
   _runGit(repoRoot, ['add', '-A']);
   _runGit(repoRoot, ['commit', '-m', message]);
+}
+
+void _gitCreateAnnotatedTag(Directory repoRoot, String tagName) {
+  _runGit(repoRoot, ['tag', '-a', tagName, '-m', tagName]);
 }
 
 ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
