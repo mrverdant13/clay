@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:pub_semver/pub_semver.dart';
@@ -517,6 +518,82 @@ void main() {
       expect(result.errorMessage, contains('Unknown commit type(s): unknown'));
     });
   });
+
+  group('filterConventionalCommits', () {
+    test('includes multi-scope commits when package name matches', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'feat(clay_cli,clay_vsc_extension): add preview',
+          'feat(clay_core): add validation',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {'feat', 'fix'},
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.type, 'feat');
+      expect(filtered.single.scopes, ['clay_cli', 'clay_vsc_extension']);
+    });
+
+    test('excludes unscoped and wrong-scope commits', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'chore: update CI',
+          'feat(clay_core): add validation',
+          'fix(clay_cli): resolve paths',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {'feat', 'fix', 'docs', 'refactor', 'test', 'build'},
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.subject, 'fix(clay_cli): resolve paths');
+    });
+
+    test('excludes commits whose type is not allowed', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'chore(clay_cli): release 0.0.1-dev.2',
+          'feat(clay_cli): add preview',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {'feat', 'fix', 'docs', 'refactor', 'test', 'build'},
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.type, 'feat');
+    });
+
+    test('matches fixture subjects from anonymized history', () {
+      final fixtureFile = _readTestFixture('commit_subjects.json');
+      final fixture = jsonDecode(fixtureFile.readAsStringSync()) as Map;
+      final packageName = fixture['packageName'] as String;
+      final allowedTypes = (fixture['allowedTypes'] as List)
+          .cast<String>()
+          .toSet();
+      final subjects = (fixture['subjects'] as List)
+          .cast<Map<Object?, Object?>>()
+          .map((entry) => entry['subject'] as String)
+          .toList();
+
+      final filtered = filterConventionalCommits(
+        subjects: subjects,
+        packageName: packageName,
+        allowedTypes: allowedTypes,
+      );
+      final includedSubjects = filtered.map((commit) => commit.subject).toSet();
+
+      for (final entry in fixture['subjects'] as List) {
+        final subject = (entry as Map)['subject'] as String;
+        final included = entry['included'] as bool;
+        expect(
+          includedSubjects.contains(subject),
+          included,
+          reason: subject,
+        );
+      }
+    });
+  });
 }
 
 File _writePubspec({
@@ -575,4 +652,18 @@ ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
     reason: 'git ${arguments.join(' ')} failed: ${result.stderr}',
   );
   return result;
+}
+
+File _readTestFixture(String name) {
+  for (final path in [
+    'tool/test/fixtures/$name',
+    'test/fixtures/$name',
+  ]) {
+    final file = File(path);
+    if (file.existsSync()) {
+      return file;
+    }
+  }
+
+  fail('Fixture not found: $name (cwd: ${Directory.current.path})');
 }

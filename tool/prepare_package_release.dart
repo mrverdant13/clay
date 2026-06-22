@@ -442,3 +442,32 @@ ConventionalCommit? parseConventionalCommitSubject(String subject) {
 
   return (types: normalized, errorMessage: null);
 }
+
+/// Returns commits from [subjects] scoped to [packageName] with an allowed
+/// [allowedTypes] entry.
+///
+/// Unscoped commits, wrong scopes, non-conventional subjects, and disallowed
+/// types are excluded.
+List<ConventionalCommit> filterConventionalCommits({
+  required Iterable<String> subjects,
+  required String packageName,
+  required Set<String> allowedTypes,
+}) {
+  final filtered = <ConventionalCommit>[];
+
+  for (final subject in subjects) {
+    final commit = parseConventionalCommitSubject(subject);
+    if (commit == null) {
+      continue;
+    }
+    if (commit.scopes.isEmpty || !commit.scopes.contains(packageName)) {
+      continue;
+    }
+    if (!allowedTypes.contains(commit.type)) {
+      continue;
+    }
+    filtered.add(commit);
+  }
+
+  return filtered;
+}
