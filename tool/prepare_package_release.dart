@@ -171,7 +171,7 @@ const _versionPlaceholder = '{version}';
 const _namePlaceholder = '{name}';
 
 /// Semver-shaped segment captured from a tag via [parseVersionFromTag].
-final _semverCapturePattern =
+const _semverCapturePattern =
     r'([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)';
 
 /// Characters that are invalid in git ref/tag literal segments.
@@ -252,7 +252,8 @@ Version? parseVersionFromTag({
   }
 }
 
-/// Lists release tags for [format] and returns the one with the highest semver.
+/// Lists release tags for [tagFormat] and returns the one with the highest
+/// semver.
 ///
 /// Non-matching tags and tags with unparseable versions are ignored.
 ({String? tag, Version? version, String? errorMessage}) resolveLatestTag({
