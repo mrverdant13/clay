@@ -648,9 +648,9 @@ void main() {
 
   group('hasBreakingChange', () {
     test('detects breaking indicator in header', () {
-      final commit = ConventionalCommit(
+      const commit = ConventionalCommit(
         type: 'feat',
-        scopes: const ['clay_cli'],
+        scopes: ['clay_cli'],
         description: 'drop legacy flag',
         subject: 'feat(clay_cli)!: drop legacy flag',
         isBreakingChange: true,
@@ -660,9 +660,9 @@ void main() {
     });
 
     test('detects BREAKING CHANGE footer in body', () {
-      final commit = ConventionalCommit(
+      const commit = ConventionalCommit(
         type: 'feat',
-        scopes: const ['clay_cli'],
+        scopes: ['clay_cli'],
         description: 'reshape preview API',
         subject: 'feat(clay_cli): reshape preview API',
         isBreakingChange: false,
@@ -718,12 +718,10 @@ void main() {
   });
 
   group('applyAutoVersionBump', () {
-    final current = Version.parse('0.0.1-dev.2');
-
     ConventionalCommit commitFromMap(Map<Object?, Object?> entry) {
       return ConventionalCommit(
         type: entry['type']! as String,
-        scopes: (entry['scopes'] as List).cast<String>(),
+        scopes: (entry['scopes']! as List).cast<String>(),
         description: entry['description']! as String,
         subject: entry['subject']! as String,
         isBreakingChange: entry['isBreakingChange'] as bool? ?? false,
@@ -760,9 +758,9 @@ void main() {
       final result = computeNextVersion(
         currentVersion: current,
         commits: [
-          ConventionalCommit(
+          const ConventionalCommit(
             type: 'fix',
-            scopes: const ['clay_cli'],
+            scopes: ['clay_cli'],
             description: 'resolve paths',
             subject: 'fix(clay_cli): resolve paths',
             isBreakingChange: false,
@@ -779,9 +777,9 @@ void main() {
         currentVersion: current,
         explicitBump: ExplicitVersionBump.minor,
         commits: [
-          ConventionalCommit(
+          const ConventionalCommit(
             type: 'fix',
-            scopes: const ['clay_cli'],
+            scopes: ['clay_cli'],
             description: 'resolve paths',
             subject: 'fix(clay_cli): resolve paths',
             isBreakingChange: false,

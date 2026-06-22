@@ -476,7 +476,7 @@ List<ConventionalCommit> filterConventionalCommits({
 const _devPrereleaseId = 'dev';
 
 final _breakingChangeFooterPattern = RegExp(
-  r'BREAKING CHANGE:',
+  'BREAKING CHANGE:',
   caseSensitive: false,
 );
 
@@ -500,9 +500,8 @@ bool isDevPrereleaseVersion(Version version) {
     return false;
   }
   final buildPart = version.preRelease[1];
-  final buildNumber = buildPart is int
-      ? buildPart
-      : int.tryParse(buildPart as String);
+  final buildNumber =
+      buildPart is int ? buildPart : int.tryParse(buildPart as String);
   return buildNumber != null && buildNumber > 0;
 }
 
@@ -538,9 +537,8 @@ Version applyExplicitVersionBump({
   switch (bump) {
     case ExplicitVersionBump.build:
       final buildPart = current.preRelease[1];
-      final buildNumber = buildPart is int
-          ? buildPart
-          : int.parse(buildPart as String);
+      final buildNumber =
+          buildPart is int ? buildPart : int.parse(buildPart as String);
       return Version(
         current.major,
         current.minor,
@@ -583,7 +581,7 @@ bool hasBreakingChange(ConventionalCommit commit) {
   return _breakingChangeFooterPattern.hasMatch(body);
 }
 
-enum _AutoBumpImpact {
+enum AutoBumpImpact {
   major,
   minor,
   patch,
@@ -591,7 +589,7 @@ enum _AutoBumpImpact {
 }
 
 /// Derives the highest semver impact from filtered [commits].
-_AutoBumpImpact determineAutoBumpImpact(List<ConventionalCommit> commits) {
+AutoBumpImpact determineAutoBumpImpact(List<ConventionalCommit> commits) {
   var hasBreakingFeat = false;
   var hasFeat = false;
   var hasFix = false;
@@ -612,15 +610,15 @@ _AutoBumpImpact determineAutoBumpImpact(List<ConventionalCommit> commits) {
   }
 
   if (hasBreakingFeat) {
-    return _AutoBumpImpact.major;
+    return AutoBumpImpact.major;
   }
   if (hasFeat) {
-    return _AutoBumpImpact.minor;
+    return AutoBumpImpact.minor;
   }
   if (hasFix) {
-    return _AutoBumpImpact.patch;
+    return AutoBumpImpact.patch;
   }
-  return _AutoBumpImpact.build;
+  return AutoBumpImpact.build;
 }
 
 /// Applies auto bump rules from [commits] to [current].
@@ -629,28 +627,28 @@ Version applyAutoVersionBump({
   required List<ConventionalCommit> commits,
 }) {
   switch (determineAutoBumpImpact(commits)) {
-    case _AutoBumpImpact.major:
+    case AutoBumpImpact.major:
       return Version(
         current.major + 1,
         0,
         0,
         pre: '$_devPrereleaseId.1',
       );
-    case _AutoBumpImpact.minor:
+    case AutoBumpImpact.minor:
       return Version(
         current.major,
         current.minor + 1,
         0,
         pre: '$_devPrereleaseId.1',
       );
-    case _AutoBumpImpact.patch:
+    case AutoBumpImpact.patch:
       return Version(
         current.major,
         current.minor,
         current.patch + 1,
         pre: '$_devPrereleaseId.1',
       );
-    case _AutoBumpImpact.build:
+    case AutoBumpImpact.build:
       return applyExplicitVersionBump(
         current: current,
         bump: ExplicitVersionBump.build,
@@ -661,7 +659,7 @@ Version applyAutoVersionBump({
 /// Computes the next `-dev.N` version from [currentVersion].
 ///
 /// When [explicitBump] and [explicitVersionText] are both set, returns a
-/// structured error. Auto mode requires at least one [commit].
+/// structured error. Auto mode requires at least one commit.
 ({Version? nextVersion, String? errorMessage}) computeNextVersion({
   required Version currentVersion,
   ExplicitVersionBump? explicitBump,
@@ -678,8 +676,7 @@ Version applyAutoVersionBump({
   if (!isDevPrereleaseVersion(currentVersion)) {
     return (
       nextVersion: null,
-      errorMessage:
-          'Current version must use -dev.N prerelease format in v1: '
+      errorMessage: 'Current version must use -dev.N prerelease format in v1: '
           '$currentVersion',
     );
   }
@@ -705,8 +702,7 @@ Version applyAutoVersionBump({
   if (commits.isEmpty) {
     return (
       nextVersion: null,
-      errorMessage:
-          'No conventional commits available for auto version bump.',
+      errorMessage: 'No conventional commits available for auto version bump.',
     );
   }
 
