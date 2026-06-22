@@ -27,7 +27,8 @@ class PackageContext {
 /// Reads `name:` and `version:` from [pubspecFile].
 ///
 /// Returns a structured error when either field is missing or empty.
-({String? name, String? version, String? errorMessage}) readPubspecNameAndVersion(
+({String? name, String? version, String? errorMessage})
+    readPubspecNameAndVersion(
   File pubspecFile,
 ) {
   final contents = pubspecFile.readAsStringSync();
@@ -67,8 +68,8 @@ class PackageContext {
     return (
       name: null,
       version: null,
-      errorMessage:
-          'pubspec.yaml version must be a non-empty string: ${pubspecFile.path}',
+      errorMessage: 'pubspec.yaml version must be a non-empty string: '
+          '${pubspecFile.path}',
     );
   }
 

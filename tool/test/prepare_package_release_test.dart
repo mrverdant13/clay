@@ -125,7 +125,8 @@ void main() {
       _initGitRepo(tempRoot);
       final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg')
         ..createSync(recursive: true);
-      File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
+      File('${packageDir.path}/CHANGELOG.md')
+          .writeAsStringSync('# Changelog\n');
       _gitCommitAll(tempRoot, message: 'init without pubspec');
 
       final result = resolvePackageContext(packageDir.path);
@@ -157,7 +158,8 @@ void main() {
       File('${packageDir.path}/pubspec.yaml').writeAsStringSync(
         'version: 0.0.1-dev.1\n',
       );
-      File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
+      File('${packageDir.path}/CHANGELOG.md')
+          .writeAsStringSync('# Changelog\n');
       _gitCommitAll(tempRoot, message: 'invalid pubspec');
 
       final result = resolvePackageContext(packageDir.path);
@@ -173,7 +175,8 @@ void main() {
       File('${packageDir.path}/pubspec.yaml').writeAsStringSync(
         'name: synthetic_pkg\n',
       );
-      File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
+      File('${packageDir.path}/CHANGELOG.md')
+          .writeAsStringSync('# Changelog\n');
       _gitCommitAll(tempRoot, message: 'invalid pubspec');
 
       final result = resolvePackageContext(packageDir.path);
@@ -204,8 +207,8 @@ File _writePubspec({
   required String version,
 }) {
   directory.createSync(recursive: true);
-  final pubspecFile = File('${directory.path}/pubspec.yaml');
-  pubspecFile.writeAsStringSync('''
+  final pubspecFile = File('${directory.path}/pubspec.yaml')
+    ..writeAsStringSync('''
 name: $name
 version: $version
 ''');
