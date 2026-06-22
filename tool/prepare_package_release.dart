@@ -407,8 +407,7 @@ ConventionalCommit? parseConventionalCommitSubject(String subject) {
 
 /// Parses a comma-separated `--commit-types` value.
 ///
-/// Types are normalized to lowercase. Unknown type names produce
-/// [errorMessage].
+/// Types are normalized to lowercase. Unknown type names produce error message.
 ({Set<String>? types, String? errorMessage}) parseCommitTypes(String input) {
   final segments = input
       .split(',')

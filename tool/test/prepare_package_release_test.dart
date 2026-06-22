@@ -450,7 +450,8 @@ void main() {
     });
 
     test('parses unscoped conventional commit without scopes', () {
-      final commit = parseConventionalCommitSubject('chore: update CI workflow');
+      final commit =
+          parseConventionalCommitSubject('chore: update CI workflow');
 
       expect(commit, isNotNull);
       expect(commit!.type, 'chore');
@@ -543,7 +544,14 @@ void main() {
           'fix(clay_cli): resolve paths',
         ],
         packageName: 'clay_cli',
-        allowedTypes: const {'feat', 'fix', 'docs', 'refactor', 'test', 'build'},
+        allowedTypes: const {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
       );
 
       expect(filtered, hasLength(1));
@@ -557,7 +565,14 @@ void main() {
           'feat(clay_cli): add preview',
         ],
         packageName: 'clay_cli',
-        allowedTypes: const {'feat', 'fix', 'docs', 'refactor', 'test', 'build'},
+        allowedTypes: const {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
       );
 
       expect(filtered, hasLength(1));
@@ -568,12 +583,11 @@ void main() {
       final fixtureFile = _readTestFixture('commit_subjects.json');
       final fixture = jsonDecode(fixtureFile.readAsStringSync()) as Map;
       final packageName = fixture['packageName'] as String;
-      final allowedTypes = (fixture['allowedTypes'] as List)
-          .cast<String>()
-          .toSet();
+      final allowedTypes =
+          (fixture['allowedTypes'] as List).cast<String>().toSet();
       final subjects = (fixture['subjects'] as List)
           .cast<Map<Object?, Object?>>()
-          .map((entry) => entry['subject'] as String)
+          .map((entry) => entry['subject']! as String)
           .toList();
 
       final filtered = filterConventionalCommits(
