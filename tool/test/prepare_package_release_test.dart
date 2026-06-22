@@ -199,6 +199,77 @@ void main() {
       expect(result.errorMessage, contains('Not a git repository'));
     });
   });
+
+  group('validateTagFormat', () {
+    test('accepts clay monorepo format', () {
+      expect(validateTagFormat('{name}/{version}'), isNull);
+    });
+
+    test('accepts single-package format', () {
+      expect(validateTagFormat('v{version}'), isNull);
+    });
+
+    test('rejects template without version placeholder', () {
+      expect(
+        validateTagFormat('{name}/release'),
+        contains('{version} exactly once'),
+      );
+    });
+
+    test('rejects template with multiple version placeholders', () {
+      expect(
+        validateTagFormat('v{version}-{version}'),
+        contains('{version} exactly once'),
+      );
+    });
+
+    test('rejects invalid git ref literal characters', () {
+      expect(
+        validateTagFormat('release?{version}'),
+        contains('invalid git ref characters'),
+      );
+    });
+  });
+
+  group('renderTagFormat', () {
+    test('renders clay monorepo tag', () {
+      expect(
+        renderTagFormat(
+          format: '{name}/{version}',
+          name: 'clay_core',
+          version: '0.0.1-dev.2',
+        ),
+        'clay_core/0.0.1-dev.2',
+      );
+    });
+
+    test('renders single-package tag', () {
+      expect(
+        renderTagFormat(
+          format: 'v{version}',
+          name: 'ignored',
+          version: '1.0.0',
+        ),
+        'v1.0.0',
+      );
+    });
+  });
+
+  group('tagGlobForFormat', () {
+    test('builds clay monorepo glob', () {
+      expect(
+        tagGlobForFormat(format: '{name}/{version}', name: 'clay_core'),
+        'clay_core/*',
+      );
+    });
+
+    test('builds single-package glob', () {
+      expect(
+        tagGlobForFormat(format: 'v{version}', name: 'ignored'),
+        'v*',
+      );
+    });
+  });
 }
 
 File _writePubspec({

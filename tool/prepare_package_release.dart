@@ -164,3 +164,58 @@ class PackageContext {
     errorMessage: null,
   );
 }
+
+const _versionPlaceholder = '{version}';
+const _namePlaceholder = '{name}';
+
+/// Characters that are invalid in git ref/tag literal segments.
+final _invalidGitRefLiteralPattern = RegExp(
+  r'[\x00-\x1f\x7f ~^:?*[\]\\]|@{|\.\.',
+);
+
+/// Validates [format] for use as `--tag-format`.
+///
+/// The template must contain `{version}` exactly once and literal characters
+/// must be valid git ref/tag characters.
+String? validateTagFormat(String format) {
+  final versionCount = _versionPlaceholder.allMatches(format).length;
+  if (versionCount == 0) {
+    return 'Tag format must contain {version} exactly once: $format';
+  }
+  if (versionCount > 1) {
+    return 'Tag format must contain {version} exactly once: $format';
+  }
+
+  final literalOnly = format
+      .replaceAll(_namePlaceholder, '')
+      .replaceAll(_versionPlaceholder, '');
+  if (_invalidGitRefLiteralPattern.hasMatch(literalOnly)) {
+    return 'Tag format contains invalid git ref characters: $format';
+  }
+  if (literalOnly.endsWith('.')) {
+    return 'Tag format literal segment cannot end with ".": $format';
+  }
+
+  return null;
+}
+
+/// Substitutes `{name}` and `{version}` into [format].
+String renderTagFormat({
+  required String format,
+  required String name,
+  required String version,
+}) {
+  return format
+      .replaceAll(_namePlaceholder, name)
+      .replaceAll(_versionPlaceholder, version);
+}
+
+/// Builds a `git tag -l` glob from [format] with `{version}` replaced by `*`.
+String tagGlobForFormat({
+  required String format,
+  required String name,
+}) {
+  return format
+      .replaceAll(_namePlaceholder, name)
+      .replaceAll(_versionPlaceholder, '*');
+}
