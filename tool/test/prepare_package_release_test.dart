@@ -400,6 +400,76 @@ void main() {
       expect(result.errorMessage, contains('{version} exactly once'));
     });
   });
+
+  group('parseConventionalCommitSubject', () {
+    test('parses scoped commit with single scope', () {
+      final commit = parseConventionalCommitSubject(
+        'fix(clay_cli): resolve relative paths from project root',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'fix');
+      expect(commit.scopes, ['clay_cli']);
+      expect(
+        commit.description,
+        'resolve relative paths from project root',
+      );
+      expect(commit.isBreakingChange, isFalse);
+    });
+
+    test('parses scoped commit with multiple scopes', () {
+      final commit = parseConventionalCommitSubject(
+        'feat(clay_cli,clay_vsc_extension): wire preview command',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+      expect(commit.scopes, ['clay_cli', 'clay_vsc_extension']);
+      expect(commit.description, 'wire preview command');
+    });
+
+    test('parses breaking change indicator in header', () {
+      final commit = parseConventionalCommitSubject(
+        'feat(clay_cli)!: drop legacy preview flag',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+      expect(commit.scopes, ['clay_cli']);
+      expect(commit.isBreakingChange, isTrue);
+    });
+
+    test('normalizes commit type to lowercase', () {
+      final commit = parseConventionalCommitSubject(
+        'FEAT(clay_cli): add preview command',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+    });
+
+    test('parses unscoped conventional commit without scopes', () {
+      final commit = parseConventionalCommitSubject('chore: update CI workflow');
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'chore');
+      expect(commit.scopes, isEmpty);
+    });
+
+    test('returns null for non-conventional subject', () {
+      expect(
+        parseConventionalCommitSubject(
+          'Merge pull request #99 from example/feature-branch',
+        ),
+        isNull,
+      );
+      expect(parseConventionalCommitSubject('WIP preview work'), isNull);
+    });
+
+    test('returns null when description is missing', () {
+      expect(parseConventionalCommitSubject('feat(clay_cli):'), isNull);
+    });
+  });
 }
 
 File _writePubspec({

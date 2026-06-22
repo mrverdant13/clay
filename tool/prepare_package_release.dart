@@ -332,3 +332,63 @@ RegExp _tagFormatToRegExp({
   buffer.write(r'$');
   return RegExp(buffer.toString());
 }
+
+final _conventionalCommitSubjectPattern = RegExp(
+  r'^([a-zA-Z]+)(?:\(([^)]*)\))?(!)?: (.+)$',
+);
+
+/// A conventional commit parsed from a git subject line.
+class ConventionalCommit {
+  const ConventionalCommit({
+    required this.type,
+    required this.scopes,
+    required this.description,
+    required this.subject,
+    required this.isBreakingChange,
+  });
+
+  final String type;
+  final List<String> scopes;
+  final String description;
+  final String subject;
+  final bool isBreakingChange;
+}
+
+/// Parses [subject] into a [ConventionalCommit].
+///
+/// Returns `null` when [subject] is not a conventional commit header.
+ConventionalCommit? parseConventionalCommitSubject(String subject) {
+  final trimmed = subject.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  final match = _conventionalCommitSubjectPattern.firstMatch(trimmed);
+  if (match == null) {
+    return null;
+  }
+
+  final type = match.group(1)!.toLowerCase();
+  final scopesRaw = match.group(2);
+  final isBreakingChange = match.group(3) == '!';
+  final description = match.group(4)!;
+  if (description.isEmpty) {
+    return null;
+  }
+
+  final scopes = scopesRaw == null || scopesRaw.isEmpty
+      ? const <String>[]
+      : scopesRaw
+          .split(',')
+          .map((scope) => scope.trim())
+          .where((scope) => scope.isNotEmpty)
+          .toList(growable: false);
+
+  return ConventionalCommit(
+    type: type,
+    scopes: scopes,
+    description: description,
+    subject: trimmed,
+    isBreakingChange: isBreakingChange,
+  );
+}
