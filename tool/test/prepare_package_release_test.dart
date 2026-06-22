@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:pub_semver/pub_semver.dart';
@@ -400,6 +401,213 @@ void main() {
       expect(result.errorMessage, contains('{version} exactly once'));
     });
   });
+
+  group('parseConventionalCommitSubject', () {
+    test('parses scoped commit with single scope', () {
+      final commit = parseConventionalCommitSubject(
+        'fix(clay_cli): resolve relative paths from project root',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'fix');
+      expect(commit.scopes, ['clay_cli']);
+      expect(
+        commit.description,
+        'resolve relative paths from project root',
+      );
+      expect(commit.isBreakingChange, isFalse);
+    });
+
+    test('parses scoped commit with multiple scopes', () {
+      final commit = parseConventionalCommitSubject(
+        'feat(clay_cli,clay_vsc_extension): wire preview command',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+      expect(commit.scopes, ['clay_cli', 'clay_vsc_extension']);
+      expect(commit.description, 'wire preview command');
+    });
+
+    test('parses breaking change indicator in header', () {
+      final commit = parseConventionalCommitSubject(
+        'feat(clay_cli)!: drop legacy preview flag',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+      expect(commit.scopes, ['clay_cli']);
+      expect(commit.isBreakingChange, isTrue);
+    });
+
+    test('normalizes commit type to lowercase', () {
+      final commit = parseConventionalCommitSubject(
+        'FEAT(clay_cli): add preview command',
+      );
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'feat');
+    });
+
+    test('parses unscoped conventional commit without scopes', () {
+      final commit =
+          parseConventionalCommitSubject('chore: update CI workflow');
+
+      expect(commit, isNotNull);
+      expect(commit!.type, 'chore');
+      expect(commit.scopes, isEmpty);
+    });
+
+    test('returns null for non-conventional subject', () {
+      expect(
+        parseConventionalCommitSubject(
+          'Merge pull request #99 from example/feature-branch',
+        ),
+        isNull,
+      );
+      expect(parseConventionalCommitSubject('WIP preview work'), isNull);
+    });
+
+    test('returns null when description is missing', () {
+      expect(parseConventionalCommitSubject('feat(clay_cli):'), isNull);
+    });
+  });
+
+  group('parseCommitTypes', () {
+    test('parses workflow default commit types', () {
+      final result = parseCommitTypes('feat,fix,docs,refactor,test,build');
+
+      expect(result.errorMessage, isNull);
+      expect(
+        result.types,
+        {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
+      );
+    });
+
+    test('normalizes commit types case-insensitively', () {
+      final result = parseCommitTypes('FEAT,Fix,DOCS');
+
+      expect(result.errorMessage, isNull);
+      expect(result.types, {'feat', 'fix', 'docs'});
+    });
+
+    test('deduplicates repeated commit types', () {
+      final result = parseCommitTypes('feat,feat,fix');
+
+      expect(result.errorMessage, isNull);
+      expect(result.types, {'feat', 'fix'});
+    });
+
+    test('rejects empty commit types list', () {
+      final result = parseCommitTypes('   ');
+
+      expect(result.types, isNull);
+      expect(result.errorMessage, contains('must not be empty'));
+    });
+
+    test('rejects unknown commit types', () {
+      final result = parseCommitTypes('feat,unknown,fix');
+
+      expect(result.types, isNull);
+      expect(result.errorMessage, contains('Unknown commit type(s): unknown'));
+    });
+  });
+
+  group('filterConventionalCommits', () {
+    test('includes multi-scope commits when package name matches', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'feat(clay_cli,clay_vsc_extension): add preview',
+          'feat(clay_core): add validation',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {'feat', 'fix'},
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.type, 'feat');
+      expect(filtered.single.scopes, ['clay_cli', 'clay_vsc_extension']);
+    });
+
+    test('excludes unscoped and wrong-scope commits', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'chore: update CI',
+          'feat(clay_core): add validation',
+          'fix(clay_cli): resolve paths',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.subject, 'fix(clay_cli): resolve paths');
+    });
+
+    test('excludes commits whose type is not allowed', () {
+      final filtered = filterConventionalCommits(
+        subjects: const [
+          'chore(clay_cli): release 0.0.1-dev.2',
+          'feat(clay_cli): add preview',
+        ],
+        packageName: 'clay_cli',
+        allowedTypes: const {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
+      );
+
+      expect(filtered, hasLength(1));
+      expect(filtered.single.type, 'feat');
+    });
+
+    test('matches fixture subjects from anonymized history', () {
+      final fixtureFile = _readTestFixture('commit_subjects.json');
+      final fixture = jsonDecode(fixtureFile.readAsStringSync()) as Map;
+      final packageName = fixture['packageName'] as String;
+      final allowedTypes =
+          (fixture['allowedTypes'] as List).cast<String>().toSet();
+      final subjects = (fixture['subjects'] as List)
+          .cast<Map<Object?, Object?>>()
+          .map((entry) => entry['subject']! as String)
+          .toList();
+
+      final filtered = filterConventionalCommits(
+        subjects: subjects,
+        packageName: packageName,
+        allowedTypes: allowedTypes,
+      );
+      final includedSubjects = filtered.map((commit) => commit.subject).toSet();
+
+      for (final entry in fixture['subjects'] as List) {
+        final subject = (entry as Map)['subject'] as String;
+        final included = entry['included'] as bool;
+        expect(
+          includedSubjects.contains(subject),
+          included,
+          reason: subject,
+        );
+      }
+    });
+  });
 }
 
 File _writePubspec({
@@ -458,4 +666,18 @@ ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
     reason: 'git ${arguments.join(' ')} failed: ${result.stderr}',
   );
   return result;
+}
+
+File _readTestFixture(String name) {
+  for (final path in [
+    'tool/test/fixtures/$name',
+    'test/fixtures/$name',
+  ]) {
+    final file = File(path);
+    if (file.existsSync()) {
+      return file;
+    }
+  }
+
+  fail('Fixture not found: $name (cwd: ${Directory.current.path})');
 }

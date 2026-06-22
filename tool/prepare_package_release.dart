@@ -332,3 +332,141 @@ RegExp _tagFormatToRegExp({
   buffer.write(r'$');
   return RegExp(buffer.toString());
 }
+
+/// Conventional commit types recognized by the prepare release tool.
+const supportedConventionalCommitTypes = {
+  'build',
+  'chore',
+  'ci',
+  'docs',
+  'feat',
+  'fix',
+  'refactor',
+  'test',
+};
+
+final _conventionalCommitSubjectPattern = RegExp(
+  r'^([a-zA-Z]+)(?:\(([^)]*)\))?(!)?: (.+)$',
+);
+
+/// A conventional commit parsed from a git subject line.
+class ConventionalCommit {
+  const ConventionalCommit({
+    required this.type,
+    required this.scopes,
+    required this.description,
+    required this.subject,
+    required this.isBreakingChange,
+  });
+
+  final String type;
+  final List<String> scopes;
+  final String description;
+  final String subject;
+  final bool isBreakingChange;
+}
+
+/// Parses [subject] into a [ConventionalCommit].
+///
+/// Returns `null` when [subject] is not a conventional commit header.
+ConventionalCommit? parseConventionalCommitSubject(String subject) {
+  final trimmed = subject.trim();
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  final match = _conventionalCommitSubjectPattern.firstMatch(trimmed);
+  if (match == null) {
+    return null;
+  }
+
+  final type = match.group(1)!.toLowerCase();
+  final scopesRaw = match.group(2);
+  final isBreakingChange = match.group(3) == '!';
+  final description = match.group(4)!;
+  if (description.isEmpty) {
+    return null;
+  }
+
+  final scopes = scopesRaw == null || scopesRaw.isEmpty
+      ? const <String>[]
+      : scopesRaw
+          .split(',')
+          .map((scope) => scope.trim())
+          .where((scope) => scope.isNotEmpty)
+          .toList(growable: false);
+
+  return ConventionalCommit(
+    type: type,
+    scopes: scopes,
+    description: description,
+    subject: trimmed,
+    isBreakingChange: isBreakingChange,
+  );
+}
+
+/// Parses a comma-separated `--commit-types` value.
+///
+/// Types are normalized to lowercase. Unknown type names produce error message.
+({Set<String>? types, String? errorMessage}) parseCommitTypes(String input) {
+  final segments = input
+      .split(',')
+      .map((segment) => segment.trim())
+      .where((segment) => segment.isNotEmpty);
+  if (segments.isEmpty) {
+    return (
+      types: null,
+      errorMessage: 'Commit types list must not be empty.',
+    );
+  }
+
+  final normalized = <String>{};
+  final unknown = <String>[];
+
+  for (final segment in segments) {
+    final type = segment.toLowerCase();
+    if (!supportedConventionalCommitTypes.contains(type)) {
+      unknown.add(segment);
+      continue;
+    }
+    normalized.add(type);
+  }
+
+  if (unknown.isNotEmpty) {
+    return (
+      types: null,
+      errorMessage: 'Unknown commit type(s): ${unknown.join(', ')}',
+    );
+  }
+
+  return (types: normalized, errorMessage: null);
+}
+
+/// Returns commits from [subjects] scoped to [packageName] with an allowed
+/// [allowedTypes] entry.
+///
+/// Unscoped commits, wrong scopes, non-conventional subjects, and disallowed
+/// types are excluded.
+List<ConventionalCommit> filterConventionalCommits({
+  required Iterable<String> subjects,
+  required String packageName,
+  required Set<String> allowedTypes,
+}) {
+  final filtered = <ConventionalCommit>[];
+
+  for (final subject in subjects) {
+    final commit = parseConventionalCommitSubject(subject);
+    if (commit == null) {
+      continue;
+    }
+    if (commit.scopes.isEmpty || !commit.scopes.contains(packageName)) {
+      continue;
+    }
+    if (!allowedTypes.contains(commit.type)) {
+      continue;
+    }
+    filtered.add(commit);
+  }
+
+  return filtered;
+}
