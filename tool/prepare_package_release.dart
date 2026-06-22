@@ -741,8 +741,9 @@ String? extractCommitShaMarkdownLink(String? body) {
 
 /// Formats a single changelog bullet for [commit].
 ///
-/// Preserves issue/PR links present in the subject description. When [body]
-/// contains a commit SHA markdown link, it is appended after the description.
+/// Preserves issue/PR links present in the subject description. When commit
+/// body contains a commit SHA markdown link, it is appended after the
+/// description.
 String formatChangelogBullet(ConventionalCommit commit) {
   final label = changelogTypeLabel(commit.type);
   final description = commit.description.trim();
@@ -772,7 +773,7 @@ String formatChangelogBullet(ConventionalCommit commit) {
   Set<String>? allowedTypes,
 }) {
   if (commits.isEmpty) {
-    final tagText = latestTag == null ? '(none)' : latestTag;
+    final tagText = latestTag ?? '(none)';
     final nameText = packageName ?? '(unknown)';
     final typesText = allowedTypes == null || allowedTypes.isEmpty
         ? '(none)'
