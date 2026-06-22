@@ -714,3 +714,129 @@ Version applyAutoVersionBump({
     errorMessage: null,
   );
 }
+
+/// Maps a conventional commit type to its changelog label.
+String changelogTypeLabel(String type) {
+  return type.toUpperCase();
+}
+
+final _commitShaMarkdownLinkPattern = RegExp(
+  r'\(\[([0-9a-f]{7,40})\]\([^)]+\)\)',
+  caseSensitive: false,
+);
+
+/// Extracts a commit SHA markdown link from [body] when present.
+String? extractCommitShaMarkdownLink(String? body) {
+  if (body == null || body.isEmpty) {
+    return null;
+  }
+
+  final match = _commitShaMarkdownLinkPattern.firstMatch(body);
+  if (match == null) {
+    return null;
+  }
+
+  return match.group(0);
+}
+
+/// Formats a single changelog bullet for [commit].
+///
+/// Preserves issue/PR links present in the subject description. When [body]
+/// contains a commit SHA markdown link, it is appended after the description.
+String formatChangelogBullet(ConventionalCommit commit) {
+  final label = changelogTypeLabel(commit.type);
+  final description = commit.description.trim();
+  final buffer = StringBuffer(' - **$label**: $description');
+
+  final shaLink = extractCommitShaMarkdownLink(commit.body);
+  if (shaLink != null && !description.contains(shaLink)) {
+    if (!description.endsWith('.')) {
+      buffer.write('.');
+    }
+    buffer.write(' $shaLink');
+  } else if (!description.endsWith('.')) {
+    buffer.write('.');
+  }
+
+  return buffer.toString();
+}
+
+/// Builds a `## <version>` changelog section from [commits].
+///
+/// Returns a structured error when [commits] is empty.
+({String? section, String? errorMessage}) buildChangelogSection({
+  required String version,
+  required List<ConventionalCommit> commits,
+  String? latestTag,
+  String? packageName,
+  Set<String>? allowedTypes,
+}) {
+  if (commits.isEmpty) {
+    final tagText = latestTag == null ? '(none)' : latestTag;
+    final nameText = packageName ?? '(unknown)';
+    final typesText = allowedTypes == null || allowedTypes.isEmpty
+        ? '(none)'
+        : allowedTypes.join(', ');
+    return (
+      section: null,
+      errorMessage: 'No commits matching scope and type filters since tag '
+          '$tagText for package $nameText with allowed types: $typesText.',
+    );
+  }
+
+  final lines = <String>[
+    '## $version',
+    '',
+    for (final commit in commits) formatChangelogBullet(commit),
+  ];
+
+  return (section: lines.join('\n'), errorMessage: null);
+}
+
+/// Prepends [section] to [existingChangelog], preserving existing content.
+String prependChangelogSection({
+  required String existingChangelog,
+  required String section,
+}) {
+  final trimmedExisting = existingChangelog.trimRight();
+  if (trimmedExisting.isEmpty) {
+    return '$section\n';
+  }
+
+  return '$section\n\n$trimmedExisting\n';
+}
+
+/// Builds a release changelog by prepending a new section for [version].
+({String? changelog, String? section, String? errorMessage})
+    buildReleaseChangelog({
+  required String version,
+  required String existingChangelog,
+  required List<ConventionalCommit> commits,
+  String? latestTag,
+  String? packageName,
+  Set<String>? allowedTypes,
+}) {
+  final sectionResult = buildChangelogSection(
+    version: version,
+    commits: commits,
+    latestTag: latestTag,
+    packageName: packageName,
+    allowedTypes: allowedTypes,
+  );
+  if (sectionResult.errorMessage != null) {
+    return (
+      changelog: null,
+      section: null,
+      errorMessage: sectionResult.errorMessage,
+    );
+  }
+
+  return (
+    changelog: prependChangelogSection(
+      existingChangelog: existingChangelog,
+      section: sectionResult.section!,
+    ),
+    section: sectionResult.section,
+    errorMessage: null,
+  );
+}
