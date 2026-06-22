@@ -357,6 +357,7 @@ class ConventionalCommit {
     required this.description,
     required this.subject,
     required this.isBreakingChange,
+    this.body,
   });
 
   final String type;
@@ -364,6 +365,7 @@ class ConventionalCommit {
   final String description;
   final String subject;
   final bool isBreakingChange;
+  final String? body;
 }
 
 /// Parses [subject] into a [ConventionalCommit].
@@ -469,4 +471,246 @@ List<ConventionalCommit> filterConventionalCommits({
   }
 
   return filtered;
+}
+
+const _devPrereleaseId = 'dev';
+
+final _breakingChangeFooterPattern = RegExp(
+  'BREAKING CHANGE:',
+  caseSensitive: false,
+);
+
+/// Explicit semver bump segment for `--bump`.
+enum ExplicitVersionBump {
+  build,
+  patch,
+  minor,
+  major,
+}
+
+/// Returns `true` when [version] uses the v1 `-dev.N` prerelease format.
+bool isDevPrereleaseVersion(Version version) {
+  if (version.preRelease.isEmpty) {
+    return false;
+  }
+  if (version.preRelease.length != 2) {
+    return false;
+  }
+  if (version.preRelease.first != _devPrereleaseId) {
+    return false;
+  }
+  final buildPart = version.preRelease[1];
+  final buildNumber =
+      buildPart is int ? buildPart : int.tryParse(buildPart as String);
+  return buildNumber != null && buildNumber > 0;
+}
+
+/// Parses [versionText] and validates the v1 `-dev.N` prerelease format.
+({Version? version, String? errorMessage}) parseDevPrereleaseVersionText(
+  String versionText,
+) {
+  final trimmed = versionText.trim();
+  if (trimmed.isEmpty) {
+    return (version: null, errorMessage: 'Version must not be empty.');
+  }
+
+  try {
+    final version = Version.parse(trimmed);
+    if (!isDevPrereleaseVersion(version)) {
+      return (
+        version: null,
+        errorMessage:
+            'Version must use -dev.N prerelease format in v1: $trimmed',
+      );
+    }
+    return (version: version, errorMessage: null);
+  } on FormatException {
+    return (version: null, errorMessage: 'Invalid semver version: $trimmed');
+  }
+}
+
+/// Applies an explicit `--bump` override to [current].
+Version applyExplicitVersionBump({
+  required Version current,
+  required ExplicitVersionBump bump,
+}) {
+  switch (bump) {
+    case ExplicitVersionBump.build:
+      final buildPart = current.preRelease[1];
+      final buildNumber =
+          buildPart is int ? buildPart : int.parse(buildPart as String);
+      return Version(
+        current.major,
+        current.minor,
+        current.patch,
+        pre: '$_devPrereleaseId.${buildNumber + 1}',
+      );
+    case ExplicitVersionBump.patch:
+      return Version(
+        current.major,
+        current.minor,
+        current.patch + 1,
+        pre: '$_devPrereleaseId.1',
+      );
+    case ExplicitVersionBump.minor:
+      return Version(
+        current.major,
+        current.minor + 1,
+        0,
+        pre: '$_devPrereleaseId.1',
+      );
+    case ExplicitVersionBump.major:
+      return Version(
+        current.major + 1,
+        0,
+        0,
+        pre: '$_devPrereleaseId.1',
+      );
+  }
+}
+
+/// Returns `true` when [commit] indicates a breaking change.
+bool hasBreakingChange(ConventionalCommit commit) {
+  if (commit.isBreakingChange) {
+    return true;
+  }
+  final body = commit.body;
+  if (body == null || body.isEmpty) {
+    return false;
+  }
+  return _breakingChangeFooterPattern.hasMatch(body);
+}
+
+enum AutoBumpImpact {
+  major,
+  minor,
+  patch,
+  build,
+}
+
+/// Derives the highest semver impact from filtered [commits].
+AutoBumpImpact determineAutoBumpImpact(List<ConventionalCommit> commits) {
+  var hasBreakingFeat = false;
+  var hasFeat = false;
+  var hasFix = false;
+
+  for (final commit in commits) {
+    switch (commit.type) {
+      case 'feat':
+        if (hasBreakingChange(commit)) {
+          hasBreakingFeat = true;
+        } else {
+          hasFeat = true;
+        }
+      case 'fix':
+        hasFix = true;
+      default:
+        break;
+    }
+  }
+
+  if (hasBreakingFeat) {
+    return AutoBumpImpact.major;
+  }
+  if (hasFeat) {
+    return AutoBumpImpact.minor;
+  }
+  if (hasFix) {
+    return AutoBumpImpact.patch;
+  }
+  return AutoBumpImpact.build;
+}
+
+/// Applies auto bump rules from [commits] to [current].
+Version applyAutoVersionBump({
+  required Version current,
+  required List<ConventionalCommit> commits,
+}) {
+  switch (determineAutoBumpImpact(commits)) {
+    case AutoBumpImpact.major:
+      return Version(
+        current.major + 1,
+        0,
+        0,
+        pre: '$_devPrereleaseId.1',
+      );
+    case AutoBumpImpact.minor:
+      return Version(
+        current.major,
+        current.minor + 1,
+        0,
+        pre: '$_devPrereleaseId.1',
+      );
+    case AutoBumpImpact.patch:
+      return Version(
+        current.major,
+        current.minor,
+        current.patch + 1,
+        pre: '$_devPrereleaseId.1',
+      );
+    case AutoBumpImpact.build:
+      return applyExplicitVersionBump(
+        current: current,
+        bump: ExplicitVersionBump.build,
+      );
+  }
+}
+
+/// Computes the next `-dev.N` version from [currentVersion].
+///
+/// When [explicitBump] and [explicitVersionText] are both set, returns a
+/// structured error. Auto mode requires at least one commit.
+({Version? nextVersion, String? errorMessage}) computeNextVersion({
+  required Version currentVersion,
+  ExplicitVersionBump? explicitBump,
+  String? explicitVersionText,
+  List<ConventionalCommit> commits = const [],
+}) {
+  if (explicitBump != null && explicitVersionText != null) {
+    return (
+      nextVersion: null,
+      errorMessage: '--bump and --version are mutually exclusive.',
+    );
+  }
+
+  if (!isDevPrereleaseVersion(currentVersion)) {
+    return (
+      nextVersion: null,
+      errorMessage: 'Current version must use -dev.N prerelease format in v1: '
+          '$currentVersion',
+    );
+  }
+
+  if (explicitVersionText != null) {
+    final parsed = parseDevPrereleaseVersionText(explicitVersionText);
+    if (parsed.errorMessage != null) {
+      return (nextVersion: null, errorMessage: parsed.errorMessage);
+    }
+    return (nextVersion: parsed.version, errorMessage: null);
+  }
+
+  if (explicitBump != null) {
+    return (
+      nextVersion: applyExplicitVersionBump(
+        current: currentVersion,
+        bump: explicitBump,
+      ),
+      errorMessage: null,
+    );
+  }
+
+  if (commits.isEmpty) {
+    return (
+      nextVersion: null,
+      errorMessage: 'No conventional commits available for auto version bump.',
+    );
+  }
+
+  return (
+    nextVersion: applyAutoVersionBump(
+      current: currentVersion,
+      commits: commits,
+    ),
+    errorMessage: null,
+  );
 }

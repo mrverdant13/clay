@@ -608,6 +608,227 @@ void main() {
       }
     });
   });
+
+  group('isDevPrereleaseVersion', () {
+    test('accepts -dev.N versions', () {
+      expect(isDevPrereleaseVersion(Version.parse('0.0.1-dev.2')), isTrue);
+      expect(isDevPrereleaseVersion(Version.parse('1.2.3-dev.99')), isTrue);
+    });
+
+    test('rejects stable and non-dev prereleases', () {
+      expect(isDevPrereleaseVersion(Version.parse('1.0.0')), isFalse);
+      expect(isDevPrereleaseVersion(Version.parse('0.1.0')), isFalse);
+      expect(isDevPrereleaseVersion(Version.parse('1.0.0-beta.1')), isFalse);
+      expect(isDevPrereleaseVersion(Version.parse('0.0.1-dev')), isFalse);
+    });
+  });
+
+  group('parseDevPrereleaseVersionText', () {
+    test('parses valid -dev.N versions', () {
+      final result = parseDevPrereleaseVersionText('0.0.1-dev.99');
+
+      expect(result.errorMessage, isNull);
+      expect(result.version, Version.parse('0.0.1-dev.99'));
+    });
+
+    test('rejects non-dev target versions', () {
+      final result = parseDevPrereleaseVersionText('1.0.0');
+
+      expect(result.version, isNull);
+      expect(result.errorMessage, contains('-dev.N'));
+    });
+
+    test('rejects invalid semver', () {
+      final result = parseDevPrereleaseVersionText('not-a-version');
+
+      expect(result.version, isNull);
+      expect(result.errorMessage, contains('Invalid semver'));
+    });
+  });
+
+  group('hasBreakingChange', () {
+    test('detects breaking indicator in header', () {
+      const commit = ConventionalCommit(
+        type: 'feat',
+        scopes: ['clay_cli'],
+        description: 'drop legacy flag',
+        subject: 'feat(clay_cli)!: drop legacy flag',
+        isBreakingChange: true,
+      );
+
+      expect(hasBreakingChange(commit), isTrue);
+    });
+
+    test('detects BREAKING CHANGE footer in body', () {
+      const commit = ConventionalCommit(
+        type: 'feat',
+        scopes: ['clay_cli'],
+        description: 'reshape preview API',
+        subject: 'feat(clay_cli): reshape preview API',
+        isBreakingChange: false,
+        body: 'BREAKING CHANGE: preview command flags were renamed.',
+      );
+
+      expect(hasBreakingChange(commit), isTrue);
+    });
+  });
+
+  group('applyExplicitVersionBump', () {
+    final current = Version.parse('0.0.1-dev.2');
+
+    test('build increments dev build only', () {
+      expect(
+        applyExplicitVersionBump(
+          current: current,
+          bump: ExplicitVersionBump.build,
+        ),
+        Version.parse('0.0.1-dev.3'),
+      );
+    });
+
+    test('patch increments patch and resets dev', () {
+      expect(
+        applyExplicitVersionBump(
+          current: current,
+          bump: ExplicitVersionBump.patch,
+        ),
+        Version.parse('0.0.2-dev.1'),
+      );
+    });
+
+    test('minor increments minor and resets dev', () {
+      expect(
+        applyExplicitVersionBump(
+          current: current,
+          bump: ExplicitVersionBump.minor,
+        ),
+        Version.parse('0.1.0-dev.1'),
+      );
+    });
+
+    test('major increments major and resets dev', () {
+      expect(
+        applyExplicitVersionBump(
+          current: current,
+          bump: ExplicitVersionBump.major,
+        ),
+        Version.parse('1.0.0-dev.1'),
+      );
+    });
+  });
+
+  group('applyAutoVersionBump', () {
+    ConventionalCommit commitFromMap(Map<Object?, Object?> entry) {
+      return ConventionalCommit(
+        type: entry['type']! as String,
+        scopes: (entry['scopes']! as List).cast<String>(),
+        description: entry['description']! as String,
+        subject: entry['subject']! as String,
+        isBreakingChange: entry['isBreakingChange'] as bool? ?? false,
+        body: entry['body'] as String?,
+      );
+    }
+
+    test('matches fixture auto bump cases', () {
+      final fixtureFile = _readTestFixture('version_bump_cases.json');
+      final fixture = jsonDecode(fixtureFile.readAsStringSync()) as Map;
+      final currentVersion = Version.parse(fixture['currentVersion'] as String);
+
+      for (final rawCase in fixture['cases'] as List) {
+        final testCase = rawCase as Map;
+        final commits = (testCase['commits'] as List)
+            .cast<Map<Object?, Object?>>()
+            .map(commitFromMap)
+            .toList();
+        final expected = Version.parse(testCase['expectedVersion'] as String);
+
+        expect(
+          applyAutoVersionBump(current: currentVersion, commits: commits),
+          expected,
+          reason: testCase['name'] as String,
+        );
+      }
+    });
+  });
+
+  group('computeNextVersion', () {
+    final current = Version.parse('0.0.1-dev.2');
+
+    test('auto mode bumps from commits', () {
+      final result = computeNextVersion(
+        currentVersion: current,
+        commits: [
+          const ConventionalCommit(
+            type: 'fix',
+            scopes: ['clay_cli'],
+            description: 'resolve paths',
+            subject: 'fix(clay_cli): resolve paths',
+            isBreakingChange: false,
+          ),
+        ],
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.nextVersion, Version.parse('0.0.2-dev.1'));
+    });
+
+    test('explicit bump override ignores commits', () {
+      final result = computeNextVersion(
+        currentVersion: current,
+        explicitBump: ExplicitVersionBump.minor,
+        commits: [
+          const ConventionalCommit(
+            type: 'fix',
+            scopes: ['clay_cli'],
+            description: 'resolve paths',
+            subject: 'fix(clay_cli): resolve paths',
+            isBreakingChange: false,
+          ),
+        ],
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.nextVersion, Version.parse('0.1.0-dev.1'));
+    });
+
+    test('explicit version override sets exact target', () {
+      final result = computeNextVersion(
+        currentVersion: current,
+        explicitVersionText: '0.0.1-dev.99',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.nextVersion, Version.parse('0.0.1-dev.99'));
+    });
+
+    test('rejects mutually exclusive bump and version overrides', () {
+      final result = computeNextVersion(
+        currentVersion: current,
+        explicitBump: ExplicitVersionBump.patch,
+        explicitVersionText: '0.0.1-dev.99',
+      );
+
+      expect(result.nextVersion, isNull);
+      expect(result.errorMessage, contains('mutually exclusive'));
+    });
+
+    test('rejects auto mode without commits', () {
+      final result = computeNextVersion(currentVersion: current);
+
+      expect(result.nextVersion, isNull);
+      expect(result.errorMessage, contains('No conventional commits'));
+    });
+
+    test('rejects non-dev current version', () {
+      final result = computeNextVersion(
+        currentVersion: Version.parse('1.0.0'),
+        explicitBump: ExplicitVersionBump.build,
+      );
+
+      expect(result.nextVersion, isNull);
+      expect(result.errorMessage, contains('-dev.N'));
+    });
+  });
 }
 
 File _writePubspec({
