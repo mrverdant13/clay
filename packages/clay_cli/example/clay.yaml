@@ -1,7 +1,7 @@
 reference: reference
 target: brick
 environment:
-  clay: ^0.0.1-dev.1
+  clay: ^0.0.1-dev.2
 replacements:
   - from: ref_pkg
     to: "{{package_name}}"
