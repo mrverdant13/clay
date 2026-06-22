@@ -252,6 +252,62 @@ Version? parseVersionFromTag({
   }
 }
 
+/// Lists release tags for [format] and returns the one with the highest semver.
+///
+/// Non-matching tags and tags with unparseable versions are ignored.
+({String? tag, Version? version, String? errorMessage}) resolveLatestTag({
+  required Directory gitRoot,
+  required String tagFormat,
+  required String packageName,
+}) {
+  final formatError = validateTagFormat(tagFormat);
+  if (formatError != null) {
+    return (tag: null, version: null, errorMessage: formatError);
+  }
+
+  final glob = tagGlobForFormat(format: tagFormat, name: packageName);
+  final result = Process.runSync(
+    'git',
+    ['-C', gitRoot.path, 'tag', '-l', glob],
+  );
+  if (result.exitCode != 0) {
+    final stderrText = result.stderr.toString().trim();
+    return (
+      tag: null,
+      version: null,
+      errorMessage: stderrText.isEmpty
+          ? 'Failed to list git tags matching "$glob".'
+          : 'Failed to list git tags matching "$glob": $stderrText',
+    );
+  }
+
+  String? latestTag;
+  Version? latestVersion;
+
+  for (final rawLine in result.stdout.toString().split('\n')) {
+    final tag = rawLine.trim();
+    if (tag.isEmpty) {
+      continue;
+    }
+
+    final parsed = parseVersionFromTag(
+      tag: tag,
+      format: tagFormat,
+      name: packageName,
+    );
+    if (parsed == null) {
+      continue;
+    }
+
+    if (latestVersion == null || parsed > latestVersion) {
+      latestTag = tag;
+      latestVersion = parsed;
+    }
+  }
+
+  return (tag: latestTag, version: latestVersion, errorMessage: null);
+}
+
 RegExp _tagFormatToRegExp({
   required String format,
   required String name,

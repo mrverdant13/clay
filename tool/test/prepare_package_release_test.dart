@@ -333,6 +333,73 @@ void main() {
       );
     });
   });
+
+  group('resolveLatestTag', () {
+    test('returns highest semver among matching annotated tags', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.1');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.3');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.2');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_cli/0.0.1-dev.9');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/not-a-version');
+      _gitCreateAnnotatedTag(tempRoot, 'clay_core/0.0.1-dev.2-extra');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: '{name}/{version}',
+        packageName: 'clay_core',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, 'clay_core/0.0.1-dev.3');
+      expect(result.version, Version.parse('0.0.1-dev.3'));
+    });
+
+    test('supports single-package tag format', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'v0.9.0');
+      _gitCreateAnnotatedTag(tempRoot, 'v1.0.0');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: 'v{version}',
+        packageName: 'my_pkg',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, 'v1.0.0');
+      expect(result.version, Version.parse('1.0.0'));
+    });
+
+    test('returns null tag when no matching tags exist', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'clay_cli/0.0.1-dev.1');
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: '{name}/{version}',
+        packageName: 'clay_core',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.tag, isNull);
+      expect(result.version, isNull);
+    });
+
+    test('rejects invalid tag format', () {
+      _initGitRepo(tempRoot);
+
+      final result = resolveLatestTag(
+        gitRoot: tempRoot,
+        tagFormat: 'release',
+        packageName: 'clay_core',
+      );
+
+      expect(result.tag, isNull);
+      expect(result.version, isNull);
+      expect(result.errorMessage, contains('{version} exactly once'));
+    });
+  });
 }
 
 File _writePubspec({
@@ -364,9 +431,19 @@ void _initGitRepo(Directory repoRoot) {
   _runGit(repoRoot, ['config', 'user.name', 'Test User']);
 }
 
+void _initGitRepoWithCommit(Directory repoRoot) {
+  _initGitRepo(repoRoot);
+  File('${repoRoot.path}/README.md').writeAsStringSync('# test repo\n');
+  _gitCommitAll(repoRoot, message: 'init');
+}
+
 void _gitCommitAll(Directory repoRoot, {required String message}) {
   _runGit(repoRoot, ['add', '-A']);
   _runGit(repoRoot, ['commit', '-m', message]);
+}
+
+void _gitCreateAnnotatedTag(Directory repoRoot, String tagName) {
+  _runGit(repoRoot, ['tag', '-a', tagName, '-m', tagName]);
 }
 
 ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
