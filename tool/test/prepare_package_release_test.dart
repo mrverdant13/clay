@@ -956,8 +956,7 @@ void main() {
         commits: commits,
         latestTag: fixture['latestTag'] as String,
         packageName: fixture['packageName'] as String,
-        allowedTypes:
-            (fixture['allowedTypes'] as List).cast<String>().toSet(),
+        allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
       );
 
       expect(sectionResult.errorMessage, isNull);
@@ -969,8 +968,7 @@ void main() {
         commits: commits,
         latestTag: fixture['latestTag'] as String,
         packageName: fixture['packageName'] as String,
-        allowedTypes:
-            (fixture['allowedTypes'] as List).cast<String>().toSet(),
+        allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
       );
 
       expect(changelogResult.errorMessage, isNull);
