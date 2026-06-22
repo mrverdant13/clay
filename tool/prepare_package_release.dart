@@ -333,6 +333,18 @@ RegExp _tagFormatToRegExp({
   return RegExp(buffer.toString());
 }
 
+/// Conventional commit types recognized by the prepare release tool.
+const supportedConventionalCommitTypes = {
+  'build',
+  'chore',
+  'ci',
+  'docs',
+  'feat',
+  'fix',
+  'refactor',
+  'test',
+};
+
 final _conventionalCommitSubjectPattern = RegExp(
   r'^([a-zA-Z]+)(?:\(([^)]*)\))?(!)?: (.+)$',
 );
@@ -391,4 +403,42 @@ ConventionalCommit? parseConventionalCommitSubject(String subject) {
     subject: trimmed,
     isBreakingChange: isBreakingChange,
   );
+}
+
+/// Parses a comma-separated `--commit-types` value.
+///
+/// Types are normalized to lowercase. Unknown type names produce
+/// [errorMessage].
+({Set<String>? types, String? errorMessage}) parseCommitTypes(String input) {
+  final segments = input
+      .split(',')
+      .map((segment) => segment.trim())
+      .where((segment) => segment.isNotEmpty);
+  if (segments.isEmpty) {
+    return (
+      types: null,
+      errorMessage: 'Commit types list must not be empty.',
+    );
+  }
+
+  final normalized = <String>{};
+  final unknown = <String>[];
+
+  for (final segment in segments) {
+    final type = segment.toLowerCase();
+    if (!supportedConventionalCommitTypes.contains(type)) {
+      unknown.add(segment);
+      continue;
+    }
+    normalized.add(type);
+  }
+
+  if (unknown.isNotEmpty) {
+    return (
+      types: null,
+      errorMessage: 'Unknown commit type(s): ${unknown.join(', ')}',
+    );
+  }
+
+  return (types: normalized, errorMessage: null);
 }

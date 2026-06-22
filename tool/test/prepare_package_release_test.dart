@@ -470,6 +470,53 @@ void main() {
       expect(parseConventionalCommitSubject('feat(clay_cli):'), isNull);
     });
   });
+
+  group('parseCommitTypes', () {
+    test('parses workflow default commit types', () {
+      final result = parseCommitTypes('feat,fix,docs,refactor,test,build');
+
+      expect(result.errorMessage, isNull);
+      expect(
+        result.types,
+        {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
+      );
+    });
+
+    test('normalizes commit types case-insensitively', () {
+      final result = parseCommitTypes('FEAT,Fix,DOCS');
+
+      expect(result.errorMessage, isNull);
+      expect(result.types, {'feat', 'fix', 'docs'});
+    });
+
+    test('deduplicates repeated commit types', () {
+      final result = parseCommitTypes('feat,feat,fix');
+
+      expect(result.errorMessage, isNull);
+      expect(result.types, {'feat', 'fix'});
+    });
+
+    test('rejects empty commit types list', () {
+      final result = parseCommitTypes('   ');
+
+      expect(result.types, isNull);
+      expect(result.errorMessage, contains('must not be empty'));
+    });
+
+    test('rejects unknown commit types', () {
+      final result = parseCommitTypes('feat,unknown,fix');
+
+      expect(result.types, isNull);
+      expect(result.errorMessage, contains('Unknown commit type(s): unknown'));
+    });
+  });
 }
 
 File _writePubspec({
