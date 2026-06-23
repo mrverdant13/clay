@@ -27,26 +27,6 @@ melos:
     bootstrap:
       environment:
         sdk: ">=3.5.0 <4.0.0"
-    version:
-      branch: main
-      includeScopes: false
-      updateGitTagRefs: false
-      workspaceChangelog: false
-      fetchTags: false
-      hooks:
-        preCommit: >
-          melos exec
-          --category=publishable
-          --
-          "
-          dart run
-          MELOS_ROOT_PATH/tool/sync_package_version.dart
-          --package MELOS_PACKAGE_NAME
-          &&
-          git add MELOS_PACKAGE_PATH
-          &&
-          git commit -m 'chore(MELOS_PACKAGE_NAME): release MELOS_PACKAGE_VERSION'
-          "
 
   scripts:
     format:
