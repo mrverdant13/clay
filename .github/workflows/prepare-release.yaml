@@ -101,5 +101,9 @@ jobs:
             --body-file - <<EOF
           ## Release PR
 
-          Automated version bump for \`${package}\` via the **Prepare Dart package release** workflow (scoped \`release.prepare\` with conventional-commit versioning and \`--preid=dev\`).
+          Automated version bump for \`${package}\` via the **Prepare Dart package release** workflow.
+
+          - Entry point: \`MELOS_PACKAGES=${package} melos run release.prepare\`
+          - Version bump: \`tool/prepare_package_release.dart\` with \`--bump build\` (increments \`-dev.N\` only)
+          - Changelog: scoped conventional commits since the latest package tag
           EOF
