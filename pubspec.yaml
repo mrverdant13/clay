@@ -27,26 +27,6 @@ melos:
     bootstrap:
       environment:
         sdk: ">=3.5.0 <4.0.0"
-    version:
-      branch: main
-      includeScopes: false
-      updateGitTagRefs: false
-      workspaceChangelog: false
-      fetchTags: false
-      hooks:
-        preCommit: >
-          melos exec
-          --category=publishable
-          --
-          "
-          dart run
-          MELOS_ROOT_PATH/tool/sync_package_version.dart
-          --package MELOS_PACKAGE_NAME
-          &&
-          git add MELOS_PACKAGE_PATH
-          &&
-          git commit -m 'chore(MELOS_PACKAGE_NAME): release MELOS_PACKAGE_VERSION'
-          "
 
   scripts:
     format:
@@ -235,16 +215,21 @@ melos:
 
     release.prepare:
       description: >
-        Bump version and changelog for a package release. Set
-        MELOS_PACKAGES=<package> to scope Melos-driven steps to one package;
-        omit for all publishable packages.
+        Bump version and changelog for a single package release. Set
+        MELOS_PACKAGES=<package> to scope to one package.
       run: >
-        melos version
-        --no-dependent-versions
-        --no-git-commit-version
-        --no-git-tag-version
-        --preid=dev
-        --yes
+        dart run MELOS_ROOT_PATH/tool/prepare_package_release.dart
+        --cwd "MELOS_PACKAGE_PATH"
+        --tag-format '{name}/{version}'
+        --commit-types feat,fix,docs,refactor,test,build
+        --apply
+        &&
+        dart run MELOS_ROOT_PATH/tool/sync_package_version.dart
+        --package "MELOS_PACKAGE_NAME"
+      exec: {}
+      packageFilters:
+        category:
+          - publishable
 
 workspace:
   - packages/clay_core/
