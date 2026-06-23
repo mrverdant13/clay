@@ -1235,6 +1235,89 @@ class PrepareReleasePlan {
   );
 }
 
+/// Replaces only the `version:` line in [pubspecContents].
+///
+/// Returns a structured error when the version line is missing.
+({String? contents, String? errorMessage}) updatePubspecVersionLine({
+  required String pubspecContents,
+  required String newVersion,
+}) {
+  final match = _pubspecVersionPattern.firstMatch(pubspecContents);
+  if (match == null) {
+    return (
+      contents: null,
+      errorMessage: 'Could not find version line in pubspec.yaml.',
+    );
+  }
+
+  return (
+    contents: pubspecContents.replaceFirst(
+      match.group(0)!,
+      'version: $newVersion',
+    ),
+    errorMessage: null,
+  );
+}
+
+/// Writes [plan] to `<cwd>/pubspec.yaml` and `<cwd>/CHANGELOG.md`.
+///
+/// Only the `version:` line in pubspec is changed. When the changelog write
+/// fails, any pubspec update is rolled back.
+({bool applied, String? errorMessage}) applyPrepareReleasePlan(
+  PrepareReleasePlan plan,
+) {
+  final packageCwd = plan.packageContext.packageCwd;
+  final pubspecFile = File('${packageCwd.path}/pubspec.yaml');
+  final changelogFile = File('${packageCwd.path}/CHANGELOG.md');
+
+  final originalPubspec = pubspecFile.readAsStringSync();
+  final originalChangelog = changelogFile.readAsStringSync();
+  final newVersionText = plan.nextVersion.toString();
+
+  final pubspecUpdate = updatePubspecVersionLine(
+    pubspecContents: originalPubspec,
+    newVersion: newVersionText,
+  );
+  if (pubspecUpdate.errorMessage != null) {
+    return (applied: false, errorMessage: pubspecUpdate.errorMessage);
+  }
+
+  final updatedChangelog = prependChangelogSection(
+    existingChangelog: originalChangelog,
+    section: plan.changelogSection,
+  );
+
+  try {
+    pubspecFile.writeAsStringSync(pubspecUpdate.contents!);
+  } on IOException catch (error) {
+    return (
+      applied: false,
+      errorMessage: 'Failed to update pubspec.yaml: $error',
+    );
+  }
+
+  try {
+    changelogFile.writeAsStringSync(updatedChangelog);
+  } on IOException catch (error) {
+    try {
+      pubspecFile.writeAsStringSync(originalPubspec);
+    } on IOException {
+      return (
+        applied: false,
+        errorMessage: 'Failed to update CHANGELOG.md: $error. '
+            'pubspec.yaml was updated but could not be rolled back.',
+      );
+    }
+    return (
+      applied: false,
+      errorMessage: 'Failed to update CHANGELOG.md: $error. '
+          'pubspec.yaml was rolled back.',
+    );
+  }
+
+  return (applied: true, errorMessage: null);
+}
+
 /// Prints a human-readable dry-run plan and machine-readable summary lines.
 void printPrepareReleasePlan(PrepareReleasePlan plan) {
   stdout
