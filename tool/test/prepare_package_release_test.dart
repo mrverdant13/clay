@@ -829,6 +829,167 @@ void main() {
       expect(result.errorMessage, contains('-dev.N'));
     });
   });
+
+  group('changelogTypeLabel', () {
+    test('maps conventional types to uppercase labels', () {
+      expect(changelogTypeLabel('feat'), 'FEAT');
+      expect(changelogTypeLabel('fix'), 'FIX');
+      expect(changelogTypeLabel('docs'), 'DOCS');
+      expect(changelogTypeLabel('refactor'), 'REFACTOR');
+      expect(changelogTypeLabel('test'), 'TEST');
+      expect(changelogTypeLabel('chore'), 'CHORE');
+      expect(changelogTypeLabel('ci'), 'CI');
+      expect(changelogTypeLabel('build'), 'BUILD');
+    });
+  });
+
+  group('formatChangelogBullet', () {
+    test('preserves issue links from the subject and appends sha links', () {
+      const commit = ConventionalCommit(
+        type: 'feat',
+        scopes: ['synthetic_pkg'],
+        description:
+            'add preview command ([#42](https://github.com/example/clay/issues/42))',
+        subject:
+            'feat(synthetic_pkg): add preview command ([#42](https://github.com/example/clay/issues/42))',
+        isBreakingChange: false,
+        body:
+            '([abc1234](https://github.com/example/clay/commit/abc1234def5678901234567890abcdef12345678))',
+      );
+
+      expect(
+        formatChangelogBullet(commit),
+        ' - **FEAT**: add preview command ([#42](https://github.com/example/clay/issues/42)). ([abc1234](https://github.com/example/clay/commit/abc1234def5678901234567890abcdef12345678))',
+      );
+    });
+
+    test('adds trailing period for plain descriptions', () {
+      const commit = ConventionalCommit(
+        type: 'docs',
+        scopes: ['synthetic_pkg'],
+        description: 'document marker syntax with examples',
+        subject: 'docs(synthetic_pkg): document marker syntax with examples',
+        isBreakingChange: false,
+      );
+
+      expect(
+        formatChangelogBullet(commit),
+        ' - **DOCS**: document marker syntax with examples.',
+      );
+    });
+
+    test('preserves shorthand issue references from the subject', () {
+      const commit = ConventionalCommit(
+        type: 'fix',
+        scopes: ['synthetic_pkg'],
+        description: 'handle missing config (#43)',
+        subject: 'fix(synthetic_pkg): handle missing config (#43)',
+        isBreakingChange: false,
+      );
+
+      expect(
+        formatChangelogBullet(commit),
+        ' - **FIX**: handle missing config (#43).',
+      );
+    });
+  });
+
+  group('buildChangelogSection', () {
+    test('returns structured error when commit list is empty', () {
+      final result = buildChangelogSection(
+        version: '0.0.1-dev.3',
+        commits: const [],
+        latestTag: 'synthetic_pkg/0.0.1-dev.2',
+        packageName: 'synthetic_pkg',
+        allowedTypes: const {'feat', 'fix'},
+      );
+
+      expect(result.section, isNull);
+      expect(
+        result.errorMessage,
+        'No commits matching scope and type filters since tag '
+        'synthetic_pkg/0.0.1-dev.2 for package synthetic_pkg with allowed '
+        'types: feat, fix.',
+      );
+    });
+  });
+
+  group('prependChangelogSection', () {
+    test('prepends a new section while preserving existing content', () {
+      const existing = '## 0.0.1-dev.2\n\n - **FEAT**: previous entry.\n';
+      const section =
+          '## 0.0.1-dev.3\n\n - **FIX**: handle missing config (#43).';
+
+      expect(
+        prependChangelogSection(
+          existingChangelog: existing,
+          section: section,
+        ),
+        '## 0.0.1-dev.3\n\n - **FIX**: handle missing config (#43).\n\n'
+        '## 0.0.1-dev.2\n\n - **FEAT**: previous entry.\n',
+      );
+    });
+  });
+
+  group('buildReleaseChangelog', () {
+    ConventionalCommit commitFromMap(Map<Object?, Object?> entry) {
+      return ConventionalCommit(
+        type: entry['type']! as String,
+        scopes: (entry['scopes']! as List).cast<String>(),
+        description: entry['description']! as String,
+        subject: entry['subject']! as String,
+        isBreakingChange: entry['isBreakingChange'] as bool? ?? false,
+        body: entry['body'] as String?,
+      );
+    }
+
+    test('matches golden fixture output', () {
+      final fixtureFile = _readTestFixture('changelog_builder_cases.json');
+      final fixture = jsonDecode(fixtureFile.readAsStringSync()) as Map;
+      final commits = (fixture['commits'] as List)
+          .cast<Map<Object?, Object?>>()
+          .map(commitFromMap)
+          .toList();
+
+      final sectionResult = buildChangelogSection(
+        version: fixture['version'] as String,
+        commits: commits,
+        latestTag: fixture['latestTag'] as String,
+        packageName: fixture['packageName'] as String,
+        allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
+      );
+
+      expect(sectionResult.errorMessage, isNull);
+      expect(sectionResult.section, fixture['expectedSection']);
+
+      final changelogResult = buildReleaseChangelog(
+        version: fixture['version'] as String,
+        existingChangelog: fixture['existingChangelog'] as String,
+        commits: commits,
+        latestTag: fixture['latestTag'] as String,
+        packageName: fixture['packageName'] as String,
+        allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
+      );
+
+      expect(changelogResult.errorMessage, isNull);
+      expect(changelogResult.changelog, fixture['expectedChangelog']);
+    });
+
+    test('fails when no commits are available for the release', () {
+      final result = buildReleaseChangelog(
+        version: '0.0.1-dev.3',
+        existingChangelog: '## 0.0.1-dev.2\n',
+        commits: const [],
+        latestTag: 'synthetic_pkg/0.0.1-dev.2',
+        packageName: 'synthetic_pkg',
+        allowedTypes: const {'feat', 'fix'},
+      );
+
+      expect(result.changelog, isNull);
+      expect(result.section, isNull);
+      expect(result.errorMessage, contains('No commits matching'));
+    });
+  });
 }
 
 File _writePubspec({
