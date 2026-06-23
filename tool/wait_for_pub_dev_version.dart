@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'sync_package_version.dart';
+import 'package_configs.dart';
 
 const defaultPollTimeout = Duration(minutes: 10);
 const defaultPollInterval = Duration(seconds: 20);

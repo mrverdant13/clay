@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package_configs.dart';
 import 'sync_package_version.dart';
 
 void main(List<String> arguments) {

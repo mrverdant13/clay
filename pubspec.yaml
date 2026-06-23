@@ -226,7 +226,7 @@ melos:
         --apply
         &&
         dart run MELOS_ROOT_PATH/tool/sync_package_version.dart
-        --package "MELOS_PACKAGE_NAME"
+        --cwd "MELOS_PACKAGE_PATH"
       exec: {}
       packageFilters:
         category:
