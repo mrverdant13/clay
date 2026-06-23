@@ -1,7 +1,7 @@
 name: clay_cli
 description: >-
   A toolchain for authoring Mason brick templates from reference projects.
-version: 0.0.1-dev.1
+version: 0.0.1-dev.2
 homepage: https://github.com/mrverdant13/clay
 repository: https://github.com/mrverdant13/clay/tree/main/packages/clay_cli
 issue_tracker: https://github.com/mrverdant13/clay/issues
