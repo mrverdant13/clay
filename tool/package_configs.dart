@@ -1,5 +1,5 @@
 /// Hardcoded package metadata for release tooling that has not yet adopted
-/// `--cwd`. Used by `release_tag.dart` and `wait_for_pub_dev_version.dart`.
+/// `--cwd`. Used by `wait_for_pub_dev_version.dart`.
 const packageConfigs = <String, PackageConfig>{
   'clay_core': PackageConfig(
     packagePath: 'packages/clay_core',

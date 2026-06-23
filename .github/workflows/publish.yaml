@@ -4,7 +4,7 @@
 # Option C two-step flow:
 # 1. Merge the release PR — release-tag.yaml pushes <package>/<version> on the merge commit.
 # 2. Dispatch this workflow on that tag ref with dry_run: false (Use workflow from: Tags).
-#    OIDC auth succeeds on tag refs; publish runs, pub.dev is polled, the release tag is verified.
+#    OIDC auth succeeds on tag refs; publish runs and pub.dev is polled.
 #    On failure, the release tag is deleted so unpublished versions are not permanently tagged.
 #
 # dry_run: true (default) runs release.check only — dispatch from main or a tag ref.
@@ -105,7 +105,33 @@ jobs:
       - name: Bootstrap workspace
         run: melos bs
       - name: Verify release tag on HEAD
-        run: dart run tool/release_tag.dart --package ${{ inputs.package }} --verify
+        env:
+          PACKAGE: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          version=$(grep '^version:' "packages/${PACKAGE}/pubspec.yaml" | awk '{print $2}')
+          expected_tag="${PACKAGE}/${version}"
+          tag_ref="refs/tags/${expected_tag}"
+
+          if ! git rev-parse --verify "$tag_ref" >/dev/null 2>&1; then
+            echo "::error::Release tag ${expected_tag} is missing on this checkout."
+            exit 1
+          fi
+
+          tag_type=$(git cat-file -t "$tag_ref")
+          if [[ "$tag_type" != "tag" ]]; then
+            echo "::error::Release tag ${expected_tag} exists but is not annotated."
+            exit 1
+          fi
+
+          head_commit=$(git rev-parse HEAD)
+          tag_commit=$(git rev-list -n 1 "$expected_tag")
+          if [[ "$tag_commit" != "$head_commit" ]]; then
+            echo "::error::Release tag ${expected_tag} points at ${tag_commit} but HEAD is ${head_commit}."
+            exit 1
+          fi
+
+          echo "Verified annotated tag ${expected_tag} on HEAD."
       - name: Publish to pub.dev
         working-directory: packages/${{ inputs.package }}
         run: dart pub publish --force
@@ -116,8 +142,6 @@ jobs:
           dart run ../../tool/wait_for_pub_dev_version.dart \
             --package ${{ inputs.package }} \
             --version "$version"
-      - name: Confirm release tag still on HEAD
-        run: dart run tool/release_tag.dart --package ${{ inputs.package }} --verify
       - name: Delete release tag on failure
         if: failure()
         env:
