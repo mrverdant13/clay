@@ -673,6 +673,34 @@ void main() {
     });
   });
 
+  group('parseExplicitVersionBump', () {
+    test('parses supported bump values case-insensitively', () {
+      expect(
+        parseExplicitVersionBump('build').bump,
+        ExplicitVersionBump.build,
+      );
+      expect(
+        parseExplicitVersionBump('PATCH').bump,
+        ExplicitVersionBump.patch,
+      );
+      expect(
+        parseExplicitVersionBump('Minor').bump,
+        ExplicitVersionBump.minor,
+      );
+      expect(
+        parseExplicitVersionBump('major').bump,
+        ExplicitVersionBump.major,
+      );
+    });
+
+    test('rejects unknown bump values', () {
+      final result = parseExplicitVersionBump('invalid');
+
+      expect(result.bump, isNull);
+      expect(result.errorMessage, contains('Invalid --bump value'));
+    });
+  });
+
   group('applyExplicitVersionBump', () {
     final current = Version.parse('0.0.1-dev.2');
 
@@ -1323,6 +1351,79 @@ void main() {
       expect(options.cwd, 'packages/synthetic_pkg');
       expect(options.tagFormat, '{name}/{version}');
       expect(options.commitTypes, 'feat,fix');
+      expect(options.explicitBump, isNull);
+      expect(options.explicitVersionText, isNull);
+      expect(options.allowUnsafeBump, isFalse);
+    });
+
+    test('parses bump override flags', () {
+      final options = parsePrepareReleaseCliOptions([
+        '--cwd',
+        'packages/synthetic_pkg',
+        '--tag-format',
+        '{name}/{version}',
+        '--commit-types',
+        'feat,fix',
+        '--bump',
+        'patch',
+        '--allow-unsafe-bump',
+      ]);
+
+      expect(options, isNotNull);
+      expect(options!.explicitBump, ExplicitVersionBump.patch);
+      expect(options.explicitVersionText, isNull);
+      expect(options.allowUnsafeBump, isTrue);
+    });
+
+    test('parses explicit version override', () {
+      final options = parsePrepareReleaseCliOptions([
+        '--cwd',
+        'packages/synthetic_pkg',
+        '--tag-format',
+        '{name}/{version}',
+        '--commit-types',
+        'feat,fix',
+        '--version',
+        '0.0.1-dev.99',
+      ]);
+
+      expect(options, isNotNull);
+      expect(options!.explicitBump, isNull);
+      expect(options.explicitVersionText, '0.0.1-dev.99');
+    });
+
+    test('rejects mutually exclusive bump and version overrides', () {
+      expect(
+        parsePrepareReleaseCliOptions([
+          '--cwd',
+          'packages/synthetic_pkg',
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat',
+          '--bump',
+          'patch',
+          '--version',
+          '0.0.1-dev.99',
+        ]),
+        isNull,
+      );
+    });
+
+    test('rejects invalid bump values', () {
+      expect(
+        parsePrepareReleaseCliOptions([
+          '--cwd',
+          'packages/synthetic_pkg',
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat',
+          '--bump',
+          'invalid',
+        ]),
+        isNull,
+      );
     });
 
     test('rejects unknown flags', () {
@@ -1404,6 +1505,9 @@ void main() {
       expect(result.stdout, contains('--cwd'));
       expect(result.stdout, contains('--tag-format'));
       expect(result.stdout, contains('--commit-types'));
+      expect(result.stdout, contains('--bump'));
+      expect(result.stdout, contains('--version'));
+      expect(result.stdout, contains('allow-unsafe-bump'));
     });
 
     test('missing required flags exits 64', () {
@@ -1413,6 +1517,160 @@ void main() {
       );
 
       expect(result.exitCode, 64);
+    });
+
+    test('--bump patch produces expected next version in dry-run output', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+
+      final pubspecBefore =
+          File('${packageDir.path}/pubspec.yaml').readAsStringSync();
+      final changelogBefore =
+          File('${packageDir.path}/CHANGELOG.md').readAsStringSync();
+
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+          '--bump',
+          'patch',
+        ],
+      );
+
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      expect(result.stdout, contains('release_version=0.0.2-dev.1'));
+      expect(
+        File('${packageDir.path}/pubspec.yaml').readAsStringSync(),
+        pubspecBefore,
+      );
+      expect(
+        File('${packageDir.path}/CHANGELOG.md').readAsStringSync(),
+        changelogBefore,
+      );
+    });
+
+    test('--version sets exact next version in dry-run output', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+          '--version',
+          '0.0.1-dev.99',
+        ],
+      );
+
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      expect(result.stdout, contains('release_version=0.0.1-dev.99'));
+    });
+
+    test('--bump and --version together exit 64', () {
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          'packages/synthetic_pkg',
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat',
+          '--bump',
+          'patch',
+          '--version',
+          '0.0.1-dev.99',
+        ],
+      );
+
+      expect(result.exitCode, 64);
+    });
+
+    test('--allow-unsafe-bump allows dry-run when pubspec is ahead of tag', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _writePubspec(
+        directory: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.3',
+      );
+      _gitCommitAll(tempRoot, message: 'chore(synthetic_pkg): bump dev version');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+
+      final withoutFlag = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+        ],
+      );
+      expect(withoutFlag.exitCode, 1);
+      expect(withoutFlag.stderr, contains('ahead of latest release tag'));
+
+      final withFlag = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+          '--allow-unsafe-bump',
+        ],
+      );
+
+      expect(withFlag.exitCode, 0, reason: withFlag.stderr.toString());
+      expect(withFlag.stdout, contains('release_version=0.1.0-dev.1'));
     });
   });
 }
