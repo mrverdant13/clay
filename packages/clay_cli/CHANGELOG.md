@@ -1,3 +1,10 @@
+## 0.0.1-dev.2
+
+ - **FEAT**: bump `clay_core` constraint to `^0.0.1-dev.2` (#140).
+ - **FEAT**: enforce `environment.clay` compatibility (#98).
+ - **FEAT**: add `clay compat` command (#100).
+ - **DOCS**: document marker syntax with examples (#132).
+
 ## 0.0.1-dev.1
 
 - **FEAT**: `--config`, `--cwd`, `--verbose`, and `--version` global flags (#20).
