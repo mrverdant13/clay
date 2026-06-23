@@ -1320,6 +1320,153 @@ void main() {
     });
   });
 
+  group('updatePubspecVersionLine', () {
+    test('replaces only the version line', () {
+      const original = '''
+name: synthetic_pkg
+description: A test package
+version: 0.0.1-dev.2
+environment:
+  sdk: ^3.0.0
+''';
+
+      final result = updatePubspecVersionLine(
+        pubspecContents: original,
+        newVersion: '0.1.0-dev.1',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.contents, contains('name: synthetic_pkg'));
+      expect(result.contents, contains('description: A test package'));
+      expect(result.contents, contains('version: 0.1.0-dev.1'));
+      expect(result.contents, isNot(contains('version: 0.0.1-dev.2')));
+    });
+
+    test('fails when version line is missing', () {
+      final result = updatePubspecVersionLine(
+        pubspecContents: 'name: synthetic_pkg\n',
+        newVersion: '0.1.0-dev.1',
+      );
+
+      expect(result.contents, isNull);
+      expect(result.errorMessage, contains('version line'));
+    });
+  });
+
+  group('applyPrepareReleasePlan', () {
+    PrepareReleasePlan buildFixturePlan(Directory packageDir) {
+      _initGitRepoWithCommit(tempRoot);
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-2.txt',
+        message: 'fix(synthetic_pkg): handle missing config (#43)',
+      );
+
+      final planResult = buildPrepareReleasePlan(
+        cwd: packageDir.path,
+        tagFormat: '{name}/{version}',
+        commitTypesInput: 'feat,fix,docs,refactor,test,build',
+      );
+      expect(planResult.errorMessage, isNull);
+      return planResult.plan!;
+    }
+
+    test('updates pubspec version and prepends changelog', () {
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      final plan = buildFixturePlan(packageDir);
+      final pubspecFile = File('${packageDir.path}/pubspec.yaml');
+      final changelogFile = File('${packageDir.path}/CHANGELOG.md');
+      final pubspecBefore = pubspecFile.readAsStringSync();
+      final changelogBefore = changelogFile.readAsStringSync();
+
+      final result = applyPrepareReleasePlan(plan);
+
+      expect(result.applied, isTrue);
+      expect(result.errorMessage, isNull);
+      expect(
+        readPubspecNameAndVersion(pubspecFile).version,
+        '0.1.0-dev.1',
+      );
+      expect(pubspecFile.readAsStringSync(), isNot(pubspecBefore));
+      expect(
+        changelogFile.readAsStringSync(),
+        startsWith('## 0.1.0-dev.1'),
+      );
+      expect(changelogFile.readAsStringSync(), contains(changelogBefore.trim()));
+    });
+
+    test('only changes the version line in pubspec.yaml', () {
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      packageDir.createSync(recursive: true);
+      File('${packageDir.path}/pubspec.yaml').writeAsStringSync('''
+name: synthetic_pkg
+description: Keep this line intact
+version: 0.0.1-dev.2
+environment:
+  sdk: ^3.0.0
+''');
+      File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
+      _initGitRepo(tempRoot);
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+
+      final planResult = buildPrepareReleasePlan(
+        cwd: packageDir.path,
+        tagFormat: '{name}/{version}',
+        commitTypesInput: 'feat,fix,docs,refactor,test,build',
+      );
+      expect(planResult.errorMessage, isNull);
+
+      final result = applyPrepareReleasePlan(planResult.plan!);
+
+      expect(result.applied, isTrue);
+      final updated = File('${packageDir.path}/pubspec.yaml').readAsStringSync();
+      expect(updated, contains('description: Keep this line intact'));
+      expect(updated, contains('environment:\n  sdk: ^3.0.0'));
+      expect(updated, contains('version: 0.1.0-dev.1'));
+    });
+
+    test('rolls back pubspec when changelog write fails', () {
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      final plan = buildFixturePlan(packageDir);
+      final pubspecFile = File('${packageDir.path}/pubspec.yaml');
+      final changelogFile = File('${packageDir.path}/CHANGELOG.md');
+      final pubspecBefore = pubspecFile.readAsStringSync();
+
+      _runChmod(changelogFile.path, '444');
+
+      addTearDown(() {
+        if (changelogFile.existsSync()) {
+          _runChmod(changelogFile.path, '644');
+        }
+      });
+
+      final result = applyPrepareReleasePlan(plan);
+
+      expect(result.applied, isFalse);
+      expect(result.errorMessage, contains('CHANGELOG.md'));
+      expect(result.errorMessage, contains('rolled back'));
+      expect(pubspecFile.readAsStringSync(), pubspecBefore);
+    });
+  });
+
   group('parsePrepareReleaseCliOptions', () {
     test('returns help mode for --help', () {
       final options = parsePrepareReleaseCliOptions(['--help']);
@@ -1426,6 +1573,21 @@ void main() {
       );
     });
 
+    test('parses apply flag', () {
+      final options = parsePrepareReleaseCliOptions([
+        '--cwd',
+        'packages/synthetic_pkg',
+        '--tag-format',
+        '{name}/{version}',
+        '--commit-types',
+        'feat,fix',
+        '--apply',
+      ]);
+
+      expect(options, isNotNull);
+      expect(options!.apply, isTrue);
+    });
+
     test('rejects unknown flags', () {
       expect(
         parsePrepareReleaseCliOptions([
@@ -1435,7 +1597,7 @@ void main() {
           '{name}/{version}',
           '--commit-types',
           'feat',
-          '--apply',
+          '--unknown-flag',
         ]),
         isNull,
       );
@@ -1508,6 +1670,7 @@ void main() {
       expect(result.stdout, contains('--bump'));
       expect(result.stdout, contains('--version'));
       expect(result.stdout, contains('allow-unsafe-bump'));
+      expect(result.stdout, contains('apply'));
     });
 
     test('missing required flags exits 64', () {
@@ -1675,6 +1838,61 @@ void main() {
       expect(withFlag.exitCode, 0, reason: withFlag.stderr.toString());
       expect(withFlag.stdout, contains('release_version=0.1.0-dev.1'));
     });
+
+    test('--apply writes pubspec version and prepends changelog', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-2.txt',
+        message: 'fix(synthetic_pkg): handle missing config (#43)',
+      );
+
+      final rootMarkerBefore =
+          File('${tempRoot.path}/README.md').readAsStringSync();
+
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+          '--apply',
+        ],
+      );
+
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      expect(result.stdout, contains('Applied release changes'));
+      expect(result.stdout, contains('release_version=0.1.0-dev.1'));
+      expect(
+        readPubspecNameAndVersion(File('${packageDir.path}/pubspec.yaml'))
+            .version,
+        '0.1.0-dev.1',
+      );
+      expect(
+        File('${packageDir.path}/CHANGELOG.md').readAsStringSync(),
+        contains('## 0.1.0-dev.1'),
+      );
+      expect(
+        File('${tempRoot.path}/README.md').readAsStringSync(),
+        rootMarkerBefore,
+      );
+    });
   });
 }
 
@@ -1743,6 +1961,15 @@ ProcessResult _runGit(Directory repoRoot, List<String> arguments) {
     reason: 'git ${arguments.join(' ')} failed: ${result.stderr}',
   );
   return result;
+}
+
+void _runChmod(String path, String mode) {
+  final result = Process.runSync('chmod', [mode, path]);
+  expect(
+    result.exitCode,
+    0,
+    reason: 'chmod $mode $path failed: ${result.stderr}',
+  );
 }
 
 File _readTestFixture(String name) {
