@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:pub_semver/pub_semver.dart';
 
 final _pubspecNamePattern = RegExp(
@@ -1086,4 +1087,287 @@ List<ConventionalCommit> parseConventionalCommits(
     ],
     errorMessage: null,
   );
+}
+
+/// A dry-run or apply plan for preparing a package release.
+class PrepareReleasePlan {
+  const PrepareReleasePlan({
+    required this.packageContext,
+    required this.tagFormat,
+    required this.allowedTypes,
+    required this.latestTag,
+    required this.currentVersion,
+    required this.nextVersion,
+    required this.commits,
+    required this.changelogSection,
+    required this.updatedChangelog,
+  });
+
+  final PackageContext packageContext;
+  final String tagFormat;
+  final Set<String> allowedTypes;
+  final String latestTag;
+  final Version currentVersion;
+  final Version nextVersion;
+  final List<ConventionalCommit> commits;
+  final String changelogSection;
+  final String updatedChangelog;
+
+  String get packageName => packageContext.name;
+
+  String get suggestedCommitMessage =>
+      'chore($packageName): release $nextVersion';
+}
+
+/// Builds a release plan from CLI inputs without writing files.
+({PrepareReleasePlan? plan, String? errorMessage}) buildPrepareReleasePlan({
+  required String cwd,
+  required String tagFormat,
+  required String commitTypesInput,
+  bool allowUnsafeBump = false,
+  ExplicitVersionBump? explicitBump,
+  String? explicitVersionText,
+}) {
+  final contextResult = resolvePackageContext(cwd);
+  if (contextResult.errorMessage != null) {
+    return (plan: null, errorMessage: contextResult.errorMessage);
+  }
+  final packageContext = contextResult.context!;
+
+  final formatError = validateTagFormat(tagFormat);
+  if (formatError != null) {
+    return (plan: null, errorMessage: formatError);
+  }
+
+  final commitTypesResult = parseCommitTypes(commitTypesInput);
+  if (commitTypesResult.errorMessage != null) {
+    return (plan: null, errorMessage: commitTypesResult.errorMessage);
+  }
+  final allowedTypes = commitTypesResult.types!;
+
+  final currentVersionResult =
+      parseDevPrereleaseVersionText(packageContext.version);
+  if (currentVersionResult.errorMessage != null) {
+    return (plan: null, errorMessage: currentVersionResult.errorMessage);
+  }
+  final currentVersion = currentVersionResult.version!;
+
+  final safetyResult = resolveLatestTagWithSafetyGate(
+    gitRoot: packageContext.gitRoot,
+    tagFormat: tagFormat,
+    packageName: packageContext.name,
+    currentVersion: currentVersion,
+    allowUnsafeBump: allowUnsafeBump,
+  );
+  if (safetyResult.errorMessage != null) {
+    return (plan: null, errorMessage: safetyResult.errorMessage);
+  }
+  final latestTag = safetyResult.latestTag!;
+
+  final commitsResult = collectScopedCommitsSinceTag(
+    gitRoot: packageContext.gitRoot,
+    latestTag: latestTag,
+    packageName: packageContext.name,
+    allowedTypes: allowedTypes,
+  );
+  if (commitsResult.errorMessage != null) {
+    return (plan: null, errorMessage: commitsResult.errorMessage);
+  }
+  final commits = commitsResult.commits!;
+
+  final nextVersionResult = computeNextVersion(
+    currentVersion: currentVersion,
+    explicitBump: explicitBump,
+    explicitVersionText: explicitVersionText,
+    commits: commits,
+  );
+  if (nextVersionResult.errorMessage != null) {
+    return (plan: null, errorMessage: nextVersionResult.errorMessage);
+  }
+  final nextVersion = nextVersionResult.nextVersion!;
+
+  final changelogFile = File('${packageContext.packageCwd.path}/CHANGELOG.md');
+  final existingChangelog = changelogFile.readAsStringSync();
+  final changelogResult = buildReleaseChangelog(
+    version: nextVersion.toString(),
+    existingChangelog: existingChangelog,
+    commits: commits,
+    latestTag: latestTag,
+    packageName: packageContext.name,
+    allowedTypes: allowedTypes,
+  );
+  if (changelogResult.errorMessage != null) {
+    return (plan: null, errorMessage: changelogResult.errorMessage);
+  }
+
+  return (
+    plan: PrepareReleasePlan(
+      packageContext: packageContext,
+      tagFormat: tagFormat,
+      allowedTypes: allowedTypes,
+      latestTag: latestTag,
+      currentVersion: currentVersion,
+      nextVersion: nextVersion,
+      commits: commits,
+      changelogSection: changelogResult.section!,
+      updatedChangelog: changelogResult.changelog!,
+    ),
+    errorMessage: null,
+  );
+}
+
+/// Prints a human-readable dry-run plan and machine-readable summary lines.
+void printPrepareReleasePlan(PrepareReleasePlan plan) {
+  stdout
+    ..writeln(
+      'Dry run — no files will be modified. Pass --apply to write '
+      'pubspec.yaml and CHANGELOG.md.',
+    )
+    ..writeln()
+    ..writeln('Package: ${plan.packageName}')
+    ..writeln('Package directory: ${plan.packageContext.packageCwd.path}')
+    ..writeln('Tag format: ${plan.tagFormat}')
+    ..writeln('Current version: ${plan.currentVersion}')
+    ..writeln('Latest release tag: ${plan.latestTag}')
+    ..writeln('Next version: ${plan.nextVersion}')
+    ..writeln('Allowed commit types: ${plan.allowedTypes.join(', ')}')
+    ..writeln(
+      'Matching commits since ${plan.latestTag}: ${plan.commits.length}',
+    )
+    ..writeln()
+    ..writeln('Suggested commit message:')
+    ..writeln(plan.suggestedCommitMessage)
+    ..writeln()
+    ..writeln('Files that would change:')
+    ..writeln(
+      '  pubspec.yaml (version: ${plan.currentVersion} → ${plan.nextVersion})',
+    )
+    ..writeln('  CHANGELOG.md (prepend new section)')
+    ..writeln()
+    ..writeln('Changelog preview:')
+    ..writeln(plan.changelogSection)
+    ..writeln()
+    ..writeln('package_name=${plan.packageName}')
+    ..writeln('release_version=${plan.nextVersion}')
+    ..writeln('package_cwd=${plan.packageContext.packageCwd.path}')
+    ..writeln('tag_format=${plan.tagFormat}')
+    ..writeln('latest_tag=${plan.latestTag}');
+}
+
+ArgParser buildPrepareReleaseArgParser() {
+  return ArgParser()
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print usage information.',
+    )
+    ..addOption(
+      'cwd',
+      help: 'Package root directory (must contain pubspec.yaml and CHANGELOG.md).',
+    )
+    ..addOption(
+      'tag-format',
+      help: "Tag template with {name} and {version} (e.g. '{name}/{version}').",
+    )
+    ..addOption(
+      'commit-types',
+      help: 'Comma-separated conventional commit types to include in the changelog.',
+    );
+}
+
+void printPrepareReleaseUsage() {
+  stdout.writeln('Usage: dart run tool/prepare_package_release.dart [options]');
+  stdout.writeln();
+  stdout.writeln(buildPrepareReleaseArgParser().usage);
+}
+
+/// Parses CLI arguments for the prepare release tool.
+///
+/// Returns `null` when usage is invalid; callers should exit `64`.
+PrepareReleaseCliOptions? parsePrepareReleaseCliOptions(List<String> arguments) {
+  if (arguments.isEmpty) {
+    stderr.writeln('Missing required arguments.');
+    return null;
+  }
+
+  if (arguments.contains('--help') || arguments.contains('-h')) {
+    return const PrepareReleaseCliOptions(showHelp: true);
+  }
+
+  final parser = buildPrepareReleaseArgParser();
+  try {
+    final results = parser.parse(arguments);
+    if (results['help'] == true) {
+      return const PrepareReleaseCliOptions(showHelp: true);
+    }
+
+    final cwd = results['cwd'] as String?;
+    if (cwd == null || cwd.isEmpty) {
+      stderr.writeln('Missing value for --cwd');
+      return null;
+    }
+
+    final tagFormat = results['tag-format'] as String?;
+    if (tagFormat == null || tagFormat.isEmpty) {
+      stderr.writeln('Missing value for --tag-format');
+      return null;
+    }
+
+    final commitTypes = results['commit-types'] as String?;
+    if (commitTypes == null || commitTypes.isEmpty) {
+      stderr.writeln('Missing value for --commit-types');
+      return null;
+    }
+
+    return PrepareReleaseCliOptions(
+      cwd: cwd,
+      tagFormat: tagFormat,
+      commitTypes: commitTypes,
+    );
+  } on FormatException catch (error) {
+    stderr.writeln(error.message);
+    return null;
+  }
+}
+
+/// Parsed CLI options for [main].
+class PrepareReleaseCliOptions {
+  const PrepareReleaseCliOptions({
+    this.showHelp = false,
+    this.cwd,
+    this.tagFormat,
+    this.commitTypes,
+  });
+
+  final bool showHelp;
+  final String? cwd;
+  final String? tagFormat;
+  final String? commitTypes;
+}
+
+void main(List<String> arguments) {
+  final options = parsePrepareReleaseCliOptions(arguments);
+  if (options == null) {
+    printPrepareReleaseUsage();
+    exit(64);
+  }
+
+  if (options.showHelp) {
+    printPrepareReleaseUsage();
+    exit(0);
+  }
+
+  final planResult = buildPrepareReleasePlan(
+    cwd: options.cwd!,
+    tagFormat: options.tagFormat!,
+    commitTypesInput: options.commitTypes!,
+  );
+  if (planResult.errorMessage != null) {
+    stderr.writeln(planResult.errorMessage);
+    exit(1);
+  }
+
+  printPrepareReleasePlan(planResult.plan!);
+  exit(0);
 }
