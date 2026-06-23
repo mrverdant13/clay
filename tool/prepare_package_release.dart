@@ -841,3 +841,249 @@ String prependChangelogSection({
     errorMessage: null,
   );
 }
+
+/// Why the release safety gate rejected a bump.
+enum ReleaseSafetyFailure {
+  noReleaseTag,
+  pubspecAheadOfTag,
+  pubspecBehindTag,
+}
+
+/// A git commit entry collected from `git log <tag>..HEAD`.
+class GitCommitEntry {
+  const GitCommitEntry({
+    required this.subject,
+    this.body,
+  });
+
+  final String subject;
+  final String? body;
+}
+
+/// Validates the tag-based release safety gate.
+///
+/// When [allowUnsafeBump] is `true`, version mismatches are allowed but a
+/// matching release tag must still exist.
+({bool passed, ReleaseSafetyFailure? failure, String? errorMessage})
+    checkReleaseSafetyGate({
+  required Version currentVersion,
+  required String? latestTag,
+  required Version? latestTagVersion,
+  required String tagFormat,
+  required String packageName,
+  bool allowUnsafeBump = false,
+}) {
+  final expectedTag = renderTagFormat(
+    format: tagFormat,
+    name: packageName,
+    version: currentVersion.toString(),
+  );
+
+  if (latestTag == null || latestTagVersion == null) {
+    return (
+      passed: false,
+      failure: ReleaseSafetyFailure.noReleaseTag,
+      errorMessage: 'No release tag found for package $packageName. '
+          'An existing release tag is required before preparing a new release. '
+          'Expected tag for current version $currentVersion: $expectedTag.',
+    );
+  }
+
+  if (allowUnsafeBump || currentVersion == latestTagVersion) {
+    return (passed: true, failure: null, errorMessage: null);
+  }
+
+  if (currentVersion > latestTagVersion) {
+    return (
+      passed: false,
+      failure: ReleaseSafetyFailure.pubspecAheadOfTag,
+      errorMessage:
+          'Package version $currentVersion is ahead of latest release '
+          'tag $latestTag ($latestTagVersion). '
+          'Expected tag for current version: $expectedTag.',
+    );
+  }
+
+  return (
+    passed: false,
+    failure: ReleaseSafetyFailure.pubspecBehindTag,
+    errorMessage:
+        'Package version $currentVersion is behind latest release tag '
+        '$latestTag ($latestTagVersion). Update pubspec version to match the '
+        'latest tag or pass --allow-unsafe-bump for local recovery.',
+  );
+}
+
+/// Resolves the latest release tag and validates the safety gate.
+({String? latestTag, Version? latestTagVersion, String? errorMessage})
+    resolveLatestTagWithSafetyGate({
+  required Directory gitRoot,
+  required String tagFormat,
+  required String packageName,
+  required Version currentVersion,
+  bool allowUnsafeBump = false,
+}) {
+  final latestTagResult = resolveLatestTag(
+    gitRoot: gitRoot,
+    tagFormat: tagFormat,
+    packageName: packageName,
+  );
+  if (latestTagResult.errorMessage != null) {
+    return (
+      latestTag: null,
+      latestTagVersion: null,
+      errorMessage: latestTagResult.errorMessage,
+    );
+  }
+
+  final safetyResult = checkReleaseSafetyGate(
+    currentVersion: currentVersion,
+    latestTag: latestTagResult.tag,
+    latestTagVersion: latestTagResult.version,
+    tagFormat: tagFormat,
+    packageName: packageName,
+    allowUnsafeBump: allowUnsafeBump,
+  );
+  if (!safetyResult.passed) {
+    return (
+      latestTag: latestTagResult.tag,
+      latestTagVersion: latestTagResult.version,
+      errorMessage: safetyResult.errorMessage,
+    );
+  }
+
+  return (
+    latestTag: latestTagResult.tag,
+    latestTagVersion: latestTagResult.version,
+    errorMessage: null,
+  );
+}
+
+const _gitCommitRecordDelimiter = '---COMMIT---';
+
+/// Collects commits from `git log <latestTag>..HEAD`.
+///
+/// Returns entries in chronological order (oldest first).
+({List<GitCommitEntry>? commits, String? errorMessage}) collectCommitsSinceTag({
+  required Directory gitRoot,
+  required String latestTag,
+}) {
+  final result = Process.runSync(
+    'git',
+    [
+      '-C',
+      gitRoot.path,
+      'log',
+      '$latestTag..HEAD',
+      '--reverse',
+      '--format=%s%n%b%n$_gitCommitRecordDelimiter',
+    ],
+  );
+  if (result.exitCode != 0) {
+    final stderrText = result.stderr.toString().trim();
+    return (
+      commits: null,
+      errorMessage: stderrText.isEmpty
+          ? 'Failed to collect commits since tag $latestTag.'
+          : 'Failed to collect commits since tag $latestTag: $stderrText',
+    );
+  }
+
+  final stdoutText = result.stdout.toString();
+  if (stdoutText.trim().isEmpty) {
+    return (commits: const [], errorMessage: null);
+  }
+
+  final commits = <GitCommitEntry>[];
+  for (final rawRecord in stdoutText.split('$_gitCommitRecordDelimiter\n')) {
+    final record = rawRecord.trim();
+    if (record.isEmpty) {
+      continue;
+    }
+
+    final lines = record.split('\n');
+    final subject = lines.first.trim();
+    if (subject.isEmpty) {
+      continue;
+    }
+
+    final bodyLines = lines.skip(1).toList();
+    while (bodyLines.isNotEmpty && bodyLines.last.trim().isEmpty) {
+      bodyLines.removeLast();
+    }
+    final body = bodyLines.isEmpty ? null : bodyLines.join('\n');
+
+    commits.add(GitCommitEntry(subject: subject, body: body));
+  }
+
+  return (commits: commits, errorMessage: null);
+}
+
+/// Parses [entries] into conventional commits, preserving commit bodies.
+List<ConventionalCommit> parseConventionalCommits(
+  Iterable<GitCommitEntry> entries,
+) {
+  final commits = <ConventionalCommit>[];
+
+  for (final entry in entries) {
+    final parsed = parseConventionalCommitSubject(entry.subject);
+    if (parsed == null) {
+      continue;
+    }
+
+    commits.add(
+      ConventionalCommit(
+        type: parsed.type,
+        scopes: parsed.scopes,
+        description: parsed.description,
+        subject: parsed.subject,
+        isBreakingChange: parsed.isBreakingChange,
+        body: entry.body,
+      ),
+    );
+  }
+
+  return commits;
+}
+
+/// Collects scoped conventional commits since [latestTag].
+({List<ConventionalCommit>? commits, String? errorMessage})
+    collectScopedCommitsSinceTag({
+  required Directory gitRoot,
+  required String latestTag,
+  required String packageName,
+  required Set<String> allowedTypes,
+}) {
+  final logResult = collectCommitsSinceTag(
+    gitRoot: gitRoot,
+    latestTag: latestTag,
+  );
+  if (logResult.errorMessage != null) {
+    return (commits: null, errorMessage: logResult.errorMessage);
+  }
+
+  final parsed = parseConventionalCommits(logResult.commits!);
+  final filtered = filterConventionalCommits(
+    subjects: parsed.map((commit) => commit.subject),
+    packageName: packageName,
+    allowedTypes: allowedTypes,
+  );
+  final bodiesBySubject = {
+    for (final commit in parsed) commit.subject: commit.body,
+  };
+
+  return (
+    commits: [
+      for (final commit in filtered)
+        ConventionalCommit(
+          type: commit.type,
+          scopes: commit.scopes,
+          description: commit.description,
+          subject: commit.subject,
+          isBreakingChange: commit.isBreakingChange,
+          body: bodiesBySubject[commit.subject],
+        ),
+    ],
+    errorMessage: null,
+  );
+}
