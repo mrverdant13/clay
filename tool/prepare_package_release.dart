@@ -530,6 +530,28 @@ bool isDevPrereleaseVersion(Version version) {
   }
 }
 
+/// Parses a `--bump` CLI value into [ExplicitVersionBump].
+({ExplicitVersionBump? bump, String? errorMessage}) parseExplicitVersionBump(
+  String input,
+) {
+  switch (input.trim().toLowerCase()) {
+    case 'build':
+      return (bump: ExplicitVersionBump.build, errorMessage: null);
+    case 'patch':
+      return (bump: ExplicitVersionBump.patch, errorMessage: null);
+    case 'minor':
+      return (bump: ExplicitVersionBump.minor, errorMessage: null);
+    case 'major':
+      return (bump: ExplicitVersionBump.major, errorMessage: null);
+    default:
+      return (
+        bump: null,
+        errorMessage: 'Invalid --bump value: $input. '
+            'Expected build, patch, minor, or major.',
+      );
+  }
+}
+
 /// Applies an explicit `--bump` override to [current].
 Version applyExplicitVersionBump({
   required Version current,
@@ -1273,6 +1295,21 @@ ArgParser buildPrepareReleaseArgParser() {
       'commit-types',
       help: 'Comma-separated conventional commit types '
           'to include in the changelog.',
+    )
+    ..addOption(
+      'bump',
+      help: 'Explicit semver bump (build, patch, minor, major). '
+          'Mutually exclusive with --version.',
+    )
+    ..addOption(
+      'version',
+      help: 'Exact target version (-dev.N prerelease only in v1). '
+          'Mutually exclusive with --bump.',
+    )
+    ..addFlag(
+      'allow-unsafe-bump',
+      help: 'Allow release planning when pubspec version does not match '
+          'the latest release tag.',
     );
 }
 
@@ -1323,10 +1360,36 @@ PrepareReleaseCliOptions? parsePrepareReleaseCliOptions(
       return null;
     }
 
+    final bumpText = results['bump'] as String?;
+    final versionText = results['version'] as String?;
+    if (bumpText != null &&
+        bumpText.isNotEmpty &&
+        versionText != null &&
+        versionText.isNotEmpty) {
+      stderr.writeln('--bump and --version are mutually exclusive.');
+      return null;
+    }
+
+    ExplicitVersionBump? explicitBump;
+    if (bumpText != null && bumpText.isNotEmpty) {
+      final bumpResult = parseExplicitVersionBump(bumpText);
+      if (bumpResult.errorMessage != null) {
+        stderr.writeln(bumpResult.errorMessage);
+        return null;
+      }
+      explicitBump = bumpResult.bump;
+    }
+
+    final explicitVersionText =
+        versionText != null && versionText.isNotEmpty ? versionText : null;
+
     return PrepareReleaseCliOptions(
       cwd: cwd,
       tagFormat: tagFormat,
       commitTypes: commitTypes,
+      explicitBump: explicitBump,
+      explicitVersionText: explicitVersionText,
+      allowUnsafeBump: results['allow-unsafe-bump'] as bool? ?? false,
     );
   } on FormatException catch (error) {
     stderr.writeln(error.message);
@@ -1341,12 +1404,18 @@ class PrepareReleaseCliOptions {
     this.cwd,
     this.tagFormat,
     this.commitTypes,
+    this.explicitBump,
+    this.explicitVersionText,
+    this.allowUnsafeBump = false,
   });
 
   final bool showHelp;
   final String? cwd;
   final String? tagFormat;
   final String? commitTypes;
+  final ExplicitVersionBump? explicitBump;
+  final String? explicitVersionText;
+  final bool allowUnsafeBump;
 }
 
 void main(List<String> arguments) {
@@ -1365,6 +1434,9 @@ void main(List<String> arguments) {
     cwd: options.cwd!,
     tagFormat: options.tagFormat!,
     commitTypesInput: options.commitTypes!,
+    allowUnsafeBump: options.allowUnsafeBump,
+    explicitBump: options.explicitBump,
+    explicitVersionText: options.explicitVersionText,
   );
   if (planResult.errorMessage != null) {
     stderr.writeln(planResult.errorMessage);
