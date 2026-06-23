@@ -236,8 +236,18 @@ Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authen
 
 ### Release runbook
 
-1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so Melos can generate changelog entries.
-2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `MELOS_PACKAGES=<package> melos run release.prepare` (Melos derives the next `-dev.N` bump from conventional commits), commits the version bump and changelog per package via the Melos `preCommit` hook, pushes `<package>/chore/release-<version>`, and opens a PR titled `chore(<package>): release <version>`.
+1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so the prepare tool can include them in the changelog.
+2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `MELOS_PACKAGES=<package> melos run release.prepare`, which invokes [`tool/prepare_package_release.dart`](tool/prepare_package_release.dart) with `--bump build` (increments `-dev.N` only), prepends a changelog from scoped commits since the latest package tag, syncs `version.dart`, then commits `pubspec.yaml`, `CHANGELOG.md`, and `lib/src/version.dart` under that package. It pushes `<package>/chore/release-<version>` and opens a PR titled `chore(<package>): release <version>`.
+   - **Local writes:** `MELOS_PACKAGES=<package> melos run release.prepare` (same entry point as CI; git commit is manual locally).
+   - **Local preview (dry-run):** invoke the prepare tool directly without `--apply` (default is dry-run):
+     ```bash
+     dart run tool/prepare_package_release.dart \
+       --cwd packages/clay_core \
+       --tag-format '{name}/{version}' \
+       --commit-types feat,fix,docs,refactor,test,build \
+       --bump build
+     ```
+   - **Semver segment bumps** (`patch`, `minor`, `major`) or an exact version require invoking the prepare tool directly with `--bump patch|minor|major` or `--version <semver>` (dry-run first; add `--apply` to write). See [Prepare tool flags](#prepare-tool-flags).
 3. **Review the release PR.** One package per PR — do not combine `clay_core` and `clay_cli`. For `clay_cli` releases after a new `clay_core`, push a follow-up commit on the release branch updating the `clay_core:` minimum constraint (for example `clay_core: ^0.0.1-dev.2`) before merge — the prepare workflow does not auto-bump dependent packages.
 4. **Wait for release PR CI.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` when the PR title, branch name, and changed release manifests all match. CI fails if more than one publishable package's manifests change in the same PR.
 5. **Merge the release PR** into `main`. [Release tag on merge](.github/workflows/release-tag.yaml) automatically creates and pushes annotated tag `<package>/<version>` on the merge commit.
@@ -256,33 +266,31 @@ Further reading: [Melos environment variables — `MELOS_PACKAGES](https://melos
 
 ### Version sync
 
-Melos `version` and the sync script keep `pubspec.yaml` and `version.dart` aligned. During `release.prepare`, the Melos `preCommit` hook runs `tool/sync_package_version.dart` for each scoped publishable package before creating per-package release commits.
+[`tool/sync_package_version.dart`](tool/sync_package_version.dart) keeps each package's `pubspec.yaml` and `lib/src/version.dart` aligned. It runs **inside** `release.prepare` immediately after `tool/prepare_package_release.dart --apply` — CI does not invoke it as a separate workflow step.
 
 ```bash
 dart run tool/sync_package_version.dart --package clay_core
 dart run tool/sync_package_version.dart --package clay_cli
 ```
 
-Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `melos version`.
+Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `release.prepare`.
 
-### Melos version flags
+### Prepare tool flags
 
-`release.prepare` passes flags required for **independent** dev releases in this monorepo:
+Set **`MELOS_PACKAGES=<package>`** to scope `melos run release.prepare` to one publishable package (`clay_core` or `clay_cli`). The Melos script embeds `--tag-format`, `--commit-types`, and **`--bump build`** — operators and CI share the same values; the prepare-release workflow does not duplicate them.
 
+| Flag | Purpose |
+| --- | --- |
+| `--cwd` | Package root directory (Melos sets this from `MELOS_PACKAGES`). |
+| `--tag-format` | Tag template for latest-tag lookup and safety gate. Embedded value: `'{name}/{version}'` (for example `clay_core/0.0.1-dev.2`). |
+| `--commit-types` | Comma-separated conventional commit types included in the changelog. Embedded value: `feat,fix,docs,refactor,test,build`. |
+| `--bump build` | **Fixed in `release.prepare`.** Increments `-dev.N` only; scoped commits still appear in the changelog but do not auto-bump semver segments. |
+| `--bump patch\|minor\|major` | Explicit semver segment bump (direct tool invocation only; resets `-dev.N` to `1`). |
+| `--version <semver>` | Exact target version (`-dev.N` prerelease only in v1). Mutually exclusive with `--bump`. |
+| `--allow-unsafe-bump` | Skip the tag/pubspec equality safety gate (local recovery). |
+| `--apply` | Write `pubspec.yaml` (`version:` line only) and prepend `CHANGELOG.md`. Omitted by default (dry-run). Always passed by `release.prepare`. |
 
-| Flag                        | Why                                                                                                                           |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `--no-git-commit-version`   | The Melos `preCommit` hook syncs `version.dart` and creates per-package commits — Melos does not commit on its own.          |
-| `--no-git-tag-version`      | [Release tagging](#release-tagging) creates tags when the release PR merges — not when Melos commits the version bump.        |
-| `--no-dependent-versions`   | Bumping `clay_core` must not auto-bump `clay_cli` when only core is releasing. Bump the CLI in its own release PR when ready. |
-| `--preid=dev`               | Pre-1.0 preview releases use `-dev.N` build identifiers.                                                                      |
-| `--yes`                     | Non-interactive confirmation for CI and automated prepare-release runs.                                                       |
-| `--manual-version=…`        | Select `build`, `patch`, `minor`, `major`, or an exact version per package.                                                   |
-
-
-Melos also keeps `--dependent-constraints` enabled by default so a `clay_cli` release can update its `clay_core:` minimum when needed.
-
-Further reading: [Melos `version` command](https://melos.invertase.dev/commands/version), [Melos automated releases guide](https://melos.invertase.dev/guides/automated-releases).
+Further reading: [`tool/prepare_package_release.dart`](tool/prepare_package_release.dart) (`dart run tool/prepare_package_release.dart --help`).
 
 ---
 
