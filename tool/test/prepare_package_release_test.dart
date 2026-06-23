@@ -1404,12 +1404,15 @@ environment:
         changelogFile.readAsStringSync(),
         startsWith('## 0.1.0-dev.1'),
       );
-      expect(changelogFile.readAsStringSync(), contains(changelogBefore.trim()));
+      expect(
+        changelogFile.readAsStringSync(),
+        contains(changelogBefore.trim()),
+      );
     });
 
     test('only changes the version line in pubspec.yaml', () {
-      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
-      packageDir.createSync(recursive: true);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg')
+        ..createSync(recursive: true);
       File('${packageDir.path}/pubspec.yaml').writeAsStringSync('''
 name: synthetic_pkg
 description: Keep this line intact
@@ -1417,7 +1420,8 @@ version: 0.0.1-dev.2
 environment:
   sdk: ^3.0.0
 ''');
-      File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
+      File('${packageDir.path}/CHANGELOG.md')
+          .writeAsStringSync('# Changelog\n');
       _initGitRepo(tempRoot);
       _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
       _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
@@ -1437,7 +1441,8 @@ environment:
       final result = applyPrepareReleasePlan(planResult.plan!);
 
       expect(result.applied, isTrue);
-      final updated = File('${packageDir.path}/pubspec.yaml').readAsStringSync();
+      final updated =
+          File('${packageDir.path}/pubspec.yaml').readAsStringSync();
       expect(updated, contains('description: Keep this line intact'));
       expect(updated, contains('environment:\n  sdk: ^3.0.0'));
       expect(updated, contains('version: 0.1.0-dev.1'));
