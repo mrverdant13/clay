@@ -1100,7 +1100,6 @@ class PrepareReleasePlan {
     required this.nextVersion,
     required this.commits,
     required this.changelogSection,
-    required this.updatedChangelog,
   });
 
   final PackageContext packageContext;
@@ -1111,7 +1110,6 @@ class PrepareReleasePlan {
   final Version nextVersion;
   final List<ConventionalCommit> commits;
   final String changelogSection;
-  final String updatedChangelog;
 
   String get packageName => packageContext.name;
 
@@ -1210,7 +1208,6 @@ class PrepareReleasePlan {
       nextVersion: nextVersion,
       commits: commits,
       changelogSection: changelogResult.section!,
-      updatedChangelog: changelogResult.changelog!,
     ),
     errorMessage: null,
   );
