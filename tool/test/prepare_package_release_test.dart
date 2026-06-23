@@ -1113,6 +1113,141 @@ void main() {
       expect(result.errorMessage, contains('No release tag found'));
     });
   });
+
+  group('collectCommitsSinceTag', () {
+    test('returns commits since the latest tag in chronological order', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'chore: unrelated root change',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-2.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-3.txt',
+        message: 'fix(synthetic_pkg): handle missing config',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-4.txt',
+        message: 'feat(other_pkg): ignore me',
+      );
+
+      final result = collectCommitsSinceTag(
+        gitRoot: tempRoot,
+        latestTag: 'synthetic_pkg/0.0.1-dev.2',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(
+        result.commits!.map((commit) => commit.subject).toList(),
+        [
+          'chore: unrelated root change',
+          'feat(synthetic_pkg): add preview command',
+          'fix(synthetic_pkg): handle missing config',
+          'feat(other_pkg): ignore me',
+        ],
+      );
+    });
+
+    test('preserves commit bodies for breaking change detection', () {
+      _initGitRepoWithCommit(tempRoot);
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _runGit(tempRoot, [
+        'commit',
+        '--allow-empty',
+        '-m',
+        'feat(synthetic_pkg): reshape preview API',
+        '-m',
+        'BREAKING CHANGE: preview command flags were renamed.',
+      ]);
+
+      final result = collectCommitsSinceTag(
+        gitRoot: tempRoot,
+        latestTag: 'synthetic_pkg/0.0.1-dev.2',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.commits, hasLength(1));
+      expect(
+        result.commits!.single.subject,
+        'feat(synthetic_pkg): reshape preview API',
+      );
+      expect(
+        result.commits!.single.body,
+        contains('BREAKING CHANGE'),
+      );
+    });
+  });
+
+  group('collectScopedCommitsSinceTag', () {
+    test('integration: collects scoped commits after safety gate passes', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-2.txt',
+        message: 'fix(synthetic_pkg): handle missing config (#43)',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-3.txt',
+        message: 'chore: update CI',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-4.txt',
+        message: 'feat(other_pkg): ignore me',
+      );
+
+      final safetyResult = resolveLatestTagWithSafetyGate(
+        gitRoot: tempRoot,
+        tagFormat: '{name}/{version}',
+        packageName: 'synthetic_pkg',
+        currentVersion: Version.parse('0.0.1-dev.2'),
+      );
+      expect(safetyResult.errorMessage, isNull);
+
+      final commitsResult = collectScopedCommitsSinceTag(
+        gitRoot: tempRoot,
+        latestTag: safetyResult.latestTag!,
+        packageName: 'synthetic_pkg',
+        allowedTypes: const {
+          'feat',
+          'fix',
+          'docs',
+          'refactor',
+          'test',
+          'build',
+        },
+      );
+
+      expect(commitsResult.errorMessage, isNull);
+      expect(commitsResult.commits, hasLength(2));
+      expect(commitsResult.commits!.map((commit) => commit.subject).toList(), [
+        'feat(synthetic_pkg): add preview command',
+        'fix(synthetic_pkg): handle missing config (#43)',
+      ]);
+    });
+  });
 }
 
 File _writePubspec({
@@ -1153,6 +1288,15 @@ void _initGitRepoWithCommit(Directory repoRoot) {
 void _gitCommitAll(Directory repoRoot, {required String message}) {
   _runGit(repoRoot, ['add', '-A']);
   _runGit(repoRoot, ['commit', '-m', message]);
+}
+
+void _gitCommitWithFileChange(
+  Directory repoRoot, {
+  required String fileName,
+  required String message,
+}) {
+  File('${repoRoot.path}/$fileName').writeAsStringSync('$message\n');
+  _gitCommitAll(repoRoot, message: message);
 }
 
 void _gitCreateAnnotatedTag(Directory repoRoot, String tagName) {
