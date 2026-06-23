@@ -1264,28 +1264,34 @@ ArgParser buildPrepareReleaseArgParser() {
     )
     ..addOption(
       'cwd',
-      help: 'Package root directory (must contain pubspec.yaml and CHANGELOG.md).',
+      help: 'Package root directory '
+          '(must contain pubspec.yaml and CHANGELOG.md).',
     )
     ..addOption(
       'tag-format',
-      help: "Tag template with {name} and {version} (e.g. '{name}/{version}').",
+      help:
+          "Tag template with {name} and {version} ''(e.g. '{name}/{version}').",
     )
     ..addOption(
       'commit-types',
-      help: 'Comma-separated conventional commit types to include in the changelog.',
+      help: 'Comma-separated conventional commit types '
+          'to include in the changelog.',
     );
 }
 
 void printPrepareReleaseUsage() {
-  stdout.writeln('Usage: dart run tool/prepare_package_release.dart [options]');
-  stdout.writeln();
-  stdout.writeln(buildPrepareReleaseArgParser().usage);
+  stdout
+    ..writeln('Usage: dart run tool/prepare_package_release.dart [options]')
+    ..writeln()
+    ..writeln(buildPrepareReleaseArgParser().usage);
 }
 
 /// Parses CLI arguments for the prepare release tool.
 ///
 /// Returns `null` when usage is invalid; callers should exit `64`.
-PrepareReleaseCliOptions? parsePrepareReleaseCliOptions(List<String> arguments) {
+PrepareReleaseCliOptions? parsePrepareReleaseCliOptions(
+  List<String> arguments,
+) {
   if (arguments.isEmpty) {
     stderr.writeln('Missing required arguments.');
     return null;
