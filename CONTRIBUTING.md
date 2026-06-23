@@ -229,7 +229,7 @@ Regular [Dart CI](.github/workflows/ci.yaml) runs format, analyze, and tests on 
 | **[Prepare Dart package release](.github/workflows/prepare-release.yaml)** | `workflow_dispatch` — choose `clay_core` or `clay_cli` | Runs scoped `release.prepare`, pushes `<package>/chore/release-<version>`, and opens a release PR    |
 | **[Dart release PR check](.github/workflows/release-pr.yaml)**             | Pull request to `main` when release manifests change   | Runs `MELOS_PACKAGES`-scoped `release.check` when the PR title and branch match the release pattern  |
 | **[Release tag on merge](.github/workflows/release-tag.yaml)**             | Merged release PR to `main`; optional `workflow_dispatch` | Creates and pushes annotated tag `<package>/<version>` on the merge commit (or recreates a missing tag on `main`) |
-| **[Publish Dart package](.github/workflows/publish.yaml)**                 | `workflow_dispatch` — choose package and `dry_run`     | Pre-publish gate (`dry_run: true`) or OIDC live publish + pub.dev poll + tag verify (`dry_run: false` on the matching tag ref) |
+| **[Publish Dart package](.github/workflows/publish.yaml)**                 | `workflow_dispatch` — choose package and `dry_run`     | Pre-publish gate (`dry_run: true`) or OIDC live publish with inline tag verify + pub.dev poll (`dry_run: false` on the matching tag ref) |
 
 
 Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authentication via [`dart-lang/setup-dart@v1`](https://github.com/dart-lang/setup-dart). Configure [environment protection rules](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#environment-protection-rules) (for example required reviewers). See [Dart automated publishing](https://dart.dev/tools/pub/automated-publishing) for pub.dev admin setup and [pub.dev automated publishing setup (maintainers)](#pubdev-automated-publishing-setup-maintainers) above.
@@ -251,7 +251,7 @@ Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authen
 3. **Review the release PR.** One package per PR — do not combine `clay_core` and `clay_cli`. For `clay_cli` releases after a new `clay_core`, push a follow-up commit on the release branch updating the `clay_core:` minimum constraint (for example `clay_core: ^0.0.1-dev.2`) before merge — the prepare workflow does not auto-bump dependent packages.
 4. **Wait for release PR CI.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` when the PR title, branch name, and changed release manifests all match. CI fails if more than one publishable package's manifests change in the same PR.
 5. **Merge the release PR** into `main`. [Release tag on merge](.github/workflows/release-tag.yaml) automatically creates and pushes annotated tag `<package>/<version>` on the merge commit.
-6. **Publish to pub.dev.** Run **Actions → Publish Dart package**, choose **Use workflow from: Tags**, select tag ref `<package>/<version>`, choose the target package, set `dry_run: false`, and approve the `pub-dev-publish` environment. The workflow verifies the release tag on `HEAD`, publishes via OIDC (`dart pub publish --force`), polls pub.dev until the version appears ([`tool/wait_for_pub_dev_version.dart`](tool/wait_for_pub_dev_version.dart)), and confirms the tag is still on `HEAD` — it does **not** create a new tag.
+6. **Publish to pub.dev.** Run **Actions → Publish Dart package**, choose **Use workflow from: Tags**, select tag ref `<package>/<version>`, choose the target package, set `dry_run: false`, and approve the `pub-dev-publish` environment. The workflow verifies the release tag on `HEAD` (inline shell), publishes via OIDC (`dart pub publish --force`), and polls pub.dev until the version appears ([`tool/wait_for_pub_dev_version.dart`](tool/wait_for_pub_dev_version.dart)) — it does **not** create a new tag.
    - **Failure recovery:** If publish or the pub.dev poll fails, the workflow deletes the release tag. Fix the issue, run **Actions → Release tag on merge** with `workflow_dispatch` to recreate the tag on `main`, then dispatch publish again on that tag ref.
    - **Pre-publish gate:** To run `release.check` outside a release PR, dispatch the same workflow with `dry_run: true` (the default) from `main` or a tag ref. That runs `release.check` only — no pub.dev publish.
 7. **Release order.** When both packages release, prepare and publish **`clay_core` first**, then **`clay_cli`**.
@@ -296,7 +296,7 @@ Further reading: [`tool/prepare_package_release.dart`](tool/prepare_package_rele
 
 ## Release tagging
 
-Published packages in this monorepo are tagged **independently** — one git tag per package release. **[Release tag on merge](.github/workflows/release-tag.yaml)** creates and pushes an annotated tag when a release PR merges to `main`. **[Publish Dart package](.github/workflows/publish.yaml)** verifies that tag on `HEAD` before and after OIDC publish; it does not create tags.
+Published packages in this monorepo are tagged **independently** — one git tag per package release. **[Release tag on merge](.github/workflows/release-tag.yaml)** creates and pushes an annotated tag when a release PR merges to `main`. **[Publish Dart package](.github/workflows/publish.yaml)** verifies that tag on `HEAD` before OIDC publish (inline shell); it does not create tags.
 
 ### Format
 
@@ -331,14 +331,14 @@ When a release tag is missing and must be recreated on `main`:
 
 **Primary — workflow dispatch.** Run **Actions → [Release tag on merge](.github/workflows/release-tag.yaml)** → **Run workflow** on branch `main`, select `clay_core` or `clay_cli`. This creates annotated tag `<package>/<version>` on the current `main` commit, where `<version>` comes from that package's `pubspec.yaml`.
 
-**Optional — local verify or dry-run** (does not create tags):
+**Optional — local verify** (does not create tags):
 
 ```bash
-# Same annotated-tag-on-HEAD check the publish workflow runs
-dart run tool/release_tag.dart --package clay_core --verify
-
-# Print planned git tag / git push commands without mutating git
-dart run tool/release_tag.dart --package clay_core
+# Same annotated-tag-on-HEAD check the publish workflow runs (clay_core example)
+version=$(grep '^version:' packages/clay_core/pubspec.yaml | awk '{print $2}')
+expected_tag="clay_core/${version}"
+git cat-file -t "refs/tags/${expected_tag}"   # must print "tag" (annotated)
+test "$(git rev-list -n 1 "$expected_tag")" = "$(git rev-parse HEAD)"
 ```
 
 List tags for a package:
