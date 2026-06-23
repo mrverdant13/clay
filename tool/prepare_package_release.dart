@@ -1356,6 +1356,26 @@ void printPrepareReleasePlan(PrepareReleasePlan plan) {
     ..writeln('latest_tag=${plan.latestTag}');
 }
 
+/// Prints apply-mode summary after files were written.
+void printApplyResult(PrepareReleasePlan plan) {
+  stdout
+    ..writeln('Applied release changes.')
+    ..writeln()
+    ..writeln('Package: ${plan.packageName}')
+    ..writeln('Package directory: ${plan.packageContext.packageCwd.path}')
+    ..writeln('Updated version: ${plan.currentVersion} → ${plan.nextVersion}')
+    ..writeln('Prepended changelog section for ${plan.nextVersion}')
+    ..writeln()
+    ..writeln('Suggested commit message:')
+    ..writeln(plan.suggestedCommitMessage)
+    ..writeln()
+    ..writeln('package_name=${plan.packageName}')
+    ..writeln('release_version=${plan.nextVersion}')
+    ..writeln('package_cwd=${plan.packageContext.packageCwd.path}')
+    ..writeln('tag_format=${plan.tagFormat}')
+    ..writeln('latest_tag=${plan.latestTag}');
+}
+
 ArgParser buildPrepareReleaseArgParser() {
   return ArgParser()
     ..addFlag(
@@ -1393,6 +1413,11 @@ ArgParser buildPrepareReleaseArgParser() {
       'allow-unsafe-bump',
       help: 'Allow release planning when pubspec version does not match '
           'the latest release tag.',
+    )
+    ..addFlag(
+      'apply',
+      help: 'Write pubspec.yaml (version line only) and prepend CHANGELOG.md. '
+          'Default is dry-run.',
     );
 }
 
@@ -1473,6 +1498,7 @@ PrepareReleaseCliOptions? parsePrepareReleaseCliOptions(
       explicitBump: explicitBump,
       explicitVersionText: explicitVersionText,
       allowUnsafeBump: results['allow-unsafe-bump'] as bool? ?? false,
+      apply: results['apply'] as bool? ?? false,
     );
   } on FormatException catch (error) {
     stderr.writeln(error.message);
@@ -1490,6 +1516,7 @@ class PrepareReleaseCliOptions {
     this.explicitBump,
     this.explicitVersionText,
     this.allowUnsafeBump = false,
+    this.apply = false,
   });
 
   final bool showHelp;
@@ -1499,6 +1526,7 @@ class PrepareReleaseCliOptions {
   final ExplicitVersionBump? explicitBump;
   final String? explicitVersionText;
   final bool allowUnsafeBump;
+  final bool apply;
 }
 
 void main(List<String> arguments) {
@@ -1526,6 +1554,17 @@ void main(List<String> arguments) {
     exit(1);
   }
 
-  printPrepareReleasePlan(planResult.plan!);
+  final plan = planResult.plan!;
+  if (options.apply) {
+    final applyResult = applyPrepareReleasePlan(plan);
+    if (applyResult.errorMessage != null) {
+      stderr.writeln(applyResult.errorMessage);
+      exit(1);
+    }
+    printApplyResult(plan);
+    exit(0);
+  }
+
+  printPrepareReleasePlan(plan);
   exit(0);
 }
