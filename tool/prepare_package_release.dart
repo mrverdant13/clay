@@ -849,6 +849,17 @@ enum ReleaseSafetyFailure {
   pubspecBehindTag,
 }
 
+/// A git commit entry collected from `git log <tag>..HEAD`.
+class GitCommitEntry {
+  const GitCommitEntry({
+    required this.subject,
+    this.body,
+  });
+
+  final String subject;
+  final String? body;
+}
+
 /// Validates the tag-based release safety gate.
 ///
 /// When [allowUnsafeBump] is `true`, version mismatches are allowed but a
@@ -942,6 +953,135 @@ enum ReleaseSafetyFailure {
   return (
     latestTag: latestTagResult.tag,
     latestTagVersion: latestTagResult.version,
+    errorMessage: null,
+  );
+}
+
+const _gitCommitRecordDelimiter = '---COMMIT---';
+
+/// Collects commits from `git log <latestTag>..HEAD`.
+///
+/// Returns entries in chronological order (oldest first).
+({List<GitCommitEntry>? commits, String? errorMessage}) collectCommitsSinceTag({
+  required Directory gitRoot,
+  required String latestTag,
+}) {
+  final result = Process.runSync(
+    'git',
+    [
+      '-C',
+      gitRoot.path,
+      'log',
+      '$latestTag..HEAD',
+      '--reverse',
+      '--format=%s%n%b%n$_gitCommitRecordDelimiter',
+    ],
+  );
+  if (result.exitCode != 0) {
+    final stderrText = result.stderr.toString().trim();
+    return (
+      commits: null,
+      errorMessage: stderrText.isEmpty
+          ? 'Failed to collect commits since tag $latestTag.'
+          : 'Failed to collect commits since tag $latestTag: $stderrText',
+    );
+  }
+
+  final stdoutText = result.stdout.toString();
+  if (stdoutText.trim().isEmpty) {
+    return (commits: const [], errorMessage: null);
+  }
+
+  final commits = <GitCommitEntry>[];
+  for (final rawRecord in stdoutText.split('$_gitCommitRecordDelimiter\n')) {
+    final record = rawRecord.trim();
+    if (record.isEmpty) {
+      continue;
+    }
+
+    final lines = record.split('\n');
+    final subject = lines.first.trim();
+    if (subject.isEmpty) {
+      continue;
+    }
+
+    final bodyLines = lines.skip(1).toList();
+    while (bodyLines.isNotEmpty && bodyLines.last.trim().isEmpty) {
+      bodyLines.removeLast();
+    }
+    final body = bodyLines.isEmpty ? null : bodyLines.join('\n');
+
+    commits.add(GitCommitEntry(subject: subject, body: body));
+  }
+
+  return (commits: commits, errorMessage: null);
+}
+
+/// Parses [entries] into conventional commits, preserving commit bodies.
+List<ConventionalCommit> parseConventionalCommits(
+  Iterable<GitCommitEntry> entries,
+) {
+  final commits = <ConventionalCommit>[];
+
+  for (final entry in entries) {
+    final parsed = parseConventionalCommitSubject(entry.subject);
+    if (parsed == null) {
+      continue;
+    }
+
+    commits.add(
+      ConventionalCommit(
+        type: parsed.type,
+        scopes: parsed.scopes,
+        description: parsed.description,
+        subject: parsed.subject,
+        isBreakingChange: parsed.isBreakingChange,
+        body: entry.body,
+      ),
+    );
+  }
+
+  return commits;
+}
+
+/// Collects scoped conventional commits since [latestTag].
+({List<ConventionalCommit>? commits, String? errorMessage})
+    collectScopedCommitsSinceTag({
+  required Directory gitRoot,
+  required String latestTag,
+  required String packageName,
+  required Set<String> allowedTypes,
+}) {
+  final logResult = collectCommitsSinceTag(
+    gitRoot: gitRoot,
+    latestTag: latestTag,
+  );
+  if (logResult.errorMessage != null) {
+    return (commits: null, errorMessage: logResult.errorMessage);
+  }
+
+  final parsed = parseConventionalCommits(logResult.commits!);
+  final filtered = filterConventionalCommits(
+    subjects: parsed.map((commit) => commit.subject),
+    packageName: packageName,
+    allowedTypes: allowedTypes,
+  );
+  final bodiesBySubject = {
+    for (final commit in parsed) commit.subject: commit.body,
+  };
+
+  return (
+    commits: [
+      for (final commit in filtered)
+        ConventionalCommit(
+          type: commit.type,
+          scopes: commit.scopes,
+          description: commit.description,
+          subject: commit.subject,
+          isBreakingChange: commit.isBreakingChange,
+          body: bodiesBySubject[commit.subject],
+        ),
+    ],
     errorMessage: null,
   );
 }
