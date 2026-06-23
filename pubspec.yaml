@@ -216,20 +216,20 @@ melos:
     release.prepare:
       description: >
         Bump version and changelog for a single package release. Set
-        MELOS_PACKAGES=<package> (required).
+        MELOS_PACKAGES=<package> to scope to one package.
       run: >
-        if [ -z "${MELOS_PACKAGES:-}" ]; then
-        echo "MELOS_PACKAGES is required. Example: MELOS_PACKAGES=clay_core melos run release.prepare" >&2;
-        exit 1;
-        fi
-        &&
-        dart run tool/prepare_package_release.dart
-        --cwd "packages/${MELOS_PACKAGES}"
+        dart run MELOS_ROOT_PATH/tool/prepare_package_release.dart
+        --cwd "MELOS_PACKAGE_PATH"
         --tag-format '{name}/{version}'
         --commit-types feat,fix,docs,refactor,test,build
         --apply
         &&
-        dart run tool/sync_package_version.dart --package "${MELOS_PACKAGES}"
+        dart run MELOS_ROOT_PATH/tool/sync_package_version.dart
+        --package "MELOS_PACKAGE_NAME"
+      exec: {}
+      packageFilters:
+        category:
+          - publishable
 
 workspace:
   - packages/clay_core/
