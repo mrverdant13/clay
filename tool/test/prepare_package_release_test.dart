@@ -1635,7 +1635,10 @@ void main() {
         name: 'synthetic_pkg',
         version: '0.0.1-dev.3',
       );
-      _gitCommitAll(tempRoot, message: 'chore(synthetic_pkg): bump dev version');
+      _gitCommitAll(
+        tempRoot,
+        message: 'chore(synthetic_pkg): bump dev version',
+      );
       _gitCommitWithFileChange(
         tempRoot,
         fileName: 'change-1.txt',
