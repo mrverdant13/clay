@@ -64,6 +64,24 @@ jobs:
           echo "value=$version" >> "$GITHUB_OUTPUT"
           echo "branch=${{ inputs.package }}/chore/release-${version}" >> "$GITHUB_OUTPUT"
 
+      - name: Commit release changes
+        run: |
+          set -euo pipefail
+          package="${{ inputs.package }}"
+          version="${{ steps.version.outputs.value }}"
+
+          git add \
+            "packages/${package}/pubspec.yaml" \
+            "packages/${package}/CHANGELOG.md" \
+            "packages/${package}/lib/src/version.dart"
+
+          if git diff --cached --quiet; then
+            echo "::error::No release changes to commit for ${package}."
+            exit 1
+          fi
+
+          git commit -m "chore(${package}): release ${version}"
+
       - name: Push release branch and open pull request
         env:
           GH_TOKEN: ${{ github.token }}
