@@ -1248,6 +1248,173 @@ void main() {
       ]);
     });
   });
+
+  group('buildPrepareReleasePlan', () {
+    test('builds a release plan for a valid fixture repository', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-2.txt',
+        message: 'fix(synthetic_pkg): handle missing config (#43)',
+      );
+
+      final result = buildPrepareReleasePlan(
+        cwd: packageDir.path,
+        tagFormat: '{name}/{version}',
+        commitTypesInput: 'feat,fix,docs,refactor,test,build',
+      );
+
+      expect(result.errorMessage, isNull);
+      final plan = result.plan!;
+      expect(plan.packageName, 'synthetic_pkg');
+      expect(plan.latestTag, 'synthetic_pkg/0.0.1-dev.2');
+      expect(plan.currentVersion, Version.parse('0.0.1-dev.2'));
+      expect(plan.nextVersion, Version.parse('0.1.0-dev.1'));
+      expect(plan.commits, hasLength(2));
+      expect(plan.changelogSection, contains('## 0.1.0-dev.1'));
+      expect(
+        plan.suggestedCommitMessage,
+        'chore(synthetic_pkg): release 0.1.0-dev.1',
+      );
+    });
+  });
+
+  group('parsePrepareReleaseCliOptions', () {
+    test('returns help mode for --help', () {
+      final options = parsePrepareReleaseCliOptions(['--help']);
+
+      expect(options, isNotNull);
+      expect(options!.showHelp, isTrue);
+    });
+
+    test('returns null when required options are missing', () {
+      expect(parsePrepareReleaseCliOptions([]), isNull);
+      expect(
+        parsePrepareReleaseCliOptions(['--cwd', 'packages/foo']),
+        isNull,
+      );
+    });
+
+    test('parses required options', () {
+      final options = parsePrepareReleaseCliOptions([
+        '--cwd',
+        'packages/synthetic_pkg',
+        '--tag-format',
+        '{name}/{version}',
+        '--commit-types',
+        'feat,fix',
+      ]);
+
+      expect(options, isNotNull);
+      expect(options!.showHelp, isFalse);
+      expect(options.cwd, 'packages/synthetic_pkg');
+      expect(options.tagFormat, '{name}/{version}');
+      expect(options.commitTypes, 'feat,fix');
+    });
+
+    test('rejects unknown flags', () {
+      expect(
+        parsePrepareReleaseCliOptions([
+          '--cwd',
+          'packages/synthetic_pkg',
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat',
+          '--apply',
+        ]),
+        isNull,
+      );
+    });
+  });
+
+  group('prepare release CLI', () {
+    test('dry-run prints plan without modifying package files', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'feat(synthetic_pkg): add preview command',
+      );
+
+      final pubspecBefore =
+          File('${packageDir.path}/pubspec.yaml').readAsStringSync();
+      final changelogBefore =
+          File('${packageDir.path}/CHANGELOG.md').readAsStringSync();
+
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: [
+          '--cwd',
+          packageDir.path,
+          '--tag-format',
+          '{name}/{version}',
+          '--commit-types',
+          'feat,fix,docs,refactor,test,build',
+        ],
+      );
+
+      expect(result.exitCode, 0, reason: result.stderr.toString());
+      expect(result.stdout, contains('Dry run'));
+      expect(result.stdout, contains('package_name=synthetic_pkg'));
+      expect(result.stdout, contains('release_version=0.1.0-dev.1'));
+      expect(result.stdout, contains('latest_tag=synthetic_pkg/0.0.1-dev.2'));
+      expect(
+        result.stdout,
+        contains('chore(synthetic_pkg): release 0.1.0-dev.1'),
+      );
+      expect(
+        File('${packageDir.path}/pubspec.yaml').readAsStringSync(),
+        pubspecBefore,
+      );
+      expect(
+        File('${packageDir.path}/CHANGELOG.md').readAsStringSync(),
+        changelogBefore,
+      );
+    });
+
+    test('--help exits zero and documents required flags', () {
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: ['--help'],
+      );
+
+      expect(result.exitCode, 0);
+      expect(result.stdout, contains('--cwd'));
+      expect(result.stdout, contains('--tag-format'));
+      expect(result.stdout, contains('--commit-types'));
+    });
+
+    test('missing required flags exits 64', () {
+      final result = _runPrepareReleaseCli(
+        repoRoot: tempRoot,
+        arguments: ['--cwd', 'packages/synthetic_pkg'],
+      );
+
+      expect(result.exitCode, 64);
+    });
+  });
 }
 
 File _writePubspec({
@@ -1329,4 +1496,30 @@ File _readTestFixture(String name) {
   }
 
   fail('Fixture not found: $name (cwd: ${Directory.current.path})');
+}
+
+ProcessResult _runPrepareReleaseCli({
+  required Directory repoRoot,
+  required List<String> arguments,
+}) {
+  final clayRepoRoot = _resolveClayRepoRoot();
+  final scriptPath = '${clayRepoRoot.path}/tool/prepare_package_release.dart';
+  return Process.runSync(
+    'dart',
+    ['run', scriptPath, ...arguments],
+    workingDirectory: clayRepoRoot.path,
+  );
+}
+
+Directory _resolveClayRepoRoot() {
+  for (final start in [Directory.current, Directory.current.parent]) {
+    final candidate = File('${start.path}/tool/prepare_package_release.dart');
+    if (candidate.existsSync()) {
+      return start;
+    }
+  }
+
+  fail(
+    'Could not resolve clay repo root (cwd: ${Directory.current.path})',
+  );
 }
