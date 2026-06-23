@@ -266,14 +266,14 @@ Further reading: [Melos environment variables — `MELOS_PACKAGES](https://melos
 
 ### Version sync
 
-Melos `version` and the sync script keep `pubspec.yaml` and `version.dart` aligned. During `release.prepare`, the Melos `preCommit` hook runs `tool/sync_package_version.dart` for each scoped publishable package before creating per-package release commits.
+[`tool/sync_package_version.dart`](tool/sync_package_version.dart) keeps each package's `pubspec.yaml` and `lib/src/version.dart` aligned. It runs **inside** `release.prepare` immediately after `tool/prepare_package_release.dart --apply` — CI does not invoke it as a separate workflow step.
 
 ```bash
 dart run tool/sync_package_version.dart --package clay_core
 dart run tool/sync_package_version.dart --package clay_cli
 ```
 
-Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `melos version`.
+Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `release.prepare`.
 
 ### Melos version flags
 
