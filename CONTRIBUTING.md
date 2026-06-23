@@ -266,11 +266,11 @@ Further reading: [Melos environment variables — `MELOS_PACKAGES](https://melos
 
 ### Version sync
 
-[`tool/sync_package_version.dart`](tool/sync_package_version.dart) keeps each package's `pubspec.yaml` and `lib/src/version.dart` aligned. It runs **inside** `release.prepare` immediately after `tool/prepare_package_release.dart --apply` — CI does not invoke it as a separate workflow step.
+[`tool/sync_package_version.dart`](tool/sync_package_version.dart) keeps each package's `pubspec.yaml` and `lib/src/version.dart` aligned. It runs **inside** `release.prepare` immediately after `tool/prepare_package_release.dart --apply` — CI does not invoke it as a separate workflow step. Pass `--cwd` to the package root; the tool discovers the semver-shaped `const` in `lib/src/version.dart` (use `--version-const` when multiple candidates exist).
 
 ```bash
-dart run tool/sync_package_version.dart --package clay_core
-dart run tool/sync_package_version.dart --package clay_cli
+dart run tool/sync_package_version.dart --cwd packages/clay_core
+dart run tool/sync_package_version.dart --cwd packages/clay_cli
 ```
 
 Unit tests in each package fail CI when the manifest and constant diverge. Run the sync script manually if you change `version:` in `pubspec.yaml` outside `release.prepare`.

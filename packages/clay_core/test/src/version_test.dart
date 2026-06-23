@@ -53,7 +53,7 @@ void main() {
       reason: 'clayCoreVersion ($clayCoreVersion) must match '
           'pubspec.yaml version ($pubspecVersion). '
           'Update lib/src/version.dart after bumping pubspec.yaml, or run '
-          'dart run tool/sync_package_version.dart --package clay_core '
+          'dart run tool/sync_package_version.dart --cwd packages/clay_core '
           'once the sync script is available.',
     );
   });
