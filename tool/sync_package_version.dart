@@ -1,5 +1,9 @@
 import 'dart:io';
 
+import 'package:pub_semver/pub_semver.dart';
+
+/// Hardcoded package metadata still used by [release_tag.dart] and
+/// [wait_for_pub_dev_version.dart] until those tools adopt `--cwd`.
 const packageConfigs = <String, PackageConfig>{
   'clay_core': PackageConfig(
     packagePath: 'packages/clay_core',
@@ -16,59 +20,75 @@ final _pubspecVersionPattern = RegExp(
   multiLine: true,
 );
 
+final _versionConstPattern = RegExp(
+  r"const\s+(\w+)\s*=\s*'([^']*)';",
+);
+
 void main(List<String> arguments) {
-  final packageName = _readPackageArgument(arguments);
-  if (packageName == null) {
+  final cwd = _readCwdArgument(arguments);
+  if (cwd == null) {
     _printUsage();
     exit(64);
   }
 
-  final config = packageConfigs[packageName];
-  if (config == null) {
-    stderr
-      ..writeln('Unknown package: $packageName')
-      ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
-    exit(1);
-  }
-
-  exit(syncPackageVersion(config, _repoRoot()));
+  final versionConstName = _readVersionConstArgument(arguments);
+  exit(syncPackageVersion(Directory(cwd), versionConstName: versionConstName));
 }
 
-/// Syncs [config]'s `lib/src/version.dart` const from its `pubspec.yaml`.
+/// Syncs `lib/src/version.dart` in [packageCwd] from its `pubspec.yaml`.
 ///
-/// Returns `0` on success (including when already in sync) and `1` on failure.
-int syncPackageVersion(PackageConfig config, Directory repoRoot) {
-  final packageDir = Directory('${repoRoot.path}/${config.packagePath}');
-  final pubspecFile = File('${packageDir.path}/pubspec.yaml');
+/// When [versionConstName] is omitted, discovers a single semver-shaped
+/// `const` in `lib/src/version.dart`. Returns `0` on success (including when
+/// already in sync) and `1` on failure.
+int syncPackageVersion(
+  Directory packageCwd, {
+  String? versionConstName,
+}) {
+  final resolvedCwd = packageCwd.absolute;
+  final pubspecFile = File('${resolvedCwd.path}/pubspec.yaml');
   if (!pubspecFile.existsSync()) {
     stderr.writeln('Missing pubspec.yaml: ${pubspecFile.path}');
     return 1;
   }
 
   final version = readPubspecVersion(pubspecFile);
-  final versionDartFile = File('${packageDir.path}/lib/src/version.dart');
+  final versionDartFile = File('${resolvedCwd.path}/lib/src/version.dart');
   if (!versionDartFile.existsSync()) {
     stderr.writeln('Missing version.dart: ${versionDartFile.path}');
     return 1;
   }
 
   final currentContents = versionDartFile.readAsStringSync();
+  final String resolvedConstName;
+  if (versionConstName != null) {
+    resolvedConstName = versionConstName;
+  } else {
+    final discovery = discoverVersionConstName(currentContents);
+    if (discovery?.name == null) {
+      stderr.writeln(
+        discovery?.errorMessage ??
+            'Could not discover a version const in ${versionDartFile.path}',
+      );
+      return 1;
+    }
+    resolvedConstName = discovery!.name!;
+  }
+
   final pattern = RegExp(
-    "const ${config.versionConstName} = '[^']*';",
+    "const $resolvedConstName = '[^']*';",
   );
   final match = pattern.firstMatch(currentContents);
   if (match == null) {
     stderr.writeln(
-      'Could not find const ${config.versionConstName} in '
-      '${versionDartFile.path}',
+      'Could not find const $resolvedConstName in ${versionDartFile.path}',
     );
     return 1;
   }
 
-  final updatedConst = "const ${config.versionConstName} = '$version';";
+  final updatedConst = "const $resolvedConstName = '$version';";
   if (match.group(0) == updatedConst) {
     stdout.writeln(
-      '${config.packagePath}: ${config.versionConstName} already matches '
+      '${resolvedCwd.path}: $resolvedConstName already matches '
       'pubspec.yaml ($version)',
     );
     return 0;
@@ -77,60 +97,111 @@ int syncPackageVersion(PackageConfig config, Directory repoRoot) {
   final updatedContents = currentContents.replaceFirst(pattern, updatedConst);
   versionDartFile.writeAsStringSync(updatedContents);
   stdout.writeln(
-    'Updated ${versionDartFile.path}: '
-    '${config.versionConstName} -> $version',
+    'Updated ${versionDartFile.path}: $resolvedConstName -> $version',
   );
   return 0;
 }
 
-String? _readPackageArgument(List<String> arguments) {
+/// Discovers the version `const` name in [versionDartContents].
+///
+/// Returns a structured error when zero or multiple semver-shaped consts are
+/// found without a unique `version` substring in the identifier.
+({String? name, String? errorMessage})? discoverVersionConstName(
+  String versionDartContents,
+) {
+  final semverConsts = <String>[];
+  for (final match in _versionConstPattern.allMatches(versionDartContents)) {
+    final name = match.group(1)!;
+    final value = match.group(2)!;
+    if (_looksLikeVersion(value)) {
+      semverConsts.add(name);
+    }
+  }
+
+  if (semverConsts.isEmpty) {
+    return (
+      name: null,
+      errorMessage: 'No semver-shaped version const found in version.dart',
+    );
+  }
+
+  if (semverConsts.length == 1) {
+    return (name: semverConsts.single, errorMessage: null);
+  }
+
+  final versionNamed = semverConsts
+      .where((name) => name.toLowerCase().contains('version'))
+      .toList();
+  if (versionNamed.length == 1) {
+    return (name: versionNamed.single, errorMessage: null);
+  }
+
+  return (
+    name: null,
+    errorMessage:
+        'Multiple semver-shaped version consts found in version.dart: '
+        '${semverConsts.join(', ')}. Pass --version-const to select one.',
+  );
+}
+
+bool _looksLikeVersion(String value) {
+  try {
+    Version.parse(value);
+    return true;
+  } on FormatException {
+    return false;
+  }
+}
+
+String? _readCwdArgument(List<String> arguments) {
   for (var index = 0; index < arguments.length; index++) {
     final argument = arguments[index];
-    if (argument == '--package') {
+    if (argument == '--cwd') {
       if (index + 1 >= arguments.length) {
-        stderr.writeln('Missing value for --package');
+        stderr.writeln('Missing value for --cwd');
         return null;
       }
       return arguments[index + 1];
     }
 
-    const prefix = '--package=';
+    const prefix = '--cwd=';
     if (argument.startsWith(prefix)) {
       final value = argument.substring(prefix.length);
       if (value.isEmpty) {
-        stderr.writeln('Missing value for --package');
+        stderr.writeln('Missing value for --cwd');
         return null;
       }
       return value;
     }
   }
 
-  stderr.writeln('Missing required --package argument');
+  stderr.writeln('Missing required --cwd argument');
   return null;
 }
 
-Directory _repoRoot() {
-  final scriptPath = Platform.script.toFilePath();
-  final toolDir = File(scriptPath).parent;
-  final root = toolDir.parent;
-  final pubspec = File('${root.path}/pubspec.yaml');
-  if (!pubspec.existsSync()) {
-    stderr.writeln(
-      'Could not locate monorepo root from script path: $scriptPath',
-    );
-    exit(1);
+String? _readVersionConstArgument(List<String> arguments) {
+  for (var index = 0; index < arguments.length; index++) {
+    final argument = arguments[index];
+    if (argument == '--version-const') {
+      if (index + 1 >= arguments.length) {
+        stderr.writeln('Missing value for --version-const');
+        return null;
+      }
+      return arguments[index + 1];
+    }
+
+    const prefix = '--version-const=';
+    if (argument.startsWith(prefix)) {
+      final value = argument.substring(prefix.length);
+      if (value.isEmpty) {
+        stderr.writeln('Missing value for --version-const');
+        return null;
+      }
+      return value;
+    }
   }
 
-  final contents = pubspec.readAsStringSync();
-  if (!RegExp(
-    r'^name:\s+clay_monorepo\s*$',
-    multiLine: true,
-  ).hasMatch(contents)) {
-    stderr.writeln('Expected clay_monorepo pubspec at ${pubspec.path}');
-    exit(1);
-  }
-
-  return root;
+  return null;
 }
 
 /// Reads the `version:` field from [pubspecFile].
@@ -160,9 +231,14 @@ String readPubspecVersion(File pubspecFile) {
 
 void _printUsage() {
   stderr
-    ..writeln('Usage: dart run tool/sync_package_version.dart --package <name>')
+    ..writeln(
+      'Usage: dart run tool/sync_package_version.dart --cwd <package-dir> '
+      '[--version-const <name>]',
+    )
     ..writeln()
-    ..writeln('Supported packages: ${packageConfigs.keys.join(', ')}');
+    ..writeln(
+      'Syncs lib/src/version.dart from pubspec.yaml in the package directory.',
+    );
 }
 
 class PackageConfig {
