@@ -2,19 +2,6 @@ import 'dart:io';
 
 import 'package:pub_semver/pub_semver.dart';
 
-/// Hardcoded package metadata still used by [release_tag.dart] and
-/// [wait_for_pub_dev_version.dart] until those tools adopt `--cwd`.
-const packageConfigs = <String, PackageConfig>{
-  'clay_core': PackageConfig(
-    packagePath: 'packages/clay_core',
-    versionConstName: 'clayCoreVersion',
-  ),
-  'clay_cli': PackageConfig(
-    packagePath: 'packages/clay_cli',
-    versionConstName: 'packageVersion',
-  ),
-};
-
 final _pubspecVersionPattern = RegExp(
   r'^version:\s+(\S+)\s*$',
   multiLine: true,
@@ -239,14 +226,4 @@ void _printUsage() {
     ..writeln(
       'Syncs lib/src/version.dart from pubspec.yaml in the package directory.',
     );
-}
-
-class PackageConfig {
-  const PackageConfig({
-    required this.packagePath,
-    required this.versionConstName,
-  });
-
-  final String packagePath;
-  final String versionConstName;
 }

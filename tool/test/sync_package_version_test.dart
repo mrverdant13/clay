@@ -127,15 +127,18 @@ const otherVersion = '9.9.9';
       expect(result?.errorMessage, isNull);
     });
 
-    test('prefers identifier containing version when multiple semver consts', () {
-      final result = discoverVersionConstName('''
+    test(
+      'prefers identifier containing version when multiple semver consts',
+      () {
+        final result = discoverVersionConstName('''
 const packageName = 'clay';
 const packageVersion = '1.0.0';
 ''');
 
-      expect(result?.name, 'packageVersion');
-      expect(result?.errorMessage, isNull);
-    });
+        expect(result?.name, 'packageVersion');
+        expect(result?.errorMessage, isNull);
+      },
+    );
 
     test('returns error when no semver const exists', () {
       final result = discoverVersionConstName(

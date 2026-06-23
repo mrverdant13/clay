@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:test/test.dart';
 
+import '../package_configs.dart';
 import '../release_tag.dart';
-import '../sync_package_version.dart';
 
 void main() {
   late Directory repoRoot;
