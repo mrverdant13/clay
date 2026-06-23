@@ -236,8 +236,18 @@ Live publishes use the **`pub-dev-publish`** GitHub environment with OIDC authen
 
 ### Release runbook
 
-1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so Melos can generate changelog entries.
-2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `MELOS_PACKAGES=<package> melos run release.prepare` (Melos derives the next `-dev.N` bump from conventional commits), commits the version bump and changelog per package via the Melos `preCommit` hook, pushes `<package>/chore/release-<version>`, and opens a PR titled `chore(<package>): release <version>`.
+1. **Prepare commits on `main`.** Ensure merged work uses [Conventional Commits](#commit-conventions) with the correct scopes (`clay_core`, `clay_cli`) so the prepare tool can include them in the changelog.
+2. **Prepare the release.** Run **Actions → Prepare Dart package release**, choose `clay_core` or `clay_cli`. The workflow runs `MELOS_PACKAGES=<package> melos run release.prepare`, which invokes [`tool/prepare_package_release.dart`](tool/prepare_package_release.dart) with `--bump build` (increments `-dev.N` only), prepends a changelog from scoped commits since the latest package tag, syncs `version.dart`, then commits `pubspec.yaml`, `CHANGELOG.md`, and `lib/src/version.dart` under that package. It pushes `<package>/chore/release-<version>` and opens a PR titled `chore(<package>): release <version>`.
+   - **Local writes:** `MELOS_PACKAGES=<package> melos run release.prepare` (same entry point as CI; git commit is manual locally).
+   - **Local preview (dry-run):** invoke the prepare tool directly without `--apply` (default is dry-run):
+     ```bash
+     dart run tool/prepare_package_release.dart \
+       --cwd packages/clay_core \
+       --tag-format '{name}/{version}' \
+       --commit-types feat,fix,docs,refactor,test,build \
+       --bump build
+     ```
+   - **Semver segment bumps** (`patch`, `minor`, `major`) or an exact version require invoking the prepare tool directly with `--bump patch|minor|major` or `--version <semver>` (dry-run first; add `--apply` to write). See [Prepare tool flags](#prepare-tool-flags).
 3. **Review the release PR.** One package per PR — do not combine `clay_core` and `clay_cli`. For `clay_cli` releases after a new `clay_core`, push a follow-up commit on the release branch updating the `clay_core:` minimum constraint (for example `clay_core: ^0.0.1-dev.2`) before merge — the prepare workflow does not auto-bump dependent packages.
 4. **Wait for release PR CI.** [Dart release PR check](.github/workflows/release-pr.yaml) runs `MELOS_PACKAGES`-scoped `release.check` when the PR title, branch name, and changed release manifests all match. CI fails if more than one publishable package's manifests change in the same PR.
 5. **Merge the release PR** into `main`. [Release tag on merge](.github/workflows/release-tag.yaml) automatically creates and pushes annotated tag `<package>/<version>` on the merge commit.
