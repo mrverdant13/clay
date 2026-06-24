@@ -2,10 +2,7 @@ import 'dart:io';
 
 import 'package:pub_semver/pub_semver.dart';
 
-final _pubspecVersionPattern = RegExp(
-  r'^version:\s+(\S+)\s*$',
-  multiLine: true,
-);
+import 'lib/pubspec.dart' as pubspec_fields;
 
 final _versionConstPattern = RegExp(
   r"const\s+(\w+)\s*=\s*'([^']*)';",
@@ -38,7 +35,12 @@ int syncPackageVersion(
     return 1;
   }
 
-  final version = readPubspecVersion(pubspecFile);
+  final versionResult = pubspec_fields.readPubspecVersion(pubspecFile);
+  if (versionResult.errorMessage != null) {
+    stderr.writeln(versionResult.errorMessage);
+    return 1;
+  }
+  final version = versionResult.version!;
   final versionDartFile = File('${resolvedCwd.path}/lib/src/version.dart');
   if (!versionDartFile.existsSync()) {
     stderr.writeln('Missing version.dart: ${versionDartFile.path}');
@@ -189,31 +191,6 @@ String? _readVersionConstArgument(List<String> arguments) {
   }
 
   return null;
-}
-
-/// Reads the `version:` field from [pubspecFile].
-///
-/// Exits the process with code 1 when the version cannot be read.
-String readPubspecVersion(File pubspecFile) {
-  final match = _pubspecVersionPattern.firstMatch(
-    pubspecFile.readAsStringSync(),
-  );
-  if (match == null) {
-    stderr.writeln(
-      'Could not read version from pubspec.yaml: ${pubspecFile.path}',
-    );
-    exit(1);
-  }
-
-  final version = match.group(1)!;
-  if (version.isEmpty) {
-    stderr.writeln(
-      'pubspec.yaml version must be a non-empty string: ${pubspecFile.path}',
-    );
-    exit(1);
-  }
-
-  return version;
 }
 
 void _printUsage() {
