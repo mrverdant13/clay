@@ -2,15 +2,25 @@
   "name": "clay",
   "displayName": "Clay",
   "description": "Editor support for Clay annotation markers in reference projects.",
-  "version": "0.0.1",
+  "version": "0.0.1-dev.1",
+  "preview": true,
   "packageManager": "pnpm@9.15.9",
   "publisher": "mrverdant13",
+  "author": {
+    "name": "Karlo Verde",
+    "url": "https://www.linkedin.com/in/mrverdant13"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/mrverdant13/clay.git",
     "directory": "extensions/clay"
   },
+  "homepage": "https://github.com/mrverdant13/clay/tree/main/extensions/clay",
+  "bugs": {
+    "url": "https://github.com/mrverdant13/clay/issues"
+  },
+  "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.85.0"
   },
