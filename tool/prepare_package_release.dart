@@ -11,6 +11,14 @@ final _pubspecVersionPattern = RegExp(
   r'^version:\s+(\S+)\s*$',
   multiLine: true,
 );
+final _pubspecRepositoryPattern = RegExp(
+  r'^repository:\s+(\S+)\s*$',
+  multiLine: true,
+);
+final _pubspecIssueTrackerPattern = RegExp(
+  r'^issue_tracker:\s+(\S+)\s*$',
+  multiLine: true,
+);
 
 /// Package metadata and paths resolved from `--cwd`.
 class PackageContext {
@@ -19,12 +27,14 @@ class PackageContext {
     required this.version,
     required this.packageCwd,
     required this.gitRoot,
+    this.linkContext,
   });
 
   final String name;
   final String version;
   final Directory packageCwd;
   final Directory gitRoot;
+  final ChangelogLinkContext? linkContext;
 }
 
 /// Reads `name:` and `version:` from [pubspecFile].
@@ -77,6 +87,89 @@ class PackageContext {
   }
 
   return (name: name, version: version, errorMessage: null);
+}
+
+/// Optional `repository:` and `issue_tracker:` values from [pubspecFile].
+({String? repository, String? issueTracker}) readPubspecRepositoryFields(
+  File pubspecFile,
+) {
+  final contents = pubspecFile.readAsStringSync();
+
+  final repositoryMatch = _pubspecRepositoryPattern.firstMatch(contents);
+  final issueTrackerMatch = _pubspecIssueTrackerPattern.firstMatch(contents);
+
+  return (
+    repository: repositoryMatch?.group(1),
+    issueTracker: issueTrackerMatch?.group(1),
+  );
+}
+
+/// GitHub URLs used when formatting changelog issue and commit links.
+class ChangelogLinkContext {
+  const ChangelogLinkContext({
+    this.issueBase,
+    this.commitBase,
+  });
+
+  /// Base URL for issues, e.g. `https://github.com/owner/repo/issues`.
+  final String? issueBase;
+
+  /// Base URL for commits, e.g. `https://github.com/owner/repo/commit`.
+  final String? commitBase;
+}
+
+/// Strips `/tree/...` path segments from a GitHub `repository:` URL.
+///
+/// Returns `null` when [repositoryUrl] is not a GitHub repository URL.
+String? parseGitHubRepositoryBase(String repositoryUrl) {
+  final uri = Uri.tryParse(repositoryUrl);
+  if (uri == null || uri.host != 'github.com') {
+    return null;
+  }
+
+  final segments =
+      uri.pathSegments.where((segment) => segment.isNotEmpty).toList();
+  if (segments.length < 2) {
+    return null;
+  }
+
+  return Uri(
+    scheme: uri.scheme,
+    host: uri.host,
+    path: '/${segments[0]}/${segments[1]}',
+  ).toString();
+}
+
+/// Builds [ChangelogLinkContext] from pubspec `repository:` / `issue_tracker:`.
+ChangelogLinkContext? buildChangelogLinkContext({
+  String? repository,
+  String? issueTracker,
+}) {
+  final repositoryBase =
+      repository == null ? null : parseGitHubRepositoryBase(repository);
+
+  final resolvedIssueBase = issueTracker ??
+      (repositoryBase == null ? null : '$repositoryBase/issues');
+  final resolvedCommitBase =
+      repositoryBase == null ? null : '$repositoryBase/commit';
+
+  if (resolvedIssueBase == null && resolvedCommitBase == null) {
+    return null;
+  }
+
+  return ChangelogLinkContext(
+    issueBase: resolvedIssueBase,
+    commitBase: resolvedCommitBase,
+  );
+}
+
+/// Resolves changelog link bases from [pubspecFile].
+ChangelogLinkContext? readChangelogLinkContext(File pubspecFile) {
+  final fields = readPubspecRepositoryFields(pubspecFile);
+  return buildChangelogLinkContext(
+    repository: fields.repository,
+    issueTracker: fields.issueTracker,
+  );
 }
 
 /// Resolves the git repository root containing [cwd].
@@ -163,6 +256,7 @@ class PackageContext {
       version: pubspecFields.version!,
       packageCwd: packageCwd,
       gitRoot: gitRootResult.gitRoot!,
+      linkContext: readChangelogLinkContext(pubspecFile),
     ),
     errorMessage: null,
   );
@@ -359,6 +453,7 @@ class ConventionalCommit {
     required this.subject,
     required this.isBreakingChange,
     this.body,
+    this.sha,
   });
 
   final String type;
@@ -367,6 +462,7 @@ class ConventionalCommit {
   final String subject;
   final bool isBreakingChange;
   final String? body;
+  final String? sha;
 }
 
 /// Parses [subject] into a [ConventionalCommit].
@@ -748,6 +844,29 @@ final _commitShaMarkdownLinkPattern = RegExp(
   caseSensitive: false,
 );
 
+/// Bare `(#123)` references not already wrapped in markdown link syntax.
+final _bareIssueReferencePattern = RegExp(r'(?<!\[)\(#(\d+)\)');
+
+/// Replaces bare `(#NNN)` references with markdown issue links.
+String linkifyIssueReferences({
+  required String description,
+  required String issueBase,
+}) {
+  return description.replaceAllMapped(_bareIssueReferencePattern, (match) {
+    final issueNumber = match.group(1)!;
+    return '([#$issueNumber]($issueBase/$issueNumber))';
+  });
+}
+
+/// Formats a commit SHA as a markdown link using [commitBase].
+String formatCommitShaMarkdownLink({
+  required String fullSha,
+  required String commitBase,
+}) {
+  final shortSha = fullSha.length >= 8 ? fullSha.substring(0, 8) : fullSha;
+  return '([$shortSha]($commitBase/$fullSha))';
+}
+
 /// Extracts a commit SHA markdown link from [body] when present.
 String? extractCommitShaMarkdownLink(String? body) {
   if (body == null || body.isEmpty) {
@@ -766,13 +885,26 @@ String? extractCommitShaMarkdownLink(String? body) {
 ///
 /// Preserves issue/PR links present in the subject description. When commit
 /// body contains a commit SHA markdown link, it is appended after the
-/// description.
-String formatChangelogBullet(ConventionalCommit commit) {
+/// description. Otherwise, [commit]\[ConventionalCommit.sha] is linked using
+/// [linkContext].
+String formatChangelogBullet(
+  ConventionalCommit commit, {
+  ChangelogLinkContext? linkContext,
+}) {
   final label = changelogTypeLabel(commit.type);
-  final description = commit.description.trim();
+  var description = commit.description.trim();
+  final issueBase = linkContext?.issueBase;
+  if (issueBase != null) {
+    description = linkifyIssueReferences(
+      description: description,
+      issueBase: issueBase,
+    );
+  }
+
   final buffer = StringBuffer(' - **$label**: $description');
 
-  final shaLink = extractCommitShaMarkdownLink(commit.body);
+  final shaLink = extractCommitShaMarkdownLink(commit.body) ??
+      _commitShaLinkFromGitSha(commit.sha, linkContext?.commitBase);
   if (shaLink != null && !description.contains(shaLink)) {
     if (!description.endsWith('.')) {
       buffer.write('.');
@@ -785,6 +917,14 @@ String formatChangelogBullet(ConventionalCommit commit) {
   return buffer.toString();
 }
 
+String? _commitShaLinkFromGitSha(String? sha, String? commitBase) {
+  if (sha == null || sha.isEmpty || commitBase == null) {
+    return null;
+  }
+
+  return formatCommitShaMarkdownLink(fullSha: sha, commitBase: commitBase);
+}
+
 /// Builds a `## <version>` changelog section from [commits].
 ///
 /// Returns a structured error when [commits] is empty.
@@ -794,6 +934,7 @@ String formatChangelogBullet(ConventionalCommit commit) {
   String? latestTag,
   String? packageName,
   Set<String>? allowedTypes,
+  ChangelogLinkContext? linkContext,
 }) {
   if (commits.isEmpty) {
     final tagText = latestTag ?? '(none)';
@@ -811,7 +952,8 @@ String formatChangelogBullet(ConventionalCommit commit) {
   final lines = <String>[
     '## $version',
     '',
-    for (final commit in commits) formatChangelogBullet(commit),
+    for (final commit in commits)
+      formatChangelogBullet(commit, linkContext: linkContext),
   ];
 
   return (section: lines.join('\n'), errorMessage: null);
@@ -839,6 +981,7 @@ String prependChangelogSection({
   String? latestTag,
   String? packageName,
   Set<String>? allowedTypes,
+  ChangelogLinkContext? linkContext,
 }) {
   final sectionResult = buildChangelogSection(
     version: version,
@@ -846,6 +989,7 @@ String prependChangelogSection({
     latestTag: latestTag,
     packageName: packageName,
     allowedTypes: allowedTypes,
+    linkContext: linkContext,
   );
   if (sectionResult.errorMessage != null) {
     return (
@@ -875,10 +1019,12 @@ enum ReleaseSafetyFailure {
 /// A git commit entry collected from `git log <tag>..HEAD`.
 class GitCommitEntry {
   const GitCommitEntry({
+    required this.sha,
     required this.subject,
     this.body,
   });
 
+  final String sha;
   final String subject;
   final String? body;
 }
@@ -999,7 +1145,7 @@ const _gitCommitRecordDelimiter = '---COMMIT---';
       'log',
       '$latestTag..HEAD',
       '--reverse',
-      '--format=%s%n%b%n$_gitCommitRecordDelimiter',
+      '--format=%H%n%s%n%b%n$_gitCommitRecordDelimiter',
     ],
   );
   if (result.exitCode != 0) {
@@ -1025,18 +1171,23 @@ const _gitCommitRecordDelimiter = '---COMMIT---';
     }
 
     final lines = record.split('\n');
-    final subject = lines.first.trim();
-    if (subject.isEmpty) {
+    if (lines.length < 2) {
       continue;
     }
 
-    final bodyLines = lines.skip(1).toList();
+    final sha = lines.first.trim();
+    final subject = lines[1].trim();
+    if (sha.isEmpty || subject.isEmpty) {
+      continue;
+    }
+
+    final bodyLines = lines.skip(2).toList();
     while (bodyLines.isNotEmpty && bodyLines.last.trim().isEmpty) {
       bodyLines.removeLast();
     }
     final body = bodyLines.isEmpty ? null : bodyLines.join('\n');
 
-    commits.add(GitCommitEntry(subject: subject, body: body));
+    commits.add(GitCommitEntry(sha: sha, subject: subject, body: body));
   }
 
   return (commits: commits, errorMessage: null);
@@ -1062,6 +1213,7 @@ List<ConventionalCommit> parseConventionalCommits(
         subject: parsed.subject,
         isBreakingChange: parsed.isBreakingChange,
         body: entry.body,
+        sha: entry.sha,
       ),
     );
   }
@@ -1092,7 +1244,7 @@ List<ConventionalCommit> parseConventionalCommits(
     allowedTypes: allowedTypes,
   );
   final bodiesBySubject = {
-    for (final commit in parsed) commit.subject: commit.body,
+    for (final commit in parsed) commit.subject: commit,
   };
 
   return (
@@ -1104,7 +1256,8 @@ List<ConventionalCommit> parseConventionalCommits(
           description: commit.description,
           subject: commit.subject,
           isBreakingChange: commit.isBreakingChange,
-          body: bodiesBySubject[commit.subject],
+          body: bodiesBySubject[commit.subject]?.body,
+          sha: bodiesBySubject[commit.subject]?.sha,
         ),
     ],
     errorMessage: null,
@@ -1215,6 +1368,7 @@ class PrepareReleasePlan {
     latestTag: latestTag,
     packageName: packageContext.name,
     allowedTypes: allowedTypes,
+    linkContext: packageContext.linkContext,
   );
   if (changelogResult.errorMessage != null) {
     return (plan: null, errorMessage: changelogResult.errorMessage);

@@ -57,6 +57,99 @@ void main() {
     });
   });
 
+  group('readPubspecRepositoryFields', () {
+    test('reads repository and issue_tracker from pubspec.yaml', () {
+      final pubspecFile = File('${tempRoot.path}/pubspec.yaml')
+        ..writeAsStringSync('''
+name: synthetic_pkg
+version: 0.0.1-dev.1
+repository: https://github.com/example/clay/tree/main/packages/synthetic_pkg
+issue_tracker: https://github.com/example/clay/issues
+''');
+
+      final result = readPubspecRepositoryFields(pubspecFile);
+
+      expect(
+        result.repository,
+        'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+      );
+      expect(result.issueTracker, 'https://github.com/example/clay/issues');
+    });
+
+    test('returns null fields when pubspec omits repository metadata', () {
+      final pubspecFile = _writePubspec(
+        directory: tempRoot,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.1',
+      );
+
+      final result = readPubspecRepositoryFields(pubspecFile);
+
+      expect(result.repository, isNull);
+      expect(result.issueTracker, isNull);
+    });
+  });
+
+  group('parseGitHubRepositoryBase', () {
+    test('strips tree path segments from monorepo repository URLs', () {
+      expect(
+        parseGitHubRepositoryBase(
+          'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        ),
+        'https://github.com/example/clay',
+      );
+    });
+
+    test('accepts repository root URLs', () {
+      expect(
+        parseGitHubRepositoryBase('https://github.com/example/clay'),
+        'https://github.com/example/clay',
+      );
+    });
+
+    test('returns null for non-GitHub URLs', () {
+      expect(
+        parseGitHubRepositoryBase('https://gitlab.com/example/clay'),
+        isNull,
+      );
+    });
+  });
+
+  group('buildChangelogLinkContext', () {
+    test('prefers issue_tracker and derives commit base from repository', () {
+      final context = buildChangelogLinkContext(
+        repository:
+            'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        issueTracker: 'https://github.com/example/clay/issues',
+      );
+
+      expect(context, isNotNull);
+      expect(context!.issueBase, 'https://github.com/example/clay/issues');
+      expect(context.commitBase, 'https://github.com/example/clay/commit');
+    });
+
+    test('derives issue base from repository when issue_tracker is omitted',
+        () {
+      final context = buildChangelogLinkContext(
+        repository: 'https://github.com/example/clay',
+      );
+
+      expect(context, isNotNull);
+      expect(context!.issueBase, 'https://github.com/example/clay/issues');
+      expect(context.commitBase, 'https://github.com/example/clay/commit');
+    });
+
+    test('returns null when no GitHub repository metadata is available', () {
+      expect(buildChangelogLinkContext(), isNull);
+      expect(
+        buildChangelogLinkContext(
+          repository: 'https://gitlab.com/example/clay',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('resolveGitRoot', () {
     test('resolves git root for a package inside a repo', () {
       _initGitRepo(tempRoot);
@@ -113,6 +206,35 @@ void main() {
       expect(
         Directory(context.gitRoot.path).resolveSymbolicLinksSync(),
         Directory(tempRoot.absolute.path).resolveSymbolicLinksSync(),
+      );
+      expect(context.linkContext, isNull);
+    });
+
+    test('resolves changelog link context from pubspec repository fields', () {
+      _initGitRepo(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.1',
+        repository:
+            'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        issueTracker: 'https://github.com/example/clay/issues',
+      );
+      _gitCommitAll(tempRoot, message: 'init package');
+
+      final result = resolvePackageContext(packageDir.path);
+
+      expect(result.errorMessage, isNull);
+      final context = result.context!;
+      expect(context.linkContext, isNotNull);
+      expect(
+        context.linkContext!.issueBase,
+        'https://github.com/example/clay/issues',
+      );
+      expect(
+        context.linkContext!.commitBase,
+        'https://github.com/example/clay/commit',
       );
     });
 
@@ -871,6 +993,43 @@ void main() {
     });
   });
 
+  group('linkifyIssueReferences', () {
+    test('wraps bare issue references in markdown links', () {
+      expect(
+        linkifyIssueReferences(
+          description: 'handle missing config (#43)',
+          issueBase: 'https://github.com/example/clay/issues',
+        ),
+        'handle missing config ([#43](https://github.com/example/clay/issues/43))',
+      );
+    });
+
+    test('leaves existing markdown issue links unchanged', () {
+      const description =
+          'add preview command ([#42](https://github.com/example/clay/issues/42))';
+
+      expect(
+        linkifyIssueReferences(
+          description: description,
+          issueBase: 'https://github.com/example/clay/issues',
+        ),
+        description,
+      );
+    });
+  });
+
+  group('formatCommitShaMarkdownLink', () {
+    test('uses an eight-character short SHA in the link label', () {
+      expect(
+        formatCommitShaMarkdownLink(
+          fullSha: 'abc1234def5678901234567890abcdef12345678',
+          commitBase: 'https://github.com/example/clay/commit',
+        ),
+        '([abc1234d](https://github.com/example/clay/commit/abc1234def5678901234567890abcdef12345678))',
+      );
+    });
+  });
+
   group('formatChangelogBullet', () {
     test('preserves issue links from the subject and appends sha links', () {
       const commit = ConventionalCommit(
@@ -891,6 +1050,26 @@ void main() {
       );
     });
 
+    test('linkifies bare issue refs and git SHAs when link context is set', () {
+      const linkContext = ChangelogLinkContext(
+        issueBase: 'https://github.com/example/clay/issues',
+        commitBase: 'https://github.com/example/clay/commit',
+      );
+      const commit = ConventionalCommit(
+        type: 'fix',
+        scopes: ['synthetic_pkg'],
+        description: 'handle missing config (#43)',
+        subject: 'fix(synthetic_pkg): handle missing config (#43)',
+        isBreakingChange: false,
+        sha: 'def56789abcdef0123456789abcdef0123456789',
+      );
+
+      expect(
+        formatChangelogBullet(commit, linkContext: linkContext),
+        ' - **FIX**: handle missing config ([#43](https://github.com/example/clay/issues/43)). ([def56789](https://github.com/example/clay/commit/def56789abcdef0123456789abcdef0123456789))',
+      );
+    });
+
     test('adds trailing period for plain descriptions', () {
       const commit = ConventionalCommit(
         type: 'docs',
@@ -906,7 +1085,7 @@ void main() {
       );
     });
 
-    test('preserves shorthand issue references from the subject', () {
+    test('preserves shorthand issue references without link context', () {
       const commit = ConventionalCommit(
         type: 'fix',
         scopes: ['synthetic_pkg'],
@@ -968,6 +1147,21 @@ void main() {
         subject: entry['subject']! as String,
         isBreakingChange: entry['isBreakingChange'] as bool? ?? false,
         body: entry['body'] as String?,
+        sha: entry['sha'] as String?,
+      );
+    }
+
+    ChangelogLinkContext? linkContextFromFixture(
+      Map<Object?, Object?> fixture,
+    ) {
+      final linkContext = fixture['linkContext'] as Map?;
+      if (linkContext == null) {
+        return null;
+      }
+
+      return ChangelogLinkContext(
+        issueBase: linkContext['issueBase'] as String?,
+        commitBase: linkContext['commitBase'] as String?,
       );
     }
 
@@ -979,12 +1173,15 @@ void main() {
           .map(commitFromMap)
           .toList();
 
+      final linkContext = linkContextFromFixture(fixture);
+
       final sectionResult = buildChangelogSection(
         version: fixture['version'] as String,
         commits: commits,
         latestTag: fixture['latestTag'] as String,
         packageName: fixture['packageName'] as String,
         allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
+        linkContext: linkContext,
       );
 
       expect(sectionResult.errorMessage, isNull);
@@ -997,6 +1194,7 @@ void main() {
         latestTag: fixture['latestTag'] as String,
         packageName: fixture['packageName'] as String,
         allowedTypes: (fixture['allowedTypes'] as List).cast<String>().toSet(),
+        linkContext: linkContext,
       );
 
       expect(changelogResult.errorMessage, isNull);
@@ -1316,6 +1514,46 @@ void main() {
       expect(
         plan.suggestedCommitMessage,
         'chore(synthetic_pkg): release 0.1.0-dev.1',
+      );
+    });
+
+    test('linkifies changelog entries from pubspec repository metadata', () {
+      _initGitRepoWithCommit(tempRoot);
+      final packageDir = Directory('${tempRoot.path}/packages/synthetic_pkg');
+      _writePackage(
+        packageDir: packageDir,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.2',
+        repository:
+            'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        issueTracker: 'https://github.com/example/clay/issues',
+      );
+      _gitCommitAll(tempRoot, message: 'chore: add package scaffold');
+      _gitCreateAnnotatedTag(tempRoot, 'synthetic_pkg/0.0.1-dev.2');
+      _gitCommitWithFileChange(
+        tempRoot,
+        fileName: 'change-1.txt',
+        message: 'fix(synthetic_pkg): handle missing config (#43)',
+      );
+
+      final result = buildPrepareReleasePlan(
+        cwd: packageDir.path,
+        tagFormat: '{name}/{version}',
+        commitTypesInput: 'feat,fix,docs,refactor,test,build',
+        explicitBump: ExplicitVersionBump.build,
+      );
+
+      expect(result.errorMessage, isNull);
+      final plan = result.plan!;
+      expect(
+        plan.changelogSection,
+        contains(
+          '([#43](https://github.com/example/clay/issues/43))',
+        ),
+      );
+      expect(
+        plan.changelogSection,
+        contains('https://github.com/example/clay/commit/'),
       );
     });
   });
@@ -1905,13 +2143,21 @@ File _writePubspec({
   required Directory directory,
   required String name,
   required String version,
+  String? repository,
+  String? issueTracker,
 }) {
   directory.createSync(recursive: true);
+  final buffer = StringBuffer()
+    ..writeln('name: $name')
+    ..writeln('version: $version');
+  if (repository != null) {
+    buffer.writeln('repository: $repository');
+  }
+  if (issueTracker != null) {
+    buffer.writeln('issue_tracker: $issueTracker');
+  }
   final pubspecFile = File('${directory.path}/pubspec.yaml')
-    ..writeAsStringSync('''
-name: $name
-version: $version
-''');
+    ..writeAsStringSync(buffer.toString());
   return pubspecFile;
 }
 
@@ -1919,8 +2165,16 @@ void _writePackage({
   required Directory packageDir,
   required String name,
   required String version,
+  String? repository,
+  String? issueTracker,
 }) {
-  _writePubspec(directory: packageDir, name: name, version: version);
+  _writePubspec(
+    directory: packageDir,
+    name: name,
+    version: version,
+    repository: repository,
+    issueTracker: issueTracker,
+  );
   File('${packageDir.path}/CHANGELOG.md').writeAsStringSync('# Changelog\n');
 }
 
