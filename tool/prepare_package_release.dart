@@ -27,12 +27,14 @@ class PackageContext {
     required this.version,
     required this.packageCwd,
     required this.gitRoot,
+    this.linkContext,
   });
 
   final String name;
   final String version;
   final Directory packageCwd;
   final Directory gitRoot;
+  final ChangelogLinkContext? linkContext;
 }
 
 /// Reads `name:` and `version:` from [pubspecFile].
@@ -254,6 +256,7 @@ ChangelogLinkContext? readChangelogLinkContext(File pubspecFile) {
       version: pubspecFields.version!,
       packageCwd: packageCwd,
       gitRoot: gitRootResult.gitRoot!,
+      linkContext: readChangelogLinkContext(pubspecFile),
     ),
     errorMessage: null,
   );
@@ -450,6 +453,7 @@ class ConventionalCommit {
     required this.subject,
     required this.isBreakingChange,
     this.body,
+    this.sha,
   });
 
   final String type;
@@ -458,6 +462,7 @@ class ConventionalCommit {
   final String subject;
   final bool isBreakingChange;
   final String? body;
+  final String? sha;
 }
 
 /// Parses [subject] into a [ConventionalCommit].
@@ -839,6 +844,30 @@ final _commitShaMarkdownLinkPattern = RegExp(
   caseSensitive: false,
 );
 
+/// Bare `(#123)` references not already wrapped in markdown link syntax.
+final _bareIssueReferencePattern = RegExp(r'(?<!\[)\(#(\d+)\)');
+
+/// Replaces bare `(#NNN)` references with markdown issue links.
+String linkifyIssueReferences({
+  required String description,
+  required String issueBase,
+}) {
+  return description.replaceAllMapped(_bareIssueReferencePattern, (match) {
+    final issueNumber = match.group(1)!;
+    return '([#$issueNumber]($issueBase/$issueNumber))';
+  });
+}
+
+/// Formats a commit SHA as a markdown link using [commitBase].
+String formatCommitShaMarkdownLink({
+  required String fullSha,
+  required String commitBase,
+}) {
+  final shortSha =
+      fullSha.length >= 8 ? fullSha.substring(0, 8) : fullSha;
+  return '([$shortSha]($commitBase/$fullSha))';
+}
+
 /// Extracts a commit SHA markdown link from [body] when present.
 String? extractCommitShaMarkdownLink(String? body) {
   if (body == null || body.isEmpty) {
@@ -857,13 +886,25 @@ String? extractCommitShaMarkdownLink(String? body) {
 ///
 /// Preserves issue/PR links present in the subject description. When commit
 /// body contains a commit SHA markdown link, it is appended after the
-/// description.
-String formatChangelogBullet(ConventionalCommit commit) {
+/// description. Otherwise, [commit.sha] is linked using [linkContext].
+String formatChangelogBullet(
+  ConventionalCommit commit, {
+  ChangelogLinkContext? linkContext,
+}) {
   final label = changelogTypeLabel(commit.type);
-  final description = commit.description.trim();
+  var description = commit.description.trim();
+  final issueBase = linkContext?.issueBase;
+  if (issueBase != null) {
+    description = linkifyIssueReferences(
+      description: description,
+      issueBase: issueBase,
+    );
+  }
+
   final buffer = StringBuffer(' - **$label**: $description');
 
-  final shaLink = extractCommitShaMarkdownLink(commit.body);
+  final shaLink = extractCommitShaMarkdownLink(commit.body) ??
+      _commitShaLinkFromGitSha(commit.sha, linkContext?.commitBase);
   if (shaLink != null && !description.contains(shaLink)) {
     if (!description.endsWith('.')) {
       buffer.write('.');
@@ -876,6 +917,14 @@ String formatChangelogBullet(ConventionalCommit commit) {
   return buffer.toString();
 }
 
+String? _commitShaLinkFromGitSha(String? sha, String? commitBase) {
+  if (sha == null || sha.isEmpty || commitBase == null) {
+    return null;
+  }
+
+  return formatCommitShaMarkdownLink(fullSha: sha, commitBase: commitBase);
+}
+
 /// Builds a `## <version>` changelog section from [commits].
 ///
 /// Returns a structured error when [commits] is empty.
@@ -885,6 +934,7 @@ String formatChangelogBullet(ConventionalCommit commit) {
   String? latestTag,
   String? packageName,
   Set<String>? allowedTypes,
+  ChangelogLinkContext? linkContext,
 }) {
   if (commits.isEmpty) {
     final tagText = latestTag ?? '(none)';
@@ -902,7 +952,8 @@ String formatChangelogBullet(ConventionalCommit commit) {
   final lines = <String>[
     '## $version',
     '',
-    for (final commit in commits) formatChangelogBullet(commit),
+    for (final commit in commits)
+      formatChangelogBullet(commit, linkContext: linkContext),
   ];
 
   return (section: lines.join('\n'), errorMessage: null);
@@ -930,6 +981,7 @@ String prependChangelogSection({
   String? latestTag,
   String? packageName,
   Set<String>? allowedTypes,
+  ChangelogLinkContext? linkContext,
 }) {
   final sectionResult = buildChangelogSection(
     version: version,
@@ -937,6 +989,7 @@ String prependChangelogSection({
     latestTag: latestTag,
     packageName: packageName,
     allowedTypes: allowedTypes,
+    linkContext: linkContext,
   );
   if (sectionResult.errorMessage != null) {
     return (
@@ -966,10 +1019,12 @@ enum ReleaseSafetyFailure {
 /// A git commit entry collected from `git log <tag>..HEAD`.
 class GitCommitEntry {
   const GitCommitEntry({
+    required this.sha,
     required this.subject,
     this.body,
   });
 
+  final String sha;
   final String subject;
   final String? body;
 }
@@ -1090,7 +1145,7 @@ const _gitCommitRecordDelimiter = '---COMMIT---';
       'log',
       '$latestTag..HEAD',
       '--reverse',
-      '--format=%s%n%b%n$_gitCommitRecordDelimiter',
+      '--format=%H%n%s%n%b%n$_gitCommitRecordDelimiter',
     ],
   );
   if (result.exitCode != 0) {
@@ -1116,18 +1171,23 @@ const _gitCommitRecordDelimiter = '---COMMIT---';
     }
 
     final lines = record.split('\n');
-    final subject = lines.first.trim();
-    if (subject.isEmpty) {
+    if (lines.length < 2) {
       continue;
     }
 
-    final bodyLines = lines.skip(1).toList();
+    final sha = lines.first.trim();
+    final subject = lines[1].trim();
+    if (sha.isEmpty || subject.isEmpty) {
+      continue;
+    }
+
+    final bodyLines = lines.skip(2).toList();
     while (bodyLines.isNotEmpty && bodyLines.last.trim().isEmpty) {
       bodyLines.removeLast();
     }
     final body = bodyLines.isEmpty ? null : bodyLines.join('\n');
 
-    commits.add(GitCommitEntry(subject: subject, body: body));
+    commits.add(GitCommitEntry(sha: sha, subject: subject, body: body));
   }
 
   return (commits: commits, errorMessage: null);
@@ -1153,6 +1213,7 @@ List<ConventionalCommit> parseConventionalCommits(
         subject: parsed.subject,
         isBreakingChange: parsed.isBreakingChange,
         body: entry.body,
+        sha: entry.sha,
       ),
     );
   }
@@ -1183,7 +1244,7 @@ List<ConventionalCommit> parseConventionalCommits(
     allowedTypes: allowedTypes,
   );
   final bodiesBySubject = {
-    for (final commit in parsed) commit.subject: commit.body,
+    for (final commit in parsed) commit.subject: commit,
   };
 
   return (
@@ -1195,7 +1256,8 @@ List<ConventionalCommit> parseConventionalCommits(
           description: commit.description,
           subject: commit.subject,
           isBreakingChange: commit.isBreakingChange,
-          body: bodiesBySubject[commit.subject],
+          body: bodiesBySubject[commit.subject]?.body,
+          sha: bodiesBySubject[commit.subject]?.sha,
         ),
     ],
     errorMessage: null,
@@ -1306,6 +1368,7 @@ class PrepareReleasePlan {
     latestTag: latestTag,
     packageName: packageContext.name,
     allowedTypes: allowedTypes,
+    linkContext: packageContext.linkContext,
   );
   if (changelogResult.errorMessage != null) {
     return (plan: null, errorMessage: changelogResult.errorMessage);
