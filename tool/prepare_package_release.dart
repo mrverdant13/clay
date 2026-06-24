@@ -11,6 +11,14 @@ final _pubspecVersionPattern = RegExp(
   r'^version:\s+(\S+)\s*$',
   multiLine: true,
 );
+final _pubspecRepositoryPattern = RegExp(
+  r'^repository:\s+(\S+)\s*$',
+  multiLine: true,
+);
+final _pubspecIssueTrackerPattern = RegExp(
+  r'^issue_tracker:\s+(\S+)\s*$',
+  multiLine: true,
+);
 
 /// Package metadata and paths resolved from `--cwd`.
 class PackageContext {
@@ -77,6 +85,89 @@ class PackageContext {
   }
 
   return (name: name, version: version, errorMessage: null);
+}
+
+/// Optional `repository:` and `issue_tracker:` values from [pubspecFile].
+({String? repository, String? issueTracker}) readPubspecRepositoryFields(
+  File pubspecFile,
+) {
+  final contents = pubspecFile.readAsStringSync();
+
+  final repositoryMatch = _pubspecRepositoryPattern.firstMatch(contents);
+  final issueTrackerMatch = _pubspecIssueTrackerPattern.firstMatch(contents);
+
+  return (
+    repository: repositoryMatch?.group(1),
+    issueTracker: issueTrackerMatch?.group(1),
+  );
+}
+
+/// GitHub URLs used when formatting changelog issue and commit links.
+class ChangelogLinkContext {
+  const ChangelogLinkContext({
+    this.issueBase,
+    this.commitBase,
+  });
+
+  /// Base URL for issues, e.g. `https://github.com/owner/repo/issues`.
+  final String? issueBase;
+
+  /// Base URL for commits, e.g. `https://github.com/owner/repo/commit`.
+  final String? commitBase;
+}
+
+/// Strips `/tree/...` path segments from a GitHub `repository:` URL.
+///
+/// Returns `null` when [repositoryUrl] is not a GitHub repository URL.
+String? parseGitHubRepositoryBase(String repositoryUrl) {
+  final uri = Uri.tryParse(repositoryUrl);
+  if (uri == null || uri.host != 'github.com') {
+    return null;
+  }
+
+  final segments =
+      uri.pathSegments.where((segment) => segment.isNotEmpty).toList();
+  if (segments.length < 2) {
+    return null;
+  }
+
+  return Uri(
+    scheme: uri.scheme,
+    host: uri.host,
+    path: '/${segments[0]}/${segments[1]}',
+  ).toString();
+}
+
+/// Builds [ChangelogLinkContext] from pubspec `repository:` / `issue_tracker:`.
+ChangelogLinkContext? buildChangelogLinkContext({
+  String? repository,
+  String? issueTracker,
+}) {
+  final repositoryBase =
+      repository == null ? null : parseGitHubRepositoryBase(repository);
+
+  final resolvedIssueBase = issueTracker ??
+      (repositoryBase == null ? null : '$repositoryBase/issues');
+  final resolvedCommitBase =
+      repositoryBase == null ? null : '$repositoryBase/commit';
+
+  if (resolvedIssueBase == null && resolvedCommitBase == null) {
+    return null;
+  }
+
+  return ChangelogLinkContext(
+    issueBase: resolvedIssueBase,
+    commitBase: resolvedCommitBase,
+  );
+}
+
+/// Resolves changelog link bases from [pubspecFile].
+ChangelogLinkContext? readChangelogLinkContext(File pubspecFile) {
+  final fields = readPubspecRepositoryFields(pubspecFile);
+  return buildChangelogLinkContext(
+    repository: fields.repository,
+    issueTracker: fields.issueTracker,
+  );
 }
 
 /// Resolves the git repository root containing [cwd].

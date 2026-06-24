@@ -57,6 +57,98 @@ void main() {
     });
   });
 
+  group('readPubspecRepositoryFields', () {
+    test('reads repository and issue_tracker from pubspec.yaml', () {
+      final pubspecFile = File('${tempRoot.path}/pubspec.yaml')
+        ..writeAsStringSync('''
+name: synthetic_pkg
+version: 0.0.1-dev.1
+repository: https://github.com/example/clay/tree/main/packages/synthetic_pkg
+issue_tracker: https://github.com/example/clay/issues
+''');
+
+      final result = readPubspecRepositoryFields(pubspecFile);
+
+      expect(
+        result.repository,
+        'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+      );
+      expect(result.issueTracker, 'https://github.com/example/clay/issues');
+    });
+
+    test('returns null fields when pubspec omits repository metadata', () {
+      final pubspecFile = _writePubspec(
+        directory: tempRoot,
+        name: 'synthetic_pkg',
+        version: '0.0.1-dev.1',
+      );
+
+      final result = readPubspecRepositoryFields(pubspecFile);
+
+      expect(result.repository, isNull);
+      expect(result.issueTracker, isNull);
+    });
+  });
+
+  group('parseGitHubRepositoryBase', () {
+    test('strips tree path segments from monorepo repository URLs', () {
+      expect(
+        parseGitHubRepositoryBase(
+          'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        ),
+        'https://github.com/example/clay',
+      );
+    });
+
+    test('accepts repository root URLs', () {
+      expect(
+        parseGitHubRepositoryBase('https://github.com/example/clay'),
+        'https://github.com/example/clay',
+      );
+    });
+
+    test('returns null for non-GitHub URLs', () {
+      expect(
+        parseGitHubRepositoryBase('https://gitlab.com/example/clay'),
+        isNull,
+      );
+    });
+  });
+
+  group('buildChangelogLinkContext', () {
+    test('prefers issue_tracker and derives commit base from repository', () {
+      final context = buildChangelogLinkContext(
+        repository:
+            'https://github.com/example/clay/tree/main/packages/synthetic_pkg',
+        issueTracker: 'https://github.com/example/clay/issues',
+      );
+
+      expect(context, isNotNull);
+      expect(context!.issueBase, 'https://github.com/example/clay/issues');
+      expect(context.commitBase, 'https://github.com/example/clay/commit');
+    });
+
+    test('derives issue base from repository when issue_tracker is omitted', () {
+      final context = buildChangelogLinkContext(
+        repository: 'https://github.com/example/clay',
+      );
+
+      expect(context, isNotNull);
+      expect(context!.issueBase, 'https://github.com/example/clay/issues');
+      expect(context.commitBase, 'https://github.com/example/clay/commit');
+    });
+
+    test('returns null when no GitHub repository metadata is available', () {
+      expect(buildChangelogLinkContext(), isNull);
+      expect(
+        buildChangelogLinkContext(
+          repository: 'https://gitlab.com/example/clay',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('resolveGitRoot', () {
     test('resolves git root for a package inside a repo', () {
       _initGitRepo(tempRoot);
