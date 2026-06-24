@@ -26,11 +26,23 @@ For extension development only:
 
 ### From the Marketplace
 
-The Clay extension will be published to the [Visual Studio Marketplace](https://marketplace.visualstudio.com/) alongside the first `clay_cli` release. Until then, install from a VSIX (see below) or run the extension from source during development.
+Install [**Clay**](https://marketplace.visualstudio.com/items?itemName=mrverdant13.clay) from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/):
+
+1. Open the Extensions view (`Cmd+Shift+X` / `Ctrl+Shift+X`).
+2. Search for **Clay** (publisher **mrverdant13**).
+3. Click **Install**.
+
+Or install from the command line:
+
+```bash
+code --install-extension mrverdant13.clay
+```
+
+The listing is a **preview** release. Preview commands require [`clay_cli`](https://pub.dev/packages/clay_cli) **`0.0.1-dev.2`** or newer on your machine (includes `clay compat` — see [CLI setup](#cli-setup)).
 
 ### From a VSIX
 
-Build a package from this repository:
+To install a locally built package instead of the Marketplace build:
 
 ```bash
 cd extensions/clay
@@ -72,7 +84,7 @@ The extension resolves an executable in this order:
 
 During monorepo development, open the clay repository (or any workspace that includes `packages/clay_cli`) and preview commands work without extra configuration.
 
-After `clay_cli` is published to pub.dev, install a build that includes `clay compat` (minimum **`0.0.1-dev.2`**):
+Install [`clay_cli`](https://pub.dev/packages/clay_cli) **`0.0.1-dev.2`** or newer from pub.dev (includes `clay compat`):
 
 ```bash
 dart install clay_cli
