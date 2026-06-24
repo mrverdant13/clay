@@ -26,13 +26,23 @@ For extension development only:
 
 ### From the Marketplace
 
-The Clay extension is **not yet listed** on the [Visual Studio Marketplace](https://marketplace.visualstudio.com/). Until it is published as **`mrverdant13.clay`**, install from a VSIX ([From a VSIX](#from-a-vsix)) or run it in the [Extension Development Host](#development-extension-development-host).
+Install [**Clay**](https://marketplace.visualstudio.com/items?itemName=mrverdant13.clay) from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/):
 
-[`clay_cli`](https://pub.dev/packages/clay_cli) **`0.0.1-dev.2`** or newer is live on pub.dev and is the minimum CLI version for preview commands in this extension preview (includes `clay compat`).
+1. Open the Extensions view (`Cmd+Shift+X` / `Ctrl+Shift+X`).
+2. Search for **Clay** (publisher **mrverdant13**).
+3. Click **Install**.
+
+Or install from the command line:
+
+```bash
+code --install-extension mrverdant13.clay
+```
+
+The listing is a **preview** release. Preview commands require [`clay_cli`](https://pub.dev/packages/clay_cli) **`0.0.1-dev.2`** or newer on your machine (includes `clay compat` — see [CLI setup](#cli-setup)).
 
 ### From a VSIX
 
-Build a package from this repository:
+To install a locally built package instead of the Marketplace build:
 
 ```bash
 cd extensions/clay
