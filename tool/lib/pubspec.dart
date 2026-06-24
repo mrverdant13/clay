@@ -93,14 +93,8 @@ import 'package:yaml_edit/yaml_edit.dart';
   }
 
   try {
-    final editor = YamlEditor(pubspecContents);
-    editor.update(['version'], newVersion);
+    final editor = YamlEditor(pubspecContents)..update(['version'], newVersion);
     return (contents: editor.toString(), errorMessage: null);
-  } on ArgumentError {
-    return (
-      contents: null,
-      errorMessage: 'Could not find version line in pubspec.yaml.',
-    );
   } on YamlException catch (error) {
     return (
       contents: null,

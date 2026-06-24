@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:pub_semver/pub_semver.dart';
 
+/// Placeholder for the package version in a `--tag-format` template.
 const versionPlaceholder = '{version}';
+
+/// Placeholder for the package name in a `--tag-format` template.
 const namePlaceholder = '{name}';
 
 /// Semver-shaped segment captured from a tag via [parseVersionFromTag].

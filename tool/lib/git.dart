@@ -32,17 +32,24 @@ import 'dart:io';
 
 /// A git commit entry collected from `git log <tag>..HEAD`.
 class GitCommitEntry {
+  /// Creates a commit entry from [sha], [subject], and optional [body].
   const GitCommitEntry({
     required this.sha,
     required this.subject,
     this.body,
   });
 
+  /// Full commit SHA.
   final String sha;
+
+  /// First line of the commit message (subject).
   final String subject;
+
+  /// Commit body after the subject, when present.
   final String? body;
 }
 
+/// Record delimiter used in custom `git log --format` output.
 const gitCommitRecordDelimiter = '---COMMIT---';
 
 /// Collects commits from `git log <latestTag>..HEAD`.
