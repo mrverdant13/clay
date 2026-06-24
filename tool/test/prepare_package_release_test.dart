@@ -128,7 +128,8 @@ issue_tracker: https://github.com/example/clay/issues
       expect(context.commitBase, 'https://github.com/example/clay/commit');
     });
 
-    test('derives issue base from repository when issue_tracker is omitted', () {
+    test('derives issue base from repository when issue_tracker is omitted',
+        () {
       final context = buildChangelogLinkContext(
         repository: 'https://github.com/example/clay',
       );
@@ -1150,7 +1151,9 @@ issue_tracker: https://github.com/example/clay/issues
       );
     }
 
-    ChangelogLinkContext? linkContextFromFixture(Map fixture) {
+    ChangelogLinkContext? linkContextFromFixture(
+      Map<Object?, Object?> fixture,
+    ) {
       final linkContext = fixture['linkContext'] as Map?;
       if (linkContext == null) {
         return null;

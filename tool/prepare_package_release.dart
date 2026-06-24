@@ -863,8 +863,7 @@ String formatCommitShaMarkdownLink({
   required String fullSha,
   required String commitBase,
 }) {
-  final shortSha =
-      fullSha.length >= 8 ? fullSha.substring(0, 8) : fullSha;
+  final shortSha = fullSha.length >= 8 ? fullSha.substring(0, 8) : fullSha;
   return '([$shortSha]($commitBase/$fullSha))';
 }
 
@@ -886,7 +885,8 @@ String? extractCommitShaMarkdownLink(String? body) {
 ///
 /// Preserves issue/PR links present in the subject description. When commit
 /// body contains a commit SHA markdown link, it is appended after the
-/// description. Otherwise, [commit.sha] is linked using [linkContext].
+/// description. Otherwise, [commit]\[ConventionalCommit.sha] is linked using
+/// [linkContext].
 String formatChangelogBullet(
   ConventionalCommit commit, {
   ChangelogLinkContext? linkContext,
