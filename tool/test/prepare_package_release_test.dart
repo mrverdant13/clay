@@ -1580,6 +1580,22 @@ environment:
       expect(result.contents, isNot(contains('version: 0.0.1-dev.2')));
     });
 
+    test('updates quoted version values', () {
+      const original = '''
+name: synthetic_pkg
+version: "0.0.1-dev.2"
+''';
+
+      final result = updatePubspecVersionLine(
+        pubspecContents: original,
+        newVersion: '0.1.0-dev.1',
+      );
+
+      expect(result.errorMessage, isNull);
+      expect(result.contents, contains('version: 0.1.0-dev.1'));
+      expect(result.contents, isNot(contains('0.0.1-dev.2')));
+    });
+
     test('fails when version line is missing', () {
       final result = updatePubspecVersionLine(
         pubspecContents: 'name: synthetic_pkg\n',
