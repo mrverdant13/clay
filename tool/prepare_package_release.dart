@@ -3,22 +3,13 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:pub_semver/pub_semver.dart';
 
-final _pubspecNamePattern = RegExp(
-  r'^name:\s+(\S+)\s*$',
-  multiLine: true,
-);
-final _pubspecVersionPattern = RegExp(
-  r'^version:\s+(\S+)\s*$',
-  multiLine: true,
-);
-final _pubspecRepositoryPattern = RegExp(
-  r'^repository:\s+(\S+)\s*$',
-  multiLine: true,
-);
-final _pubspecIssueTrackerPattern = RegExp(
-  r'^issue_tracker:\s+(\S+)\s*$',
-  multiLine: true,
-);
+import 'lib/git.dart';
+import 'lib/pubspec.dart';
+import 'lib/tag_format.dart';
+
+export 'lib/git.dart';
+export 'lib/pubspec.dart';
+export 'lib/tag_format.dart';
 
 /// Package metadata and paths resolved from `--cwd`.
 class PackageContext {
@@ -35,73 +26,6 @@ class PackageContext {
   final Directory packageCwd;
   final Directory gitRoot;
   final ChangelogLinkContext? linkContext;
-}
-
-/// Reads `name:` and `version:` from [pubspecFile].
-///
-/// Returns a structured error when either field is missing or empty.
-({String? name, String? version, String? errorMessage})
-    readPubspecNameAndVersion(
-  File pubspecFile,
-) {
-  final contents = pubspecFile.readAsStringSync();
-
-  final nameMatch = _pubspecNamePattern.firstMatch(contents);
-  if (nameMatch == null) {
-    return (
-      name: null,
-      version: null,
-      errorMessage:
-          'Could not read name from pubspec.yaml: ${pubspecFile.path}',
-    );
-  }
-
-  final name = nameMatch.group(1)!;
-  if (name.isEmpty) {
-    return (
-      name: null,
-      version: null,
-      errorMessage:
-          'pubspec.yaml name must be a non-empty string: ${pubspecFile.path}',
-    );
-  }
-
-  final versionMatch = _pubspecVersionPattern.firstMatch(contents);
-  if (versionMatch == null) {
-    return (
-      name: null,
-      version: null,
-      errorMessage:
-          'Could not read version from pubspec.yaml: ${pubspecFile.path}',
-    );
-  }
-
-  final version = versionMatch.group(1)!;
-  if (version.isEmpty) {
-    return (
-      name: null,
-      version: null,
-      errorMessage: 'pubspec.yaml version must be a non-empty string: '
-          '${pubspecFile.path}',
-    );
-  }
-
-  return (name: name, version: version, errorMessage: null);
-}
-
-/// Optional `repository:` and `issue_tracker:` values from [pubspecFile].
-({String? repository, String? issueTracker}) readPubspecRepositoryFields(
-  File pubspecFile,
-) {
-  final contents = pubspecFile.readAsStringSync();
-
-  final repositoryMatch = _pubspecRepositoryPattern.firstMatch(contents);
-  final issueTrackerMatch = _pubspecIssueTrackerPattern.firstMatch(contents);
-
-  return (
-    repository: repositoryMatch?.group(1),
-    issueTracker: issueTrackerMatch?.group(1),
-  );
 }
 
 /// GitHub URLs used when formatting changelog issue and commit links.
@@ -172,36 +96,6 @@ ChangelogLinkContext? readChangelogLinkContext(File pubspecFile) {
   );
 }
 
-/// Resolves the git repository root containing [cwd].
-///
-/// Uses `git -C <cwd> rev-parse --show-toplevel`.
-({Directory? gitRoot, String? errorMessage}) resolveGitRoot(Directory cwd) {
-  final result = Process.runSync(
-    'git',
-    ['-C', cwd.path, 'rev-parse', '--show-toplevel'],
-  );
-  if (result.exitCode != 0) {
-    final stderrText = result.stderr.toString().trim();
-    if (stderrText.isNotEmpty) {
-      return (
-        gitRoot: null,
-        errorMessage: 'Not a git repository: ${cwd.path} ($stderrText)',
-      );
-    }
-    return (gitRoot: null, errorMessage: 'Not a git repository: ${cwd.path}');
-  }
-
-  final rootPath = result.stdout.toString().trim();
-  if (rootPath.isEmpty) {
-    return (
-      gitRoot: null,
-      errorMessage: 'Could not resolve git repository root for: ${cwd.path}',
-    );
-  }
-
-  return (gitRoot: Directory(rootPath), errorMessage: null);
-}
-
 /// Resolves and validates package context from [cwdPath].
 ///
 /// [cwdPath] is normalized to an absolute directory. Validation covers the
@@ -260,172 +154,6 @@ ChangelogLinkContext? readChangelogLinkContext(File pubspecFile) {
     ),
     errorMessage: null,
   );
-}
-
-const _versionPlaceholder = '{version}';
-const _namePlaceholder = '{name}';
-
-/// Semver-shaped segment captured from a tag via [parseVersionFromTag].
-const _semverCapturePattern =
-    r'([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?(?:\+[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?)';
-
-/// Characters that are invalid in git ref/tag literal segments.
-final _invalidGitRefLiteralPattern = RegExp(
-  r'[\x00-\x1f\x7f ~^:?*[\]\\]|@{|\.\.',
-);
-
-/// Validates [format] for use as `--tag-format`.
-///
-/// The template must contain `{version}` exactly once and literal characters
-/// must be valid git ref/tag characters.
-String? validateTagFormat(String format) {
-  final versionCount = _versionPlaceholder.allMatches(format).length;
-  if (versionCount == 0) {
-    return 'Tag format must contain {version} exactly once: $format';
-  }
-  if (versionCount > 1) {
-    return 'Tag format must contain {version} exactly once: $format';
-  }
-
-  final literalOnly = format
-      .replaceAll(_namePlaceholder, '')
-      .replaceAll(_versionPlaceholder, '');
-  if (_invalidGitRefLiteralPattern.hasMatch(literalOnly)) {
-    return 'Tag format contains invalid git ref characters: $format';
-  }
-  if (literalOnly.endsWith('.')) {
-    return 'Tag format literal segment cannot end with ".": $format';
-  }
-
-  return null;
-}
-
-/// Substitutes `{name}` and `{version}` into [format].
-String renderTagFormat({
-  required String format,
-  required String name,
-  required String version,
-}) {
-  return format
-      .replaceAll(_namePlaceholder, name)
-      .replaceAll(_versionPlaceholder, version);
-}
-
-/// Builds a `git tag -l` glob from [format] with `{version}` replaced by `*`.
-String tagGlobForFormat({
-  required String format,
-  required String name,
-}) {
-  return format
-      .replaceAll(_namePlaceholder, name)
-      .replaceAll(_versionPlaceholder, '*');
-}
-
-/// Parses the semver from [tag] using [format] and [name].
-///
-/// Returns `null` when [tag] does not match the full template.
-Version? parseVersionFromTag({
-  required String tag,
-  required String format,
-  required String name,
-}) {
-  final pattern = _tagFormatToRegExp(format: format, name: name);
-  final match = pattern.firstMatch(tag);
-  if (match == null) {
-    return null;
-  }
-
-  final versionText = match.group(1);
-  if (versionText == null || versionText.isEmpty) {
-    return null;
-  }
-
-  try {
-    return Version.parse(versionText);
-  } on FormatException {
-    return null;
-  }
-}
-
-/// Lists release tags for [tagFormat] and returns the one with the highest
-/// semver.
-///
-/// Non-matching tags and tags with unparseable versions are ignored.
-({String? tag, Version? version, String? errorMessage}) resolveLatestTag({
-  required Directory gitRoot,
-  required String tagFormat,
-  required String packageName,
-}) {
-  final formatError = validateTagFormat(tagFormat);
-  if (formatError != null) {
-    return (tag: null, version: null, errorMessage: formatError);
-  }
-
-  final glob = tagGlobForFormat(format: tagFormat, name: packageName);
-  final result = Process.runSync(
-    'git',
-    ['-C', gitRoot.path, 'tag', '-l', glob],
-  );
-  if (result.exitCode != 0) {
-    final stderrText = result.stderr.toString().trim();
-    return (
-      tag: null,
-      version: null,
-      errorMessage: stderrText.isEmpty
-          ? 'Failed to list git tags matching "$glob".'
-          : 'Failed to list git tags matching "$glob": $stderrText',
-    );
-  }
-
-  String? latestTag;
-  Version? latestVersion;
-
-  for (final rawLine in result.stdout.toString().split('\n')) {
-    final tag = rawLine.trim();
-    if (tag.isEmpty) {
-      continue;
-    }
-
-    final parsed = parseVersionFromTag(
-      tag: tag,
-      format: tagFormat,
-      name: packageName,
-    );
-    if (parsed == null) {
-      continue;
-    }
-
-    if (latestVersion == null || parsed > latestVersion) {
-      latestTag = tag;
-      latestVersion = parsed;
-    }
-  }
-
-  return (tag: latestTag, version: latestVersion, errorMessage: null);
-}
-
-RegExp _tagFormatToRegExp({
-  required String format,
-  required String name,
-}) {
-  final buffer = StringBuffer('^');
-  var index = 0;
-  while (index < format.length) {
-    if (format.startsWith(_namePlaceholder, index)) {
-      buffer.write(RegExp.escape(name));
-      index += _namePlaceholder.length;
-      continue;
-    }
-    if (format.startsWith(_versionPlaceholder, index)) {
-      buffer.write(_semverCapturePattern);
-      index += _versionPlaceholder.length;
-      continue;
-    }
-    buffer.write(RegExp.escape(format[index]));
-    index++;
-  }
-  buffer.write(r'$');
-  return RegExp(buffer.toString());
 }
 
 /// Conventional commit types recognized by the prepare release tool.
@@ -1016,19 +744,6 @@ enum ReleaseSafetyFailure {
   pubspecBehindTag,
 }
 
-/// A git commit entry collected from `git log <tag>..HEAD`.
-class GitCommitEntry {
-  const GitCommitEntry({
-    required this.sha,
-    required this.subject,
-    this.body,
-  });
-
-  final String sha;
-  final String subject;
-  final String? body;
-}
-
 /// Validates the tag-based release safety gate.
 ///
 /// When [allowUnsafeBump] is `true`, version mismatches are allowed but a
@@ -1126,71 +841,6 @@ class GitCommitEntry {
     latestTagVersion: latestTagResult.version,
     errorMessage: null,
   );
-}
-
-const _gitCommitRecordDelimiter = '---COMMIT---';
-
-/// Collects commits from `git log <latestTag>..HEAD`.
-///
-/// Returns entries in chronological order (oldest first).
-({List<GitCommitEntry>? commits, String? errorMessage}) collectCommitsSinceTag({
-  required Directory gitRoot,
-  required String latestTag,
-}) {
-  final result = Process.runSync(
-    'git',
-    [
-      '-C',
-      gitRoot.path,
-      'log',
-      '$latestTag..HEAD',
-      '--reverse',
-      '--format=%H%n%s%n%b%n$_gitCommitRecordDelimiter',
-    ],
-  );
-  if (result.exitCode != 0) {
-    final stderrText = result.stderr.toString().trim();
-    return (
-      commits: null,
-      errorMessage: stderrText.isEmpty
-          ? 'Failed to collect commits since tag $latestTag.'
-          : 'Failed to collect commits since tag $latestTag: $stderrText',
-    );
-  }
-
-  final stdoutText = result.stdout.toString();
-  if (stdoutText.trim().isEmpty) {
-    return (commits: const [], errorMessage: null);
-  }
-
-  final commits = <GitCommitEntry>[];
-  for (final rawRecord in stdoutText.split('$_gitCommitRecordDelimiter\n')) {
-    final record = rawRecord.trim();
-    if (record.isEmpty) {
-      continue;
-    }
-
-    final lines = record.split('\n');
-    if (lines.length < 2) {
-      continue;
-    }
-
-    final sha = lines.first.trim();
-    final subject = lines[1].trim();
-    if (sha.isEmpty || subject.isEmpty) {
-      continue;
-    }
-
-    final bodyLines = lines.skip(2).toList();
-    while (bodyLines.isNotEmpty && bodyLines.last.trim().isEmpty) {
-      bodyLines.removeLast();
-    }
-    final body = bodyLines.isEmpty ? null : bodyLines.join('\n');
-
-    commits.add(GitCommitEntry(sha: sha, subject: subject, body: body));
-  }
-
-  return (commits: commits, errorMessage: null);
 }
 
 /// Parses [entries] into conventional commits, preserving commit bodies.
@@ -1384,30 +1034,6 @@ class PrepareReleasePlan {
       nextVersion: nextVersion,
       commits: commits,
       changelogSection: changelogResult.section!,
-    ),
-    errorMessage: null,
-  );
-}
-
-/// Replaces only the `version:` line in [pubspecContents].
-///
-/// Returns a structured error when the version line is missing.
-({String? contents, String? errorMessage}) updatePubspecVersionLine({
-  required String pubspecContents,
-  required String newVersion,
-}) {
-  final match = _pubspecVersionPattern.firstMatch(pubspecContents);
-  if (match == null) {
-    return (
-      contents: null,
-      errorMessage: 'Could not find version line in pubspec.yaml.',
-    );
-  }
-
-  return (
-    contents: pubspecContents.replaceFirst(
-      match.group(0)!,
-      'version: $newVersion',
     ),
     errorMessage: null,
   );
