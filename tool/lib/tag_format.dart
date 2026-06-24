@@ -30,9 +30,8 @@ String? validateTagFormat(String format) {
     return 'Tag format must contain {version} exactly once: $format';
   }
 
-  final literalOnly = format
-      .replaceAll(namePlaceholder, '')
-      .replaceAll(versionPlaceholder, '');
+  final literalOnly =
+      format.replaceAll(namePlaceholder, '').replaceAll(versionPlaceholder, '');
   if (invalidGitRefLiteralPattern.hasMatch(literalOnly)) {
     return 'Tag format contains invalid git ref characters: $format';
   }
