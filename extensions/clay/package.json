@@ -2,7 +2,7 @@
   "name": "clay",
   "displayName": "Clay",
   "description": "Editor support for Clay annotation markers in reference projects.",
-  "version": "0.0.1-dev.1",
+  "version": "0.0.1",
   "preview": true,
   "packageManager": "pnpm@9.15.9",
   "publisher": "mrverdant13",
