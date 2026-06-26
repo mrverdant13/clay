@@ -1,4 +1,4 @@
-## 0.0.1-dev.1
+## 0.0.1
 
 - **FEAT**: annotation syntax highlighting via TextMate grammar injection in Dart, Shell, YAML, HTML, XML, Markdown, and ignore files (#30).
 - **FEAT**: block shading and code folding for remove, replace, insert, and partial annotation blocks (#31).
