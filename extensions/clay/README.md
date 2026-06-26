@@ -308,4 +308,4 @@ Contributor setup for the full monorepo (Dart CLI, Melos, extension) is document
 
 ## License
 
-MIT — see [`package.json`](./package.json).
+MIT — see [LICENSE](LICENSE).
